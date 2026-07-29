@@ -1,7 +1,7 @@
-package io.github.scala_tessella.research_core
+package io.github.scala_tessella.research_core.solver
 
 import io.github.scala_tessella.research_core.Signatures.VertexSignature
-import io.github.scala_tessella.research_core.SymbolAssembly.{canonicalStarKey, ClauseSink, Star}
+import io.github.scala_tessella.research_core.solver.SymbolAssembly.{canonicalStarKey, ClauseSink, Star}
 
 import java.nio.file.{Files, Path, StandardOpenOption}
 import scala.collection.mutable

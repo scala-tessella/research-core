@@ -7,10 +7,13 @@ verification repositories and depend on a pinned release of `research-core`.
 
 ## Modules
 
-| Module | Artifact | Contents |
-|---|---|---|
-| `core`   | `research-core`        | Pure combinatorics + exact arithmetic. Scala.js-clean (no JVM-only IO). |
-| `solver` | `research-core-solver` | SAT assembler + DRAT/UNSAT certification harness (SAT4J, JVM-only). |
+| Module | Artifact | Package | Contents |
+|---|---|---|---|
+| `core`   | `research-core`        | `io.github.scala_tessella.research_core`        | Pure combinatorics + exact arithmetic. Scala.js-clean (no JVM-only IO). |
+| `solver` | `research-core-solver` | `io.github.scala_tessella.research_core.solver` | SAT assembler + DRAT/UNSAT certification harness (SAT4J, JVM-only). |
+
+`solver` is a subpackage of `core` (no split package). This keeps `core`'s `private[research_core]` members
+reachable from `solver` while they stay hidden from library users.
 
 ### `core` public surface
 

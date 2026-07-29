@@ -1,11 +1,13 @@
 // research-core — shared substrate for the scala-tessella research programme. No theorems live here:
 // individual results (their verification repos) depend on this library.
 //
-//   core   — pure combinatorics + exact arithmetic: Frac, Cyclo24, Signatures (vertex signatures),
-//            TypeCompatibility (polygon-alphabet support), the Delaney–Dress symbol engine (DelaneySymbols),
-//            the exact angle/moduli layer (MetricLayer), reference data (TilingReference).
-//   solver — the SAT assembler + DRAT/UNSAT certification harness (SAT4J, JVM-only). Optional: needed only
-//            for the combinatorial-completeness (exhaustiveness) surface, not for the metric specs.
+//   core   [package research_core]        — pure combinatorics + exact arithmetic: Frac, Cyclo24,
+//            Signatures (vertex signatures), TypeCompatibility (polygon-alphabet support), the Delaney–Dress
+//            symbol engine (DelaneySymbols), the exact angle/moduli layer (MetricLayer), reference data
+//            (TilingReference).
+//   solver [package research_core.solver] — the SAT assembler + DRAT/UNSAT certification harness (SAT4J,
+//            JVM-only). A subpackage of core (no split package); optional, needed only for the
+//            combinatorial-completeness (exhaustiveness) surface, not for the metric specs.
 
 ThisBuild / scalaVersion   := "3.8.4"
 ThisBuild / organization   := "io.github.scala-tessella"

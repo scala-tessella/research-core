@@ -1,4 +1,4 @@
-package io.github.scala_tessella.research_core
+package io.github.scala_tessella.research_core.solver
 
 import io.github.scala_tessella.research_core.DelaneySymbols.{
   DSet, DSymbol, canonicalKey, isEuclidean, isMinimal

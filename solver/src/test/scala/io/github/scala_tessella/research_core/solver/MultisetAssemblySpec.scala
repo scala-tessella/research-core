@@ -1,6 +1,6 @@
-package io.github.scala_tessella.research_core
+package io.github.scala_tessella.research_core.solver
 
-import io.github.scala_tessella.research_core.SymbolAssembly.*
+import io.github.scala_tessella.research_core.solver.SymbolAssembly.*
 import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
