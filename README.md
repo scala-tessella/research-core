@@ -3,9 +3,7 @@
 Shared substrate for the `scala-tessella` research programme on tilings of the plane.
 
 **No theorems live here.** This library holds only reusable machinery; individual results live in their own
-verification repositories and depend on a pinned release of `research-core`. The sources are extracted,
-source-identical, from `scala-tessella/uniform-tilings`, with the original package namespace
-(`io.github.scala_tessella.uniform_tilings`) preserved so dependants need no edits.
+verification repositories and depend on a pinned release of `research-core`.
 
 ## Modules
 

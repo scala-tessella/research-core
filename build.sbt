@@ -24,8 +24,10 @@ ThisBuild / scmInfo        := Some(ScmInfo(
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
-    "io.github.scala-tessella" %% "ring-seq"  % "0.8.0",
-    "org.scalatest"            %% "scalatest" % "3.2.20" % Test
+    "io.github.scala-tessella" %% "ring-seq"        % "0.8.0",
+    "org.scalatest"            %% "scalatest"       % "3.2.20"   % Test,
+    "org.scalacheck"           %% "scalacheck"      % "1.19.0"   % Test,
+    "org.scalatestplus"        %% "scalacheck-1-19" % "3.2.20.0" % Test
   )
 )
 
