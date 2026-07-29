@@ -1,7 +1,10 @@
 package io.github.scala_tessella.research_core.solver
 
 import io.github.scala_tessella.research_core.solver.SymbolAssembly.*
+import io.github.scala_tessella.research_core.DelaneySymbols
 import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
+import io.github.scala_tessella.research_core.TilingReference
+import io.github.scala_tessella.research_core.TypeCompatibility
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

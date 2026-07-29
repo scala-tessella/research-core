@@ -1,6 +1,6 @@
 # research-core
 
-Shared substrate for the `scala-tessella` research programme on tilings of the plane.
+Shared substrate for the `scala-tessella` research programme on tilings.
 
 **No theorems live here.** This library holds only reusable machinery; individual results live in their own
 verification repositories and depend on a pinned release of `research-core`.

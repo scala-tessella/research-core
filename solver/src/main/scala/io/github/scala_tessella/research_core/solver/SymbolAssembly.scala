@@ -1,9 +1,10 @@
 package io.github.scala_tessella.research_core.solver
 
 import io.github.scala_tessella.research_core.DelaneySymbols.{
-  DSet, DSymbol, canonicalKey, isEuclidean, isMinimal
+  DSet, DSymbol, canonicalKey, collectOrbits, isEuclidean, isMinimal, regularPolygonVertices
 }
 import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
+import io.github.scala_tessella.research_core.TypeCompatibility
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs.{ContradictionException, ISolver}
@@ -438,7 +439,7 @@ object SymbolAssembly:
         if d >= 1 && !seen(d) then { seen += d; todo.enqueue(d) }
     if seen.size != m then None
     else
-      val (orbs, index) = DelaneySymbols.collectOrbits(dset)
+      val (orbs, index) = collectOrbits(dset)
       val vs            = Array.ofDim[Int](orbs.size)
       var ok            = true
       for (o, i) <- orbs.zipWithIndex do
@@ -451,7 +452,7 @@ object SymbolAssembly:
         val dsym = new DSymbol(dset, orbs, index, vs)
         if !dsym.isEuclidean then None
         else
-          DelaneySymbols.regularPolygonVertices(dsym) match
+          regularPolygonVertices(dsym) match
             case Some(_) if dsym.isMinimal =>
               Some(dsym.canonicalKey -> dsym)
             case _                         => None
