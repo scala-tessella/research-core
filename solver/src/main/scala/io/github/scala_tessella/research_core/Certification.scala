@@ -1,7 +1,7 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
-import io.github.scala_tessella.uniform_tilings.Signatures.VertexSignature
-import io.github.scala_tessella.uniform_tilings.SymbolAssembly.{canonicalStarKey, ClauseSink, Star}
+import io.github.scala_tessella.research_core.Signatures.VertexSignature
+import io.github.scala_tessella.research_core.SymbolAssembly.{canonicalStarKey, ClauseSink, Star}
 
 import java.nio.file.{Files, Path, StandardOpenOption}
 import scala.collection.mutable

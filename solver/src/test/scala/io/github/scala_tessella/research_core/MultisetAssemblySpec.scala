@@ -1,7 +1,7 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
-import io.github.scala_tessella.uniform_tilings.SymbolAssembly.*
-import io.github.scala_tessella.uniform_tilings.Signatures.{VertexSignature, normalize}
+import io.github.scala_tessella.research_core.SymbolAssembly.*
+import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

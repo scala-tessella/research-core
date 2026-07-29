@@ -1,6 +1,6 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
-import io.github.scala_tessella.uniform_tilings.Cyclo24.{Cyclo, Rat}
+import io.github.scala_tessella.research_core.Cyclo24.{Cyclo, Rat}
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

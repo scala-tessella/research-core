@@ -1,6 +1,6 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
-import io.github.scala_tessella.uniform_tilings.DelaneySymbols.DSymbol
+import io.github.scala_tessella.research_core.DelaneySymbols.DSymbol
 
 import scala.collection.mutable
 

@@ -1,4 +1,4 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
 import org.scalacheck.Gen
 import org.scalatest.flatspec.AnyFlatSpec

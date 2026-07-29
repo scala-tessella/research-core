@@ -1,6 +1,6 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
-import io.github.scala_tessella.uniform_tilings.Signatures.{VertexSignature, normalize}
+import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
 
 /** Ground-truth reference for the Krotenheerdt enumeration (OEIS A068600: n-uniform tilings with exactly n
   * DISTINCT vertex types). Used to validate that every engine returns *exactly* the right tilings — not

@@ -1,4 +1,4 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
 import io.github.scala_tessella.ring_seq.RingSeq.bracelet
 

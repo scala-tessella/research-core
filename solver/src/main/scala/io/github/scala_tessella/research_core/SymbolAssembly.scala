@@ -1,9 +1,9 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
-import io.github.scala_tessella.uniform_tilings.DelaneySymbols.{
+import io.github.scala_tessella.research_core.DelaneySymbols.{
   DSet, DSymbol, canonicalKey, isEuclidean, isMinimal
 }
-import io.github.scala_tessella.uniform_tilings.Signatures.{VertexSignature, normalize}
+import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
 import org.sat4j.core.VecInt
 import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs.{ContradictionException, ISolver}
@@ -480,7 +480,7 @@ object SymbolAssembly:
   /** The sound lex-leader targets of a frame (ADR-0041): every nontrivial star automorphism lifted to the
     * global chambers, plus the swap of each adjacent IDENTICAL star pair.
     */
-  private[uniform_tilings] def frameSymmetries(frame: Frame, chosen: Vector[Star]): Vector[Vector[Int]] =
+  private[research_core] def frameSymmetries(frame: Frame, chosen: Vector[Star]): Vector[Vector[Int]] =
     val perStar = chosen.indices.toVector.flatMap: i =>
       val off = frame.offsets(i)
       starAutomorphisms(chosen(i)).filter(a => a != a.indices.toVector).map: a =>
@@ -517,7 +517,7 @@ object SymbolAssembly:
     * friends) iterate this and recompute the symmetries themselves via [[frameSymmetries]]. A thin view over
     * [[multisetFrames]]: same frames, same order.
     */
-  private[uniform_tilings] def frames(types: Seq[VertexSignature]): Vector[(Frame, Vector[Star])] =
+  private[research_core] def frames(types: Seq[VertexSignature]): Vector[(Frame, Vector[Star])] =
     multisetFrames(types).map((chosen, frame, _) => (frame, chosen))
 
   /** ADR-0041: enumerate every tiling whose vertex-type MULTISET is exactly `types` — n orbits over

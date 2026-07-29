@@ -1,6 +1,5 @@
 // research-core — shared substrate for the scala-tessella research programme. No theorems live here:
-// individual results (their verification repos) depend on this library. Extracted, source-identical, from
-// scala-tessella/uniform-tilings; the package namespace is preserved so dependants need no edits.
+// individual results (their verification repos) depend on this library.
 //
 //   core   — pure combinatorics + exact arithmetic: Frac, Cyclo24, Signatures (vertex signatures),
 //            TypeCompatibility (polygon-alphabet support), the Delaney–Dress symbol engine (DelaneySymbols),
@@ -24,7 +23,6 @@ ThisBuild / scmInfo        := Some(ScmInfo(
 
 lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
-    "io.github.scala-tessella" %% "ring-seq"        % "0.8.0",
     "org.scalatest"            %% "scalatest"       % "3.2.20"   % Test,
     "org.scalacheck"           %% "scalacheck"      % "1.19.0"   % Test,
     "org.scalatestplus"        %% "scalacheck-1-19" % "3.2.20.0" % Test

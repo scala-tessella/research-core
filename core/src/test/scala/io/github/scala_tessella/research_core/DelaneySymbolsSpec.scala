@@ -1,9 +1,9 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
-import io.github.scala_tessella.uniform_tilings.Frac
-import io.github.scala_tessella.uniform_tilings.Signatures.{VertexSignature, normalize}
-import io.github.scala_tessella.uniform_tilings.TypeCompatibility.isCompleteVertex
-import io.github.scala_tessella.uniform_tilings.TypeCompatibility.viableFigures as validSignatures
+import io.github.scala_tessella.research_core.Frac
+import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
+import io.github.scala_tessella.research_core.TypeCompatibility.isCompleteVertex
+import io.github.scala_tessella.research_core.TypeCompatibility.viableFigures as validSignatures
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

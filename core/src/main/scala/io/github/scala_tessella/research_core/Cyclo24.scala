@@ -1,4 +1,4 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
 /** ADR-0009 paper certification, track B — exact arithmetic in the cyclotomic field ℚ(ζ₂₄), ζ = e^{iπ/12}:
   * basis 1, ζ, …, ζ⁷ over ℚ with ζ⁸ = ζ⁴ − 1 (the 24th cyclotomic polynomial is x⁸ − x⁴ + 1). Coefficients

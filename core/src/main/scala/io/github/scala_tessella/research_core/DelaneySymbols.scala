@@ -1,7 +1,7 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
-import io.github.scala_tessella.uniform_tilings.Signatures.*
-import io.github.scala_tessella.uniform_tilings.TypeCompatibility.{derivedPolygonAlphabet, isCompleteVertex}
+import io.github.scala_tessella.research_core.Signatures.*
+import io.github.scala_tessella.research_core.TypeCompatibility.{derivedPolygonAlphabet, isCompleteVertex}
 
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, ForkJoinPool, RecursiveAction}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
@@ -406,7 +406,7 @@ object DelaneySymbols:
     /** `m_{i,i+1}` through `d` — the polygon side-count (i=0) or vertex degree (i=1). */
     def m(i: Int, j: Int, d: Int): Int = rOf(i, j, d) * v(i, j, d)
 
-  private[uniform_tilings] def collectOrbits(ds: DSet): (Vector[Orbit], Array[Array[Int]]) =
+  private[research_core] def collectOrbits(ds: DSet): (Vector[Orbit], Array[Array[Int]]) =
     val all   = Vector.newBuilder[Orbit]
     val index = Array.fill(Dim + 1, ds.size + 1)(0)
     var built = Vector.empty[Orbit]
@@ -582,7 +582,7 @@ object DelaneySymbols:
     * its side count — the geometric cyclic sequence of (face orbit, size) around the vertex through `d`.
     * Needed by the U-class check (ADR-0009 G4), where face orbits are designated regular or irregular.
     */
-  private[uniform_tilings] def vertexConfigOrbits(ds: DSymbol, d: Int): Option[List[(Int, Int)]] =
+  private[research_core] def vertexConfigOrbits(ds: DSymbol, d: Int): Option[List[(Int, Int)]] =
     val frag = mutable.ArrayBuffer.empty[(Int, Int)]
     var cur  = d
     var go   = true
@@ -599,7 +599,7 @@ object DelaneySymbols:
   /** True iff the symbol is a euclidean tiling by regular polygons `{3,4,6,8,12}` with every vertex a valid
     * 360° type. Returns the vertex type signatures (one per 12-orbit) when valid, else None.
     */
-  private[uniform_tilings] def regularPolygonVertices(ds: DSymbol): Option[List[VertexSignature]] =
+  private[research_core] def regularPolygonVertices(ds: DSymbol): Option[List[VertexSignature]] =
     // tiles: every 01-orbit's m₀₁ must be an admissible polygon (ds.orbs = orbits(0,1) ++ orbits(1,2))
     val faceOK =
       ds.orbs.forall(o => o.i != 0 || derivedPolygonAlphabet.contains(ds.m(0, 1, o.elements.head)))
@@ -664,7 +664,7 @@ object DelaneySymbols:
     * sweeps with high `maxN`, where materializing every symbol would not fit the heap (the D5 fusion-attack
     * base-surface scan keeps only the regular symbols out of ~365k distinct at 22 chambers).
     */
-  private[uniform_tilings] def enumerateRelaxedParallel(
+  private[research_core] def enumerateRelaxedParallel(
       maxN: Int,
       maxSize: Int,
       parallelism: Int = math.max(1, Runtime.getRuntime.availableProcessors - 1),
@@ -710,7 +710,7 @@ object DelaneySymbols:
     * GIVEN D-sets — v-assignment sweep, curvature 0, vertex configs — with no generation of its own. Applied
     * to the certified [[relaxedDSets]] universe it must reproduce the 93 (asserted in the probe).
     */
-  private[uniform_tilings] def euclideanSymbolsOf(
+  private[research_core] def euclideanSymbolsOf(
       dsets: Vector[DSet],
       maxN: Int
   ): List[(Tiling, DSymbol)] =
@@ -726,7 +726,7 @@ object DelaneySymbols:
                 out += ((Tiling(orbs12.length, sigs.flatten.map(normalize).toList, dsym.size), dsym))
     out.result()
 
-  private[uniform_tilings] def enumerateRelaxedDetailed(maxN: Int, maxSize: Int): List[(Tiling, DSymbol)] =
+  private[research_core] def enumerateRelaxedDetailed(maxN: Int, maxSize: Int): List[(Tiling, DSymbol)] =
     val out = List.newBuilder[(Tiling, DSymbol)]
     DSetGenerator(maxSize, relaxed = true).foreach: dset =>
       if euclideanFeasible(dset) then
@@ -746,7 +746,7 @@ object DelaneySymbols:
     * symbol is the same geometric tiling carrying a subgroup of its symmetry (more vertex orbits than n).
     */
   extension (ds: DSymbol)
-    private[uniform_tilings] def isMinimal: Boolean =
+    private[research_core] def isMinimal: Boolean =
       val n  = ds.size
       var d0 = 2
       while d0 <= n do
@@ -783,7 +783,7 @@ object DelaneySymbols:
       true
 
   extension (ds: DSymbol)
-    private[uniform_tilings] def isEuclidean: Boolean =
+    private[research_core] def isEuclidean: Boolean =
       var result = Frac(-ds.size, 2)
       val all    = ds.orbs // collectOrbits already built orbits(0,1) ++ orbits(1,2) in this order
       var idx    = 0
@@ -845,7 +845,7 @@ object DelaneySymbols:
     * paper certification track A): the SAT side blocks precisely these (in every BFS relabeling) and proves
     * nothing else exists; the euclidean/v filtering is the exact JVM tail.
     */
-  private[uniform_tilings] def relaxedDSets(maxSize: Int): Vector[DSet] =
+  private[research_core] def relaxedDSets(maxSize: Int): Vector[DSet] =
     val out = Vector.newBuilder[DSet]
     DSetGenerator(maxSize, prune = false, relaxed = true).foreach: dset =>
       if orbits(dset, 1, 2).length == 1 then out += dset
@@ -856,7 +856,7 @@ object DelaneySymbols:
     * scan order (d = 1..n, i = 0..2) — exactly the SAT-side numbering constraint of the completeness
     * obligation, so blocking these copies blocks the whole isomorphism class.
     */
-  private[uniform_tilings] def bfsRelabelings(ds: DSet): Vector[DSet] =
+  private[research_core] def bfsRelabelings(ds: DSet): Vector[DSet] =
     val n   = ds.size
     val out = mutable.LinkedHashMap.empty[List[Int], DSet]
     for start <- 1 to n do
@@ -880,7 +880,7 @@ object DelaneySymbols:
     out.values.toVector
 
   /** Label-free identity of a D-SET (no m/v data): the minimal BFS σ-trace over all starts. */
-  private[uniform_tilings] def dsetKey(ds: DSet): String =
+  private[research_core] def dsetKey(ds: DSet): String =
     bfsRelabelings(ds).iterator
       .map(r => (1 to r.size).flatMap(d => (0 to Dim).map(i => r.get(i, d))).mkString(","))
       .min
@@ -893,7 +893,7 @@ object DelaneySymbols:
     * applied to a completed symbol.
     */
   extension (ds: DSymbol)
-    private[uniform_tilings] def orbifoldKey: String =
+    private[research_core] def orbifoldKey: String =
       val cones   = mutable.ArrayBuffer.empty[Int]
       val corners = mutable.ArrayBuffer.empty[Int]
       for orb <- orbits(ds.dset, 0, 2) do
@@ -964,7 +964,7 @@ object DelaneySymbols:
     * one of these — and moduli pull back injectively along coverings, so any max-over-quotients test may scan
     * just this list (ADR-0009 G3).
     */
-  private[uniform_tilings] def properQuotients(ds: DSymbol): List[DSymbol] =
+  private[research_core] def properQuotients(ds: DSymbol): List[DSymbol] =
     val n   = ds.size
     val out = mutable.LinkedHashMap.empty[String, DSymbol]
     var d0  = 2
@@ -1124,7 +1124,7 @@ object DelaneySymbols:
     * `prune == !prune` canonical-key-set equality test then proves the prune drops no tiling (soundness of
     * the cut) directly, rather than only via the slow complete-count check.
     */
-  private[uniform_tilings] def enumerateSymbolsPrunable(
+  private[research_core] def enumerateSymbolsPrunable(
       maxN: Int,
       maxSize: Int,
       prune: Boolean
@@ -1190,7 +1190,7 @@ object DelaneySymbols:
     * gate; the difference ≈ euclidean-symbol PROCESSING (the v-assignment + minimal-symbol + key work on the
     * survivors). Tells which half to attack.
     */
-  private[uniform_tilings] def countDSetsParallel(maxSize: Int, parallelism: Int): (Long, Long) =
+  private[research_core] def countDSetsParallel(maxSize: Int, parallelism: Int): (Long, Long) =
     val complete = new AtomicLong(0)
     val eucl     = new AtomicLong(0)
     DSetGenerator(maxSize).parallelForeach(

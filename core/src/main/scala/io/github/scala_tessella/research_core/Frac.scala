@@ -1,4 +1,4 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
 /** Exact rationals for curvature / angle arithmetic (extracted from the Delaney machinery). */
 final case class Frac(num: Long, den: Long):

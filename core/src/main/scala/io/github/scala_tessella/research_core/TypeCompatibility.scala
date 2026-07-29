@@ -1,6 +1,6 @@
-package io.github.scala_tessella.uniform_tilings
+package io.github.scala_tessella.research_core
 
-import io.github.scala_tessella.uniform_tilings.Signatures.{VertexSignature, normalize}
+import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
 
 /** Fair top-down type-set derivation (ADR-0040 = ADR-0039 Phase 1).
   *
