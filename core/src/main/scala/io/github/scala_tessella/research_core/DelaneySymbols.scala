@@ -710,7 +710,7 @@ object DelaneySymbols:
     * GIVEN D-sets — v-assignment sweep, curvature 0, vertex configs — with no generation of its own. Applied
     * to the certified [[relaxedDSets]] universe it must reproduce the 93 (asserted in the probe).
     */
-  private[research_core] def euclideanSymbolsOf(
+  def euclideanSymbolsOf(
       dsets: Vector[DSet],
       maxN: Int
   ): List[(Tiling, DSymbol)] =
@@ -845,7 +845,7 @@ object DelaneySymbols:
     * paper certification track A): the SAT side blocks precisely these (in every BFS relabeling) and proves
     * nothing else exists; the euclidean/v filtering is the exact JVM tail.
     */
-  private[research_core] def relaxedDSets(maxSize: Int): Vector[DSet] =
+  def relaxedDSets(maxSize: Int): Vector[DSet] =
     val out = Vector.newBuilder[DSet]
     DSetGenerator(maxSize, prune = false, relaxed = true).foreach: dset =>
       if orbits(dset, 1, 2).length == 1 then out += dset
@@ -856,7 +856,7 @@ object DelaneySymbols:
     * scan order (d = 1..n, i = 0..2) — exactly the SAT-side numbering constraint of the completeness
     * obligation, so blocking these copies blocks the whole isomorphism class.
     */
-  private[research_core] def bfsRelabelings(ds: DSet): Vector[DSet] =
+  def bfsRelabelings(ds: DSet): Vector[DSet] =
     val n   = ds.size
     val out = mutable.LinkedHashMap.empty[List[Int], DSet]
     for start <- 1 to n do
