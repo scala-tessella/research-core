@@ -1,5 +1,7 @@
 # research-core
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.scala-tessella/research-core_3?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.scala-tessella/research-core_3)
+
 Shared substrate for the `scala-tessella` research programme on tilings.
 
 **No theorems live here.** This library holds only reusable machinery; individual results live in their own
