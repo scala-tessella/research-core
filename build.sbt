@@ -4,7 +4,7 @@
 //   core   [package research_core]        — pure combinatorics + exact arithmetic: Frac, Cyclo24,
 //            Signatures (vertex signatures), TypeCompatibility (polygon-alphabet support), the Delaney–Dress
 //            symbol engine (DelaneySymbols), the exact angle/moduli layer (MetricLayer), exported rank
-//            witnesses (RankWitness), reference data (TilingReference).
+//            witnesses (RankWitness), the U(z) class machinery (UClass), reference data (TilingReference).
 //   solver [package research_core.solver] — the SAT assembler (SymbolAssembly) + DRAT/UNSAT certification
 //            harness (Certification, K1Certify, QuotientCertify, CertifyRunner; SAT4J in-process, external
 //            kissat/drat-trim optional). A subpackage of core (no split package); needed only for the

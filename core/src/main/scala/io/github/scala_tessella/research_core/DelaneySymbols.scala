@@ -406,7 +406,7 @@ object DelaneySymbols:
     /** `m_{i,i+1}` through `d` — the polygon side-count (i=0) or vertex degree (i=1). */
     def m(i: Int, j: Int, d: Int): Int = rOf(i, j, d) * v(i, j, d)
 
-  private[research_core] def collectOrbits(ds: DSet): (Vector[Orbit], Array[Array[Int]]) =
+  def collectOrbits(ds: DSet): (Vector[Orbit], Array[Array[Int]]) =
     val all   = Vector.newBuilder[Orbit]
     val index = Array.fill(Dim + 1, ds.size + 1)(0)
     var built = Vector.empty[Orbit]
@@ -582,7 +582,7 @@ object DelaneySymbols:
     * its side count — the geometric cyclic sequence of (face orbit, size) around the vertex through `d`.
     * Needed by the U-class check (ADR-0009 G4), where face orbits are designated regular or irregular.
     */
-  private[research_core] def vertexConfigOrbits(ds: DSymbol, d: Int): Option[List[(Int, Int)]] =
+  def vertexConfigOrbits(ds: DSymbol, d: Int): Option[List[(Int, Int)]] =
     val frag = mutable.ArrayBuffer.empty[(Int, Int)]
     var cur  = d
     var go   = true
@@ -664,7 +664,7 @@ object DelaneySymbols:
     * sweeps with high `maxN`, where materializing every symbol would not fit the heap (the D5 fusion-attack
     * base-surface scan keeps only the regular symbols out of ~365k distinct at 22 chambers).
     */
-  private[research_core] def enumerateRelaxedParallel(
+  def enumerateRelaxedParallel(
       maxN: Int,
       maxSize: Int,
       parallelism: Int = math.max(1, Runtime.getRuntime.availableProcessors - 1),
@@ -783,7 +783,7 @@ object DelaneySymbols:
       true
 
   extension (ds: DSymbol)
-    private[research_core] def isEuclidean: Boolean =
+    def isEuclidean: Boolean =
       var result = Frac(-ds.size, 2)
       val all    = ds.orbs // collectOrbits already built orbits(0,1) ++ orbits(1,2) in this order
       var idx    = 0

@@ -30,6 +30,8 @@ reachable from `solver` while they stay hidden from library users.
   `maxClosureResidual`, `moduliDimension`, `nullspaceBasis`, `closureRank`, `exactSymmetryRealizable`.
 - `RankWitness` — exported algebraic rank witnesses (pivot minors, kernel bases): `produce`, `verify`, `det`,
   `minor`, re-checkable by any computer algebra system.
+- `UClass` — the U(z) class machinery (unit-edge tilings around a vertex figure): `candidates`,
+  `designations`, `forcedRegular`, `noneForcedRegular`, `cyclicSubset`.
 - `TilingReference` — reference data (e.g. `n1`, the 11 Archimedean vertex configurations).
 
 ## Build
