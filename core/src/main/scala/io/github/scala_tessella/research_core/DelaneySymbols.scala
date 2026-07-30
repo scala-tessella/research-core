@@ -599,7 +599,7 @@ object DelaneySymbols:
   /** True iff the symbol is a euclidean tiling by regular polygons `{3,4,6,8,12}` with every vertex a valid
     * 360° type. Returns the vertex type signatures (one per 12-orbit) when valid, else None.
     */
-  private[research_core] def regularPolygonVertices(ds: DSymbol): Option[List[VertexSignature]] =
+  def regularPolygonVertices(ds: DSymbol): Option[List[VertexSignature]] =
     // tiles: every 01-orbit's m₀₁ must be an admissible polygon (ds.orbs = orbits(0,1) ++ orbits(1,2))
     val faceOK =
       ds.orbs.forall(o => o.i != 0 || derivedPolygonAlphabet.contains(ds.m(0, 1, o.elements.head)))
@@ -726,7 +726,7 @@ object DelaneySymbols:
                 out += ((Tiling(orbs12.length, sigs.flatten.map(normalize).toList, dsym.size), dsym))
     out.result()
 
-  private[research_core] def enumerateRelaxedDetailed(maxN: Int, maxSize: Int): List[(Tiling, DSymbol)] =
+  def enumerateRelaxedDetailed(maxN: Int, maxSize: Int): List[(Tiling, DSymbol)] =
     val out = List.newBuilder[(Tiling, DSymbol)]
     DSetGenerator(maxSize, relaxed = true).foreach: dset =>
       if euclideanFeasible(dset) then
@@ -746,7 +746,7 @@ object DelaneySymbols:
     * symbol is the same geometric tiling carrying a subgroup of its symmetry (more vertex orbits than n).
     */
   extension (ds: DSymbol)
-    private[research_core] def isMinimal: Boolean =
+    def isMinimal: Boolean =
       val n  = ds.size
       var d0 = 2
       while d0 <= n do
@@ -964,7 +964,7 @@ object DelaneySymbols:
     * one of these — and moduli pull back injectively along coverings, so any max-over-quotients test may scan
     * just this list (ADR-0009 G3).
     */
-  private[research_core] def properQuotients(ds: DSymbol): List[DSymbol] =
+  def properQuotients(ds: DSymbol): List[DSymbol] =
     val n   = ds.size
     val out = mutable.LinkedHashMap.empty[String, DSymbol]
     var d0  = 2
