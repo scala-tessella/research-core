@@ -51,7 +51,7 @@ object CertifyRunner:
     val code = p.waitFor()
     (code, out)
 
-  private[research_core] def certifyCnf(cnf: Path, proof: Path): (Boolean, Boolean) =
+  def certifyCnf(cnf: Path, proof: Path): (Boolean, Boolean) =
     val (kc, _)   = run(kissat.toString, cnf.toString, proof.toString)
     val (_, dOut) = run(dratTrim.toString, cnf.toString, proof.toString)
     // verdict by the exact `s VERIFIED` line: drat-trim's exit code is 1 even on its trivial-UNSAT
