@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software in research, please cite the specific archived version you
+  pinned, not the repository in general. Each release has its own version DOI; see the
+  "Archived releases" table in README.md.
+title: research-core
+abstract: >-
+  Shared substrate for the scala-tessella research programme on tilings: exact rational
+  and cyclotomic arithmetic, the Delaney-Dress symbol engine, the exact angle/moduli
+  layer, exported algebraic rank witnesses, the U(z) class machinery, and a SAT/DRAT
+  certification harness. No theorems live here; individual results live in their own
+  verification repositories and depend on a pinned release.
+type: software
+authors:
+  - given-names: Mario
+    family-names: Càllisto
+    orcid: https://orcid.org/0009-0009-1215-3278
+    email: mario.callisto@gmail.com
+    alias: mcallisto
+license: Apache-2.0
+repository-code: https://github.com/scala-tessella/research-core
+url: https://github.com/scala-tessella/research-core
+version: 0.3.0
+date-released: '2026-07-30'
+keywords:
+  - tilings
+  - tessellations
+  - Delaney-Dress symbols
+  - exact arithmetic
+  - formal verification
+  - Scala
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21708011
+    description: Version DOI for the 0.2.1 release

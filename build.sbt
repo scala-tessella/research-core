@@ -17,7 +17,7 @@ ThisBuild / scalafmtOnCompile := true
 ThisBuild / homepage       := Some(url("https://github.com/scala-tessella/research-core"))
 ThisBuild / licenses       := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 ThisBuild / developers     := List(
-  Developer("scala-tessella", "scala-tessella", "mario.callisto@gmail.com", url("https://github.com/scala-tessella"))
+  Developer("scala-tessella", "Mario Càllisto", "mario.callisto@gmail.com", url("https://github.com/scala-tessella"))
 )
 ThisBuild / scmInfo        := Some(ScmInfo(
   url("https://github.com/scala-tessella/research-core"),

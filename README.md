@@ -19,6 +19,12 @@ reachable from `solver` while they stay hidden from library users.
 
 ### `core` public surface
 
+> **Reading this from a verification repository?** This page describes the current development line, which
+> moves ahead of the archived releases that verification repositories pin. `UClass` and the widened
+> `DelaneySymbols` entry points, for instance, arrived in 0.3.0 and are **absent from 0.2.1**. Check the
+> pinned version's own archive and the [CHANGELOG](CHANGELOG.md) rather than this list. The archived 0.2.1
+> release is [doi:10.5281/zenodo.21708011](https://doi.org/10.5281/zenodo.21708011).
+
 - `Frac` — exact rationals.
 - `Cyclo24` — exact arithmetic in the 24th cyclotomic field (the angles that arise for `{3,4,6,8,12}` faces).
 - `Signatures.VertexSignature` — vertex configurations. (`TypeCompatibility` provides polygon-alphabet
@@ -31,7 +37,7 @@ reachable from `solver` while they stay hidden from library users.
 - `RankWitness` — exported algebraic rank witnesses (pivot minors, kernel bases): `produce`, `verify`, `det`,
   `minor`, re-checkable by any computer algebra system.
 - `UClass` — the U(z) class machinery (unit-edge tilings around a vertex figure): `candidates`,
-  `designations`, `forcedRegular`, `noneForcedRegular`, `cyclicSubset`.
+  `designations`, `forcedRegular`, `noneForcedRegular`, `cyclicSubset`, `targets`.
 - `TilingReference` — reference data (e.g. `n1`, the 11 Archimedean vertex configurations).
 
 ## Build
@@ -64,4 +70,14 @@ libraryDependencies += "io.github.scala-tessella" %% "research-core" % "0.1.0"
 ## Versioning
 
 `early-semver`. The `core` public surface above is the compatibility contract; keep it stable across a major
-line so every archived verification repo keeps resolving.
+line so every archived verification repo keeps resolving. Release-by-release changes are in
+[CHANGELOG.md](CHANGELOG.md).
+
+### Archived releases
+
+Each release is archived with its own version DOI, which is what a verification repository should cite (not
+the all-versions concept DOI, which resolves to whatever is newest):
+
+| Version | DOI |
+|---|---|
+| 0.2.1 | [10.5281/zenodo.21708011](https://doi.org/10.5281/zenodo.21708011) |
