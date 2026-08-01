@@ -12,7 +12,7 @@ verification repositories and depend on a pinned release of `research-core`.
 | Module | Artifact | Package | Contents |
 |---|---|---|---|
 | `core`   | `research-core`        | `io.github.scala_tessella.research_core`        | Pure combinatorics + exact arithmetic. Scala.js-clean (no JVM-only IO). |
-| `solver` | `research-core-solver` | `io.github.scala_tessella.research_core.solver` | SAT assembler (`SymbolAssembly`) + DRAT/UNSAT certification harness (`Certification`, `K1Certify`, `QuotientCertify`, `CertifyRunner`; SAT4J in-process, external kissat/drat-trim optional). |
+| `solver` | `research-core-solver` | `io.github.scala_tessella.research_core.solver` | SAT assembler (`SymbolAssembly`) + DRAT/UNSAT certification harness (`Certification`, `K1Certify`, `K2Certify`, `QuotientCertify`, `CertifyRunner`; SAT4J in-process, external kissat/drat-trim optional). |
 
 `solver` is a subpackage of `core` (no split package). This keeps `core`'s `private[research_core]` members
 reachable from `solver` while they stay hidden from library users.
@@ -30,8 +30,10 @@ reachable from `solver` while they stay hidden from library users.
 - `Signatures.VertexSignature` — vertex configurations. (`TypeCompatibility` provides polygon-alphabet
   support used internally by the engine.)
 - `DelaneySymbols` — the Delaney–Dress symbol engine: types `DSymbol`, `Orbit`, `Tiling`, `DSet`; enumeration
-  (`enumerateSymbols`, `enumerateRelaxedDetailed`, `relaxedDSets`, `bfsRelabelings`, `euclideanSymbolsOf`);
-  minimality/quotients (`isMinimal`, `properQuotients`, `canonicalKey`); `regularPolygonVertices`.
+  (`enumerateSymbols`, `enumerateRelaxedDetailed`, `relaxedDSets`, `relaxedOrbitBoundedDSets`,
+  `bfsRelabelings`, `euclideanSymbolsOf`); the tier-1 curvature relaxation `tier1Feasible` (the
+  euclidean-feasible ⇒ tier-1 lemma is proved in its scaladoc); minimality/quotients (`isMinimal`,
+  `properQuotients`, `canonicalKey`); `regularPolygonVertices`.
 - `MetricLayer` — the exact linear angle theory and moduli: `angleSystem`, `regularPoint`, `satisfies`,
   `maxClosureResidual`, `moduliDimension`, `nullspaceBasis`, `closureRank`, `exactSymmetryRealizable`.
 - `RankWitness` — exported algebraic rank witnesses (pivot minors, kernel bases): `produce`, `verify`, `det`,

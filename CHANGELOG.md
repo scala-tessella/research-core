@@ -6,6 +6,43 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.3.1] — 2026-08-01
+
+The tier-1 certification release: the machinery behind the k ≤ 2 completeness certificate of the
+minimal-uniformity paper (certification track A2) joins the library — a curvature relaxation local enough
+for SAT, its orbit-bounded generation universe, and the two-orbit completeness encoding.
+
+### Added
+
+- **`DelaneySymbols.tier1Feasible`** (`core`) — the tier-1 curvature relaxation, exact integer arithmetic
+  in twelfths, with THE LEMMA proved in its scaladoc: every euclidean-feasible D-set satisfies
+  `#good ≥ 3C − 12·vSum`, where `good(d)` ⟺ `(σ₀σ₁)³(d) = d` ⟺ d's tile orbit has branching r ∈ {1, 3}
+  (the alternating orbit's π-period equals r for chains and cycles alike), and `12·vSum` is the
+  vertex-orbit side of the curvature sum. The condition is local (no orbit-length machinery), which is
+  what lets curvature into a completeness CNF; it is maximally tight at the top chamber counts (at
+  C = 24 with two vertex orbits it forces every tile orbit to r ∈ {1, 3} and both vertex orbits to
+  cycles of length ≥ 6).
+- **`DelaneySymbols.relaxedOrbitBoundedDSets`** (`core`) — streaming, parallel generation of the
+  ≤ maxN-vertex-orbit certification universe (canonically labeled, NO curvature pruning), with the
+  monotone closed-vertex-orbit tree prune, and — under `tier1 = true` — the tier-1 filter plus its
+  matching monotone tree prune (closed bad-tile chambers > 48 − 2·size). At maxN = 2, maxSize = 24 the
+  raw universe is ~10⁸ D-sets at the top slices; the tier-1 universe is 2,710.
+- **`K2Certify`** (`solver`) — the SAT encoding behind the k ≤ 2 completeness obligation: the `K1Certify`
+  core (pair variables, (σ₀σ₂)² = id, BFS-consistent numbering) plus an exact ≤ 2-vertex-orbit layer
+  (σ₁/σ₂-invariant 2-coloring, anchored level-reachability — the 2^{C−1} cut clauses of the k = 1 track
+  do not scale) and the tier-1 layer (one-directional witness chains for `good`, exact unary counters,
+  per-class contribution selectors). Models can never overstate their case; every tier-1 labeling
+  extends to a model. `enumerate` mirrors `K1Certify.enumerate` (blocking on pair variables).
+- `K2CertifySpec` — agreement with the generator at C ≤ 8 op-for-op; negative controls for both new
+  layers (a valid 3-vertex-orbit D-set excluded; tier-1-infeasible ≤ 2-orbit D-sets excluded,
+  non-vacuously).
+
+### Notes
+
+- The consuming campaign (universe, per-C agreement/fidelity/DRAT obligations, euclidean tail) lives in
+  the `minimal-uniformity-three` verification repository, which pins this release; the certificate's
+  verdict is recorded there.
+
 ## [0.3.0] — 2026-07-30
 
 The U(z) class release: the machinery for deciding U-class membership joins the `core` public surface,

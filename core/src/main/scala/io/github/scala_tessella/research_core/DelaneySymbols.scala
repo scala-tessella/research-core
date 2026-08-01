@@ -851,6 +851,137 @@ object DelaneySymbols:
       if orbits(dset, 1, 2).length == 1 then out += dset
     out.result()
 
+  /** Chambers lying in CLOSED (0,1)-orbits whose branching number r is NOT in {1, 3} — the tile orbits that
+    * cannot contribute the maximal curvature rate of 4/12 per chamber (their rate is ≤ 3/12, a tier-1 deficit
+    * of ≥ 1/12 per chamber; see [[tier1Feasible]]). A closed orbit persists unchanged in every completion, so
+    * this count is MONOTONE non-decreasing along the generation tree.
+    */
+  private def closedBadTileChambers(ds: DSet): Int =
+    val seen = Array.fill(ds.size + 1)(false)
+    var bad  = 0
+    var d    = 1
+    while d <= ds.size do
+      if !seen(d) then
+        var e        = d
+        var k        = 0
+        var len      = 0
+        var isChain  = false
+        var complete = true
+        var go       = true
+        while go do
+          if !seen(e) then { seen(e) = true; len += 1 }
+          val ek = ds.get(k, e)
+          if ek == 0 then { complete = false; go = false }
+          else
+            if ek == e then isChain = true
+            e = ek
+            k = 1 - k
+            if e == d && k == 0 then go = false
+        if complete then
+          val r = if isChain then len else (len + 1) / 2
+          if r != 1 && r != 3 then bad += len
+      d += 1
+    bad
+
+  /** ADR-0009 paper certification, track A2 — the TIER-1 curvature relaxation, exact integer arithmetic in
+    * twelfths. THE LEMMA (the one new pen-and-paper ingredient of the A2 certificate): every euclidean-
+    * feasible D-set ([[euclideanFeasible]]) satisfies `#good ≥ 3·C − 12·vSum`, where `good(d)` ⟺ chamber
+    * `d`'s (0,1)-orbit has branching number r ∈ {1, 3} ⟺ `(σ₀σ₁)³(d) = d` (the alternating orbit's π-period
+    * equals r for chains and cycles alike), and `12·vSum` is the vertex side of the curvature sum: per
+    * (1,2)-orbit, chain of length L contributes 4 / 6 / 12 (L = 1 / 2 / ≥ 3) and a cycle of length L
+    * contributes 8 / 12 / 24 (L = 2 / 4 / ≥ 6), i.e. 12·k/minV with minV = max(1, ⌈3/r⌉).
+    *
+    * PROOF. 12·κ_max = −6C + 12·vSum + 12·tileSum. A tile orbit with r ∈ {1, 3} contributes exactly 4/12 per
+    * chamber (chain L=1: (1/3)/1; cycle L=2: (2/3)/2; chain L=3: 1/3; cycle L=6: 2/6); any other r
+    * contributes ≤ 3/12 per chamber (r = 2: exactly 3/12; r ≥ 4 chain: 12/L ≤ 3; r ≥ 4 cycle: 12·2/L = 12/r ≤
+    * 3). Hence 12·tileSum ≤ 4·#good + 3·(C − #good), and κ_max ≥ 0 forces −6C + 12·vSum + 3C + #good ≥ 0. ∎
+    *
+    * The relaxation is what lets curvature into the SAT certificate: `good` is a LOCAL condition on the
+    * composed permutation σ₀σ₁ (no orbit-length machinery), and at the top chamber counts it is maximally
+    * tight — at C = 24 it forces #good = C and both vertex orbits to be cycles of length ≥ 6, and every
+    * tier-1 model there has κ_max = 0 exactly.
+    */
+  def tier1Feasible(ds: DSet): Boolean =
+    var vSum12 = 0
+    for orb <- orbits(ds, 1, 2) do
+      val len = orb.elements.length
+      vSum12 += (if orb.isChain then if len == 1 then 4 else if len == 2 then 6 else 12
+                 else if len == 2 then 8 else if len == 4 then 12 else 24)
+    val good   = ds.size - closedBadTileChambers(ds) // complete D-set: every orbit closed, bad = C − good
+    good >= 3 * ds.size - vSum12
+
+  /** ADR-0009 paper certification, track A2 — the k ≤ 2 certification universe: ALL complete D-sets with ≤
+    * `maxSize` chambers and ≤ `maxN` vertex ((1,2))-orbits, canonically labeled, NO curvature pruning
+    * ([[relaxedDSets]] one level up: the SAT side has no curvature, so the euclidean/v filtering must stay in
+    * the exact JVM tail). The generation tree is pruned by the MONOTONIC closed-vertex-orbit count
+    * ([[closedVertexCount]]): a closed (1,2)-orbit never merges in any completion, so a partial with more
+    * than `maxN` of them yields none of the universe — sound and early-firing, the [[orbitBoundedStats]]
+    * prune transposed to the relaxed unpruned world. Streaming and parallel: `sink` MUST be thread-safe;
+    * returns the emitted count. Heartbeat on `log` every 15 s.
+    *
+    * With `tier1 = true` the universe is additionally cut to the [[tier1Feasible]] D-sets (the sound
+    * curvature relaxation that the SAT side can express), with the matching MONOTONE tree prune: a universe
+    * member of size C′ ≤ `maxSize` ≤ 24 has #bad ≤ 12·vSum − 2C′ ≤ 48 − 2C′ ≤ 48 − 2·(partial size), and
+    * [[closedBadTileChambers]] only grows, so a partial exceeding that bound has no universe completion.
+    */
+  def relaxedOrbitBoundedDSets(
+      maxN: Int,
+      maxSize: Int,
+      parallelism: Int = math.max(1, Runtime.getRuntime.availableProcessors - 1),
+      sink: DSet => Unit,
+      log: String => Unit = _ => (),
+      tier1: Boolean = false
+  ): Long =
+    val count   = new AtomicLong(0)
+    val t0      = System.nanoTime()
+    val gen     = new BackTracker[DSet, DSetGenState]:
+      def root: DSetGenState                             = DSetGenState(DSet.empty1, Array.fill(maxSize + 1)(false))
+      def extract(st: DSetGenState): Option[DSet]        =
+        if firstUndefined(st.ds).isEmpty then Some(st.ds) else None
+      def children(st: DSetGenState): List[DSetGenState] =
+        firstUndefined(st.ds) match
+          case None         => Nil
+          case Some((d, i)) =>
+            val out = List.newBuilder[DSetGenState]
+            var e   = d
+            val cap = math.min(st.ds.size + 1, maxSize)
+            while e <= cap do
+              if st.ds.get(i, e) == 0 then
+                val grow                 = e > st.ds.size
+                val dset                 = if grow then st.ds.grown else st.ds.copy
+                dset.set(i, d, e)
+                val (head, tail, gap, k) = scan02Orbit(dset, d)
+                var ok                   = true
+                if gap == 1 then dset.set(k, head, tail)
+                else if gap == 0 && head != tail then ok = false
+                if ok && closedVertexCount(dset) <= maxN &&
+                  (!tier1 || closedBadTileChambers(dset) <= 48 - 2 * dset.size)
+                then
+                  val isRemapStart = st.isRemapStart.clone()
+                  if grow then isRemapStart(e) = true
+                  if checkCanonicity(dset, isRemapStart) then out += DSetGenState(dset, isRemapStart)
+              e += 1
+            out.result()
+    val running = new AtomicBoolean(true)
+    val logger  = new Thread(() =>
+      while running.get do
+        try Thread.sleep(15000)
+        catch case _: InterruptedException => ()
+        if running.get then
+          val secs = math.max(1e-3, (System.nanoTime() - t0) / 1e9)
+          val n    = count.get
+          log(f"  [universe maxN=$maxN maxSize=$maxSize] ${secs}%.0fs  dsets=$n (${(n / secs).toLong}/s)")
+    )
+    logger.setDaemon(true)
+    logger.start()
+    try
+      gen.parallelForeach(
+        parallelism,
+        ds => if !tier1 || tier1Feasible(ds) then { count.incrementAndGet(); sink(ds) }
+      )
+    finally { running.set(false); logger.interrupt() }
+    count.get
+
   /** All BFS-consistent relabelings of a D-set (the [[compareRenumberedFrom]] renumbering, one per start
     * chamber), deduped by op content. A labeling is BFS-consistent iff chambers are numbered in first-seen
     * scan order (d = 1..n, i = 0..2) — exactly the SAT-side numbering constraint of the completeness
