@@ -23,9 +23,9 @@ url: https://github.com/scala-tessella/research-core
 # The latest ARCHIVED release, which is what a citation must resolve to. Later versions may exist on Maven
 # Central without being archived (0.3.0 is on Central but has no Zenodo deposit, so nothing citable names it);
 # this block moves forward only when a release is archived and its version DOI is minted.
-version: 0.2.1
-date-released: '2026-07-30'
-doi: 10.5281/zenodo.21708011
+version: 0.3.1
+date-released: '2026-08-01'
+doi: 10.5281/zenodo.21739112
 keywords:
   - tilings
   - tessellations
@@ -37,6 +37,9 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.21708010
     description: Concept DOI (all versions) — always resolves to the newest release
+  - type: doi
+    value: 10.5281/zenodo.21739112
+    description: Version DOI of release 0.3.1 — the release pinned by the minimal-uniformity-three artifact
   - type: doi
     value: 10.5281/zenodo.21708011
     description: Version DOI of release 0.2.1 — the release pinned by the 31-unit-edge-tilings artifact

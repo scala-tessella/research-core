@@ -8,6 +8,9 @@ listed in the README is the compatibility contract.
 
 ## [0.3.1] — 2026-08-01
 
+Archived as [doi:10.5281/zenodo.21739112](https://doi.org/10.5281/zenodo.21739112) — the version DOI to cite
+when pinning this release.
+
 The tier-1 certification release: the machinery behind the k ≤ 2 completeness certificate of the
 minimal-uniformity paper (certification track A2) joins the library — a curvature relaxation local enough
 for SAT, its orbit-bounded generation universe, and the two-orbit completeness encoding.
@@ -89,5 +92,6 @@ when pinning this release.
   repository can certify a CNF/DRAT pair directly (external `kissat` + `drat-trim`, verdict taken from the
   exact `s VERIFIED` line) without going through the bundled runner entry points.
 
+[0.3.1]: https://github.com/scala-tessella/research-core/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/scala-tessella/research-core/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/scala-tessella/research-core/compare/v0.2.0...v0.2.1

@@ -22,8 +22,8 @@ reachable from `solver` while they stay hidden from library users.
 > **Reading this from a verification repository?** This page describes the current development line, which
 > moves ahead of the archived releases that verification repositories pin. `UClass` and the widened
 > `DelaneySymbols` entry points, for instance, arrived in 0.3.0 and are **absent from 0.2.1**. Check the
-> pinned version's own archive and the [CHANGELOG](CHANGELOG.md) rather than this list. The archived 0.2.1
-> release is [doi:10.5281/zenodo.21708011](https://doi.org/10.5281/zenodo.21708011).
+> pinned version's own archive and the [CHANGELOG](CHANGELOG.md) rather than this list. The newest archived
+> release is 0.3.1, [doi:10.5281/zenodo.21739112](https://doi.org/10.5281/zenodo.21739112).
 
 - `Frac` — exact rationals.
 - `Cyclo24` — exact arithmetic in the 24th cyclotomic field (the angles that arise for `{3,4,6,8,12}` faces).
@@ -82,4 +82,5 @@ the all-versions concept DOI, which resolves to whatever is newest):
 
 | Version | DOI |
 |---|---|
+| 0.3.1 | [10.5281/zenodo.21739112](https://doi.org/10.5281/zenodo.21739112) |
 | 0.2.1 | [10.5281/zenodo.21708011](https://doi.org/10.5281/zenodo.21708011) |
