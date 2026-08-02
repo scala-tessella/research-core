@@ -6,6 +6,59 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.5.0] — 2026-08-02
+
+The honeycomb release: the three-dimensional substrate joins the library — the cell alphabet and its
+interval-certified dihedrals, the vertex-species assembly on the sphere of directions, the star-gluing
+atlas, the pattern/development engine and its audit certificates, and the Delaney–Dress symbol side of a
+vertex star (chambers, foldings, the σ₀ assembly, the symbol catalog and the k = 1 realization). These are
+the engines the `convex-uniform-honeycombs` verification repository asserts against, and every one of them
+is also on the path of the k ≥ 2 programme, which is why they belong here rather than in a result's own
+repository. No results are stated here: every enumeration COUNT is asserted by the verification repository
+of the paper that states it. IO-free and free of JVM-only concurrency, so `core` stays Scala.js-clean.
+
+### Added
+
+- **`HoneycombAlphabet`** (`core`) — the core cell alphabet of the three-dimensional programme: the 13
+  unit-edge convex uniform polyhedra, their exact dihedrals in the two-tier lattice `15°ℤ + αℤ`
+  (`α = arctan √2`, irrational in degrees by Niven), and the edge-figure enumerator. Because the edge
+  equation `Σθ = 360°` splits into `Σn = 0` and `Σr = 360`, edge figures are a finite linear-diophantine
+  enumeration — no transcendence theory inside the alphabet.
+- **`CertifiedDihedrals`** (`core`) — interval-certified dihedrals for an ARBITRARY unit-edge uniform
+  polyhedron, from its vertex configuration alone (no coordinate tables trusted): certified bisection for
+  the vertex-figure circumradius, corner reconstruction, interval propagation. An interval MISS certifies
+  non-equality, so exclusions proved with these intervals are genuine proofs.
+- **`SpeciesSupports`** (`core`) — the area equation for vertex figures: corner solid angles live in the
+  same two-tier lattice, so "corners tile the 720° sphere" splits exactly as the edge equation does, and
+  with the per-face-size parity condition bounds the cell multiset of every possible vertex species.
+- **`SpeciesEnumerator`** (`core`) — the species table: all edge-to-edge tilings of the sphere of
+  directions by the rigid corner figures of the alphabet, assembled by geometric depth-first search with
+  interval rotations, pruned by the exact area/support/vertex-sum constraints, deduplicated by the
+  canonical key of the labeled combinatorial map.
+- **`SpeciesCorona`** (`core`) — corona structure over the species: the figure-hosting table, the species
+  adjacency graph, and the face-cycle filter (the planar odd-face walk, one dimension up).
+- **`MonoShell`** (`core`) — the star-gluing atlas and the mono-species shell filter, decided on CELL
+  DESCRIPTORS (type plus the two face germs at an edge), so ring agreement is descriptor-multiset equality
+  and candidate motions need no case analysis.
+- **`TransitivePatterns`** (`core`) — gluing patterns, the forcing theorem for single-coset species, coset
+  skeletons, collision-free breadth-first development, and canonical development fingerprints.
+- **`CompletenessAudit`** (`core`) — the four finite certificates that upgrade a finite-radius pattern
+  enumeration to a classification statement: periodization (translation words, ball periodicity, lattice
+  invariance, coverage), class coherence at the determination radius, fingerprint separation, and germ
+  forcing for cap closure.
+- **`SpeciesCorona.ringAt`**, **`SpeciesCorona.pathExists`** and **`StarChambers.orbitSize`** are public
+  rather than `private[research_core]`. All three are what a spec needs to check the engines against
+  INDEPENDENT data: `ringAt` walks the corner ring at a tiling vertex purely combinatorially, so a spec can
+  confront the chamber complex's `(σ₂σ₃)`-orbit sizes with ring sizes derived a different way; `pathExists`
+  is the face-cycle relation's reachability, checkable on hand-built relations; `orbitSize` is the orbit
+  length of an alternating composition. Same signatures, no behaviour change.
+- **`StarChambers`**, **`StarFoldings`**, **`Sigma0Assembly`**, **`SymbolCatalog`**,
+  **`SymbolRealization`** (`core`) — the Delaney–Dress side of a vertex star: the chamber complex of a
+  species and its flag laws, the full subgroup lattice and the folded complexes, the exhaustive σ₀
+  assembly joining k folded stars into a symbol candidate, canonical keys with minimality by congruence
+  closure plus the k = 1 and k-orbit sweep drivers, and the derivation of a certified honeycomb's minimal
+  symbol from its certified pattern.
+
 ## [0.4.0] — 2026-08-02
 
 The atlas release: the symbol developer joins the library, and the frame sweep the certification drivers

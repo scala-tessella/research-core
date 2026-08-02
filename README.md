@@ -45,6 +45,27 @@ reachable from `solver` while they stay hidden from library users.
   returned string).
 - `TilingReference` — reference data (e.g. `n1`, the 11 Archimedean vertex configurations).
 
+The three-dimensional substrate (unit-edge honeycombs of `E³` by convex uniform cells):
+
+- `HoneycombAlphabet` — the 13 core cells, their exact dihedrals in the two-tier lattice `15°ℤ + αℤ`
+  (`α = arctan √2`), and the edge-figure enumerator.
+- `CertifiedDihedrals` — interval-certified dihedrals of an arbitrary unit-edge uniform polyhedron from its
+  vertex configuration alone: `Iv` interval arithmetic, circumradius by certified bisection, corner
+  reconstruction.
+- `SpeciesSupports` — the area equation for vertex figures (corner excesses, the parity condition), bounding
+  the cell multiset of a vertex species.
+- `SpeciesEnumerator` — the species table: edge-to-edge tilings of the sphere of directions by the rigid
+  corner figures, assembled geometrically and deduplicated by canonical combinatorial-map key.
+- `SpeciesCorona` — figure hosting, species adjacency, the face-cycle filter.
+- `MonoShell` — the star-gluing atlas and the mono-species shell filter, on cell descriptors.
+- `TransitivePatterns` — gluing patterns, the single-coset forcing theorem, coset skeletons, collision-free
+  development, canonical fingerprints.
+- `CompletenessAudit` — periodization, class coherence, fingerprint separation and germ forcing: the finite
+  certificates a classification argument consumes.
+- `StarChambers`, `StarFoldings`, `Sigma0Assembly`, `SymbolCatalog`, `SymbolRealization` — the Delaney–Dress
+  side of a vertex star: chamber complex, subgroup lattice and foldings, the σ₀ assembly, canonical keys and
+  minimality with the sweep drivers, and the minimal symbol of a certified honeycomb.
+
 ## Build
 
 ```bash
