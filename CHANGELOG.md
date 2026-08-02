@@ -6,6 +6,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.4.0] — 2026-08-02
+
+The atlas release: the symbol developer joins the library, and the frame sweep the certification drivers
+iterate becomes public API. Both are what the `krotenheerdt-tilings` verification repository needs from
+here; no behaviour changes.
+
+### Added
+
+- **`SymbolRenderer`** (`core`) — barycentric development of a euclidean regular-polygon tiling directly
+  from its (minimal) Delaney–Dress symbol, plus SVG emission: `develop` (BFS over σ₀/σ₁/σ₂ placing each
+  chamber's flag triangle, returning the complete faces), `toSvg` (self-contained document with a banner,
+  in two forms — from developed faces, or from a symbol in one call), and the geometry leaves `apothem`,
+  `circumradius`, `reflect`. Developing the QUOTIENT symbol unfolds the orbifold, so branchings and mirror
+  chains need no special handling. IO-free by design — the document is returned as a string and writing it
+  is the caller's business — so `core` stays Scala.js-clean.
+
+### Changed
+
+- **`SymbolAssembly.frames`** and **`SymbolAssembly.frameSymmetries`** (`solver`) are now public. Both were
+  `private[research_core]`, hence reachable only from inside the library, while a per-frame certification
+  driver living in a verification repository needs exactly this pair: `frames` to iterate the sweep, and
+  `frameSymmetries` to rebuild the lex-leader targets of a frame it wants to encode both with and without
+  symmetry breaking. Same signatures, same order, no behaviour change.
+
 ## [0.3.1] — 2026-08-01
 
 Archived as [doi:10.5281/zenodo.21739112](https://doi.org/10.5281/zenodo.21739112) — the version DOI to cite
@@ -92,6 +116,7 @@ when pinning this release.
   repository can certify a CNF/DRAT pair directly (external `kissat` + `drat-trim`, verdict taken from the
   exact `s VERIFIED` line) without going through the bundled runner entry points.
 
+[0.4.0]: https://github.com/scala-tessella/research-core/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/scala-tessella/research-core/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/scala-tessella/research-core/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/scala-tessella/research-core/compare/v0.2.0...v0.2.1

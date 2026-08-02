@@ -481,7 +481,7 @@ object SymbolAssembly:
   /** The sound lex-leader targets of a frame (ADR-0041): every nontrivial star automorphism lifted to the
     * global chambers, plus the swap of each adjacent IDENTICAL star pair.
     */
-  private[research_core] def frameSymmetries(frame: Frame, chosen: Vector[Star]): Vector[Vector[Int]] =
+  def frameSymmetries(frame: Frame, chosen: Vector[Star]): Vector[Vector[Int]] =
     val perStar = chosen.indices.toVector.flatMap: i =>
       val off = frame.offsets(i)
       starAutomorphisms(chosen(i)).filter(a => a != a.indices.toVector).map: a =>
@@ -518,7 +518,7 @@ object SymbolAssembly:
     * friends) iterate this and recompute the symmetries themselves via [[frameSymmetries]]. A thin view over
     * [[multisetFrames]]: same frames, same order.
     */
-  private[research_core] def frames(types: Seq[VertexSignature]): Vector[(Frame, Vector[Star])] =
+  def frames(types: Seq[VertexSignature]): Vector[(Frame, Vector[Star])] =
     multisetFrames(types).map((chosen, frame, _) => (frame, chosen))
 
   /** ADR-0041: enumerate every tiling whose vertex-type MULTISET is exactly `types` — n orbits over

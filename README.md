@@ -40,6 +40,9 @@ reachable from `solver` while they stay hidden from library users.
   `minor`, re-checkable by any computer algebra system.
 - `UClass` — the U(z) class machinery (unit-edge tilings around a vertex figure): `candidates`,
   `designations`, `forcedRegular`, `noneForcedRegular`, `cyclicSubset`, `targets`.
+- `SymbolRenderer` — barycentric development of a tiling straight from its minimal symbol, and SVG
+  emission: `develop`, `toSvg`, `apothem`, `circumradius`, `reflect`. IO-free (the caller writes the
+  returned string).
 - `TilingReference` — reference data (e.g. `n1`, the 11 Archimedean vertex configurations).
 
 ## Build
