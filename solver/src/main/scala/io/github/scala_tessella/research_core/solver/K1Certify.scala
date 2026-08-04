@@ -1,10 +1,8 @@
 package io.github.scala_tessella.research_core.solver
 
 import io.github.scala_tessella.research_core.DelaneySymbols.DSet
-import io.github.scala_tessella.research_core.solver.SymbolAssembly.{ClauseSink, NullSink, Sat4jSink, TeeSink}
-import org.sat4j.core.VecInt
-import org.sat4j.minisat.SolverFactory
-import org.sat4j.specs.ContradictionException
+import io.github.scala_tessella.research_core.solver.SatSolver.SolverSink
+import io.github.scala_tessella.research_core.solver.SymbolAssembly.{ClauseSink, NullSink, TeeSink}
 
 import scala.collection.mutable
 
@@ -82,14 +80,13 @@ object K1Certify:
       blockingSink: ClauseSink = NullSink,
       onModel: Array[Int] => Unit = _ => ()
   ): List[DSet] =
-    val solver  = SolverFactory.newDefault()
-    solver.setTimeout(3600)
+    val solver  = Sat4jSolver()
     val out     = mutable.ListBuffer.empty[DSet]
-    val encSink = if baseSink eq NullSink then Sat4jSink(solver) else TeeSink(baseSink, Sat4jSink(solver))
+    val encSink = if baseSink eq NullSink then SolverSink(solver) else TeeSink(baseSink, SolverSink(solver))
     try
       val enc = encode(c, encSink)
       var go  = true
-      while go && solver.isSatisfiable do
+      while go && solver.solve() do
         val model    = solver.model()
         val trues    = model.filter(_ > 0).toSet
         val chosen   = enc.x.collect { case (_, v) if trues(v) => v }.toSeq.sorted
@@ -101,7 +98,8 @@ object K1Certify:
         onModel(model)
         val blocking = chosen.map(-_)
         blockingSink.clause(blocking)
-        try solver.addClause(new VecInt(blocking.toArray))
-        catch case _: ContradictionException => go = false
-    catch case _: ContradictionException => ()
+        try solver.addClause(blocking)
+        catch case _: SatSolver.Contradiction => go = false
+    catch case _: SatSolver.Contradiction => ()
+    finally solver.close()
     out.toList

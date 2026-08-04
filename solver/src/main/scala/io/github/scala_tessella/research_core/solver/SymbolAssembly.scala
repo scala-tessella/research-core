@@ -5,8 +5,8 @@ import io.github.scala_tessella.research_core.DelaneySymbols.{
 }
 import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
 import io.github.scala_tessella.research_core.TypeCompatibility
+import io.github.scala_tessella.research_core.solver.SatSolver.SolverSink
 import org.sat4j.core.VecInt
-import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs.{ContradictionException, ISolver}
 
 import scala.collection.mutable
@@ -256,8 +256,9 @@ object SymbolAssembly:
       */
     def exactlyOne(lits: Array[Int]): Unit
 
-  /** The live-solver sink — exactly the calls the encoder has always made on SAT4J. May throw
-    * `ContradictionException` mid-stream (trivially UNSAT — callers catch); certification sinks must not.
+  /** The SAT4J-specific sink, kept for source compatibility with downstream repos — internal call sites now
+    * go through the solver-agnostic [[SatSolver.SolverSink]]. May throw `ContradictionException` mid-stream
+    * (trivially UNSAT — callers catch); certification sinks must not.
     */
   final class Sat4jSink(solver: ISolver) extends ClauseSink:
     def clause(lits: Seq[Int]): Unit       = solver.addClause(new VecInt(lits.toArray))
@@ -362,8 +363,9 @@ object SymbolAssembly:
           ePrev = e
     pairVar
 
-  /** All σ₀ involutions of the frame satisfying the three constraints: SAT4J CDCL over the [[encodeSigma0]]
-    * instance. Enumeration is hand-rolled (NOT `ModelIterator`): blocking only the true σ₀ pair-variables
+  /** All σ₀ involutions of the frame satisfying the three constraints: CDCL over the [[encodeSigma0]]
+    * instance via `newSolver` (SAT4J by default — [[Sat4jSolver]]). Enumeration is hand-rolled (NOT
+    * `ModelIterator`): blocking only the true σ₀ pair-variables
     * keeps each blocking clause ≤ #chambers wide; ModelIterator blocks the FULL model incl. thousands of
     * face-path auxiliaries, which OOM'd a 10g heap on the symmetric-rich n=5 sets (tens of thousands of
     * models). `maxModels` is a flood-guard — a capped result is reported, never silent.
@@ -381,20 +383,20 @@ object SymbolAssembly:
       symmetries: Vector[Vector[Int]] = Vector.empty,
       baseSink: ClauseSink = NullSink,
       blockingSink: ClauseSink = NullSink,
-      onModel: Array[Int] => Unit = _ => ()
+      onModel: Array[Int] => Unit = _ => (),
+      newSolver: () => SatSolver = () => Sat4jSolver()
   ): (List[Array[Int]], Boolean) =
     val m       = frame.size
-    val solver  = SolverFactory.newDefault()
-    solver.setTimeout(3600)
+    val solver  = newSolver()
     val out     = mutable.ListBuffer.empty[Array[Int]]
     var capped  = false
-    val encSink = if baseSink eq NullSink then Sat4jSink(solver) else TeeSink(baseSink, Sat4jSink(solver))
+    val encSink = if baseSink eq NullSink then SolverSink(solver) else TeeSink(baseSink, SolverSink(solver))
     try
       val pairVar = encodeSigma0(frame, symmetries, encSink)
       var go      = true
-      while go && out.size <= maxModels && solver.isSatisfiable do
+      while go && out.size <= maxModels && solver.solve() do
         val model    = solver.model()
-        // SAT4J's model() is variable-ordered (entry i is the literal of variable i+1), and pair vars are
+        // model() is variable-ordered (entry i is the literal of variable i+1), and pair vars are
         // numbered 1..#pairs first — so truth of pair var v is the sign of model(v - 1), no Set needed
         val s0       = new Array[Int](m + 1)
         val blocking = mutable.ArrayBuffer.empty[Int] // the negated chosen pair vars, in pairVar order
@@ -405,11 +407,12 @@ object SymbolAssembly:
         out += s0
         onModel(model)
         // block THIS σ₀ (a distinct one must flip at least one chosen pair); adding may hit contradiction.
-        // Emitted to blockingSink FIRST — the obligation instance needs it even when SAT4J saturates here.
+        // Emitted to blockingSink FIRST — the obligation instance needs it even when the solver saturates.
         blockingSink.clause(blocking.toSeq)
-        try solver.addClause(new VecInt(blocking.toArray))
-        catch case _: ContradictionException => go = false
-    catch case _: ContradictionException => () // trivially UNSAT
+        try solver.addClause(blocking.toSeq)
+        catch case _: SatSolver.Contradiction => go = false
+    catch case _: SatSolver.Contradiction => () // trivially UNSAT
+    finally solver.close()
     if out.size > maxModels then
       capped = true
       out.dropRightInPlace(out.size - maxModels)
