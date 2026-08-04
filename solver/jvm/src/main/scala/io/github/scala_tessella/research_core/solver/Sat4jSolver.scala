@@ -28,3 +28,15 @@ object Sat4jSolver:
     val s = SolverFactory.newDefault()
     s.setTimeout(timeoutSeconds)
     new Sat4jSolver(s)
+
+/** The JVM default live solver behind the shared enumerators. */
+private[solver] object PlatformSolver:
+  def default(timeoutSeconds: Int = 3600): SatSolver = Sat4jSolver(timeoutSeconds)
+
+/** SAT4J-specific [[SymbolAssembly.ClauseSink]], kept for downstream source compatibility (formerly
+  * `SymbolAssembly.Sat4jSink` — now JVM-only, since `SymbolAssembly` cross-compiles). May throw
+  * `ContradictionException` mid-stream (trivially UNSAT — callers catch); certification sinks must not.
+  */
+final class Sat4jSink(solver: ISolver) extends SymbolAssembly.ClauseSink:
+  def clause(lits: Seq[Int]): Unit       = solver.addClause(new VecInt(lits.toArray))
+  def exactlyOne(lits: Array[Int]): Unit = solver.addExactly(new VecInt(lits), 1)

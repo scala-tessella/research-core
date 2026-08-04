@@ -151,8 +151,7 @@ object Certification:
     * manifest maps it back to the full key.
     */
   def frameKeyHash(key: String): String =
-    java.security.MessageDigest
-      .getInstance("SHA-256")
+    Sha256
       .digest(key.getBytes("UTF-8"))
       .take(8)
       .map(b => f"$b%02x")

@@ -80,7 +80,7 @@ object K1Certify:
       blockingSink: ClauseSink = NullSink,
       onModel: Array[Int] => Unit = _ => ()
   ): List[DSet] =
-    val solver  = Sat4jSolver()
+    val solver  = PlatformSolver.default()
     val out     = mutable.ListBuffer.empty[DSet]
     val encSink = if baseSink eq NullSink then SolverSink(solver) else TeeSink(baseSink, SolverSink(solver))
     try

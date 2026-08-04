@@ -6,8 +6,6 @@ import io.github.scala_tessella.research_core.DelaneySymbols.{
 import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
 import io.github.scala_tessella.research_core.TypeCompatibility
 import io.github.scala_tessella.research_core.solver.SatSolver.SolverSink
-import org.sat4j.core.VecInt
-import org.sat4j.specs.{ContradictionException, ISolver}
 
 import scala.collection.mutable
 
@@ -256,14 +254,6 @@ object SymbolAssembly:
       */
     def exactlyOne(lits: Array[Int]): Unit
 
-  /** The SAT4J-specific sink, kept for source compatibility with downstream repos — internal call sites now
-    * go through the solver-agnostic [[SatSolver.SolverSink]]. May throw `ContradictionException` mid-stream
-    * (trivially UNSAT — callers catch); certification sinks must not.
-    */
-  final class Sat4jSink(solver: ISolver) extends ClauseSink:
-    def clause(lits: Seq[Int]): Unit       = solver.addClause(new VecInt(lits.toArray))
-    def exactlyOne(lits: Array[Int]): Unit = solver.addExactly(new VecInt(lits), 1)
-
   /** Discards everything — the default certification hooks of [[enumerateSigma0]]. */
   object NullSink extends ClauseSink:
     def clause(lits: Seq[Int]): Unit       = ()
@@ -384,7 +374,7 @@ object SymbolAssembly:
       baseSink: ClauseSink = NullSink,
       blockingSink: ClauseSink = NullSink,
       onModel: Array[Int] => Unit = _ => (),
-      newSolver: () => SatSolver = () => Sat4jSolver()
+      newSolver: () => SatSolver = () => PlatformSolver.default()
   ): (List[Array[Int]], Boolean) =
     val m       = frame.size
     val solver  = newSolver()
