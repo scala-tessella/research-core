@@ -3,6 +3,9 @@ package io.github.scala_tessella.research_core
 import io.github.scala_tessella.research_core.Signatures.*
 import io.github.scala_tessella.research_core.TypeCompatibility.{derivedPolygonAlphabet, isCompleteVertex}
 
+import cats.effect.IO
+import cats.syntax.parallel.*
+
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue, ForkJoinPool, RecursiveAction}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import scala.collection.mutable
@@ -188,6 +191,39 @@ object DelaneySymbols:
               forked.foreach(_.join())
       try pool.invoke(new Task(root))
       finally pool.shutdown()
+
+    /** The Cats Effect twin of [[parallelForeach]] (the migration path to Scala Native, where the runtime is
+      * CE's own work-stealing compute pool): a fiber is spawned only at BRANCH points — single-child chains
+      * are walked inline without suspending, so fiber count tracks branch points exactly as the ForkJoin
+      * task count does. `parallelism <= 1` falls back to the sequential walk; beyond that the CE global
+      * runtime's pool width (#cores), not `parallelism`, bounds the true concurrency. `f` MUST be
+      * thread-safe, exactly as for [[parallelForeach]].
+      */
+    def parallelForeachCE(parallelism: Int, f: R => Unit): Unit =
+      if parallelism <= 1 then foreach(f)
+      else
+        import cats.effect.unsafe.implicits.global
+        // fiber-per-branch is ~3x slower than ForkJoin here (fiber start/join dwarfs a task push), so
+        // forking is BUDGETED: the first `parallelism * 256` branch children get fibers — enough frontier
+        // for the pool to balance — and every branch after that is walked inline on its owning fiber
+        val budget = new java.util.concurrent.atomic.AtomicInteger(parallelism * 256)
+        def walk(st: S): Unit =
+          extract(st).foreach(f)
+          children(st).foreach(walk)
+        def go(st: S): IO[Unit] =
+          IO.defer {
+            var cur = st
+            extract(cur).foreach(f)
+            var cs  = children(cur)
+            while cs.lengthCompare(1) == 0 do
+              cur = cs.head
+              extract(cur).foreach(f)
+              cs = children(cur)
+            if cs.isEmpty then IO.unit
+            else if budget.addAndGet(-cs.size) >= 0 then cs.parTraverse_(go)
+            else IO(cs.foreach(walk))
+          }
+        go(root).unsafeRunSync()
 
   // ---- D-SET generator (enumerate the involution structures up to maxSize chambers) -------------------
 
@@ -1325,6 +1361,21 @@ object DelaneySymbols:
     val complete = new AtomicLong(0)
     val eucl     = new AtomicLong(0)
     DSetGenerator(maxSize).parallelForeach(
+      parallelism,
+      dset => {
+        complete.incrementAndGet()
+        if euclideanFeasible(dset) then eucl.incrementAndGet()
+      }
+    )
+    (complete.get, eucl.get)
+
+  /** [[countDSetsParallel]] on the Cats Effect engine ([[BackTracker.parallelForeachCE]]) — the A/B seam for
+    * benchmarking the CE fiber walk against the ForkJoin task walk on the identical generation tree.
+    */
+  private[research_core] def countDSetsParallelCE(maxSize: Int, parallelism: Int): (Long, Long) =
+    val complete = new AtomicLong(0)
+    val eucl     = new AtomicLong(0)
+    DSetGenerator(maxSize).parallelForeachCE(
       parallelism,
       dset => {
         complete.incrementAndGet()
