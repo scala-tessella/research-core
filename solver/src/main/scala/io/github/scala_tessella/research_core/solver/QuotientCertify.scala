@@ -94,6 +94,5 @@ object QuotientCertify:
 
   /** kissat satisfiability verdict (exit 10 = SAT, 20 = UNSAT) — the SAT-direction gate needs SAT. */
   def kissatSat(cnf: Path): Boolean =
-    val p = new ProcessBuilder(CertifyRunner.kissat.toString, cnf.toString).redirectErrorStream(true).start()
-    p.getInputStream.readAllBytes()
-    p.waitFor() == 10
+    import cats.effect.unsafe.implicits.global
+    CertifyRunner.kissatSatIO(cnf).unsafeRunSync()
