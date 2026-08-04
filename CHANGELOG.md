@@ -6,6 +6,39 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+The cross-platform release: `core` and `solver` cross-build for the JVM and Scala Native
+(`crossProject`, `CrossType.Full`), with Cats Effect 3.7 / fs2 3.13 as the portable concurrency and
+process substrate. Both platforms are fully green on the whole suite, including the count-exact oracle
+gates (G1/G2/G3 and the Krotenheerdt ladder) — on Native with CaDiCaL as the live solver, which is the
+strongest cross-solver enumeration-parity check the library can express.
+
+### Added
+
+- **`SatSolver`** (`solver`, shared) — the incremental CDCL surface the enumerators actually use
+  (`addClause`/`exactlyOne`/`solve`/`model`), extracted behind a platform-neutral trait with the
+  solver-agnostic `SatSolver.Contradiction` replacing SAT4J's `ContradictionException` in control flow.
+  The live solver is the per-platform `PlatformSolver`: SAT4J on the JVM (`Sat4jSolver`), CaDiCaL
+  in-process through an IPASIR `@extern` binding on Scala Native (`CadicalSolver` — pairwise
+  `exactlyOne`, so the live encoding is literally the certified one there). `enumerateSigma0` gains a
+  `newSolver` factory parameter.
+- **`Sha256`** (`solver`, shared) — pure-Scala SHA-256 for `frameKeyHash`
+  (`java.security.MessageDigest` is absent from Scala Native's javalib), NIST-vector tested and
+  property-checked against `MessageDigest` on the JVM, so frame hashes stay bit-identical across
+  platforms.
+- **`BackTracker.parallelForeachCE`** (`core`) — a Cats Effect twin of the ForkJoin work-stealing walk
+  (fibers only at branch points, forking budgeted): at parity with ForkJoin on the JVM and ~1.5× faster
+  than it on Native, where it is the intended engine. Callers stay on ForkJoin on the JVM.
+
+### Changed
+
+- **`CertifyRunner`** externals (kissat, drat-trim) run through fs2-io processes on `IO`;
+  `certifyCnf`/`certifyFrame` keep their synchronous signatures as facades over new `IO` variants.
+- **`Sat4jSink`** is now a top-level JVM-only class (formerly `SymbolAssembly.Sat4jSink`), kept for
+  downstream source compatibility; `SymbolAssembly` itself is SAT4J-free and cross-compiles.
+- Native linking requires `libcadical` (e.g. Homebrew) on the library path.
+
 ## [0.5.0] — 2026-08-02
 
 The honeycomb release: the three-dimensional substrate joins the library — the cell alphabet and its
