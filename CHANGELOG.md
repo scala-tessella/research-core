@@ -6,6 +6,63 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.6.0] — 2026-08-05
+
+The cross-platform release: `core` and `solver` cross-build for the JVM and Scala Native
+(`crossProject`, `CrossType.Full`), with Cats Effect 3.7 / fs2 3.13 as the portable concurrency and
+process substrate. Both platforms are fully green on the whole suite, including the count-exact oracle
+gates (G1/G2/G3 and the Krotenheerdt ladder) — on Native with CaDiCaL as the live solver, which is the
+strongest cross-solver enumeration-parity check the library can express.
+
+### Added
+
+- **`SatSolver`** (`solver`, shared) — the incremental CDCL surface the enumerators actually use
+  (`addClause`/`exactlyOne`/`solve`/`model`), extracted behind a platform-neutral trait with the
+  solver-agnostic `SatSolver.Contradiction` replacing SAT4J's `ContradictionException` in control flow.
+  The live solver is the per-platform `PlatformSolver`: SAT4J on the JVM (`Sat4jSolver`), CaDiCaL
+  in-process through an IPASIR `@extern` binding on Scala Native (`CadicalSolver` — pairwise
+  `exactlyOne`, so the live encoding is literally the certified one there; `timeoutSeconds` enforced via
+  the IPASIR terminate callback). `enumerateSigma0` gains a `newSolver` factory parameter, and solver
+  timeouts surface as the platform-neutral `SatSolver.Timeout` on both platforms (translated from SAT4J's
+  `TimeoutException` on the JVM).
+- **`Sha256`** (`solver`, shared) — pure-Scala SHA-256 for `frameKeyHash`
+  (`java.security.MessageDigest` is absent from Scala Native's javalib), NIST-vector tested and
+  property-checked against `MessageDigest` on the JVM, so frame hashes stay bit-identical across
+  platforms.
+- **`BackTracker.parallelForeachCE`** (`core`) — a Cats Effect twin of the ForkJoin work-stealing walk
+  (fibers only at branch points, forking budgeted): at parity with ForkJoin on the JVM and ~1.5× faster
+  than it on Native, where it is the intended engine. Callers stay on ForkJoin on the JVM.
+
+### Fixed
+
+- **`TransitivePatterns.searchPatterns` under-reported `capped`**: the `Some(v)` backtracking branch (the
+  one every real cap-hit unwinds through — measured 43/43 on the species corpus) never set the flag, so
+  truncated searches were reported as complete; the exhaustion certificate (`!capped && allKnown`)
+  consumed that flag. Both branches now report truncation precisely (candidates remaining when the cap
+  broke the loop), verified exact — zero false negatives AND zero false positives — against ground-truth
+  re-runs at cap + 1 over the whole corpus (`CappedProbeSpec`, kept as regression teeth). `analyze` no
+  longer counts the forced cap-1 truncation as capped (by the forcing theorem it misses no honeycomb), so
+  `Report.capped` semantics for forced species are unchanged.
+
+  Downstream impact assessed: none realized. `31-unit-edge-tilings` (0.2.1) and
+  `minimal-uniformity-three` (0.3.1) pin versions that predate `searchPatterns` entirely (it shipped in
+  0.5.0) and use no honeycomb API. `convex-uniform-honeycombs` (0.5.0) is the sole consumer of the
+  affected exhaustion certificate — re-running the full completeness audit with the truthful flag
+  reproduces its every assertion (26 species, 28 classes, all skeletons closed, zero flags): every
+  exhaustion search genuinely completed under the 500000 cap, so the pre-fix certificates were
+  materially valid and the defect was latent on that path.
+
+### Changed
+
+- **`CertifyRunner`** externals (kissat, drat-trim) run through fs2-io processes on `IO`;
+  `certifyCnf`/`certifyFrame` keep their synchronous signatures as facades over new `IO` variants.
+- **`Sat4jSink`** is now a top-level JVM-only class (formerly `SymbolAssembly.Sat4jSink`), kept for
+  downstream source compatibility; `SymbolAssembly` itself is SAT4J-free and cross-compiles.
+- Native linking requires `libcadical` (e.g. Homebrew) on the library path.
+- Known Scala Native 0.5.12 limitation (documented in the README, measured by the `Native benchmark`
+  workflow): LLVM-optimized builds of the multithreaded enumeration fault under the default Immix GC —
+  use `SCALANATIVE_GC=boehm` for Native release builds; debug builds are unaffected.
+
 ## [0.5.0] — 2026-08-02
 
 The honeycomb release: the three-dimensional substrate joins the library — the cell alphabet and its

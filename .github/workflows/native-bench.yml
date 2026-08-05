@@ -1,0 +1,82 @@
+name: Native benchmark
+
+# The BackTrackerCESpec maxSize-18 benchmark on one runner, so JVM and Scala Native numbers are
+# comparable. The two configurations that matter: the JVM baseline and the Native release build on the
+# Boehm GC — plus a cheap Immix canary. Diagnostic history (2026-08-05, this file's git log): debug+Immix
+# correct everywhere; release-fast+Immix SIGSEGVs or hangs nondeterministically (clang 14/macOS and
+# clang 18/Linux, Scala Native 0.5.12, Interflow on or off, LTO or not); release-fast+Boehm correct —
+# CE engine 11.8s vs ~91s debug. The canary flips green when upstream fixes the Immix interaction.
+#
+# RESEARCH_BENCH_ENGINE=ce benchmarks the CE engine alone against pinned counts (the ForkJoin engine
+# can stack-overflow under release modes and is not the Native engine anyway).
+
+on:
+  workflow_dispatch:
+  # workflow_dispatch is only registered once this file reaches the default branch — until the branch
+  # merges, a push that touches THIS file is the trigger (fires once, then stays quiet)
+  push:
+    paths:
+      - ".github/workflows/native-bench.yml"
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      # pin the Scala Native toolchain to LLVM 18 (Scala Native requires clang >= 16)
+      LLVM_BIN: /usr/lib/llvm-18/bin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Install clang 18 and libgc (Boehm GC)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-18 libgc-dev
+          "$LLVM_BIN/clang" --version
+
+      - name: JVM baseline (both engines)
+        run: |
+          set -o pipefail
+          sbt 'coreJVM/testOnly *BackTrackerCESpec' | tee -a bench.log
+
+      - name: Native release-fast + Boehm GC (CE engine)
+        timeout-minutes: 15
+        env:
+          SCALANATIVE_MODE: release-fast
+          SCALANATIVE_GC: boehm
+          RESEARCH_BENCH_ENGINE: ce
+        run: |
+          set -o pipefail
+          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
+
+      # known to fault on Scala Native 0.5.12 — kept as a canary for the upstream Immix fix
+      - name: Immix canary (release-fast, CE engine)
+        continue-on-error: true
+        timeout-minutes: 8
+        env:
+          SCALANATIVE_MODE: release-fast
+          RESEARCH_BENCH_ENGINE: ce
+        run: |
+          set -o pipefail
+          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
+
+      - name: Collect timings
+        if: always()
+        run: |
+          {
+            echo '## BackTrackerCESpec maxSize-18 timings'
+            echo '```'
+            grep -E '(ForkJoin|CE) engine' bench.log || echo 'no timing lines captured'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

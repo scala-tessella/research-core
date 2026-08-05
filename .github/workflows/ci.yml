@@ -5,7 +5,7 @@ on:
   push:
 
 jobs:
-  test:
+  test-jvm:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,8 +21,72 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Build and test
-        run: sbt test
+      # kissat + drat-trim into tools/bin so the DRAT certification path is exercised, not cancelled
+      - name: Build SAT certification tools (kissat, drat-trim)
+        run: |
+          mkdir -p tools/bin
+          git clone --depth 1 https://github.com/arminbiere/kissat.git /tmp/kissat
+          (cd /tmp/kissat && ./configure && make -j"$(nproc)")
+          cp /tmp/kissat/build/kissat tools/bin/
+          git clone --depth 1 https://github.com/marijnheule/drat-trim.git /tmp/drat-trim
+          (cd /tmp/drat-trim && make)
+          cp /tmp/drat-trim/drat-trim tools/bin/
+
+      - name: Build and test (JVM)
+        run: sbt coreJVM/test solverJVM/test
 
       - name: Scaladoc generation
-        run: sbt core/doc solver/doc
+        run: sbt coreJVM/doc solverJVM/doc
+
+  test-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [coreNative, solverNative]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      # pin the Scala Native toolchain to LLVM 18 (Scala Native requires clang >= 16)
+      LLVM_BIN: /usr/lib/llvm-18/bin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: sbt
+
+      - name: Setup sbt
+        uses: sbt/setup-sbt@v1
+
+      - name: Install clang 18
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-18
+          "$LLVM_BIN/clang" --version
+
+      # libcadical provides the IPASIR symbols the native SatSolver links against;
+      # -fPIC because the test binary links position-independent
+      - name: Build and install CaDiCaL
+        if: matrix.project == 'solverNative'
+        run: |
+          git clone --depth 1 https://github.com/arminbiere/cadical.git /tmp/cadical
+          (cd /tmp/cadical && CXXFLAGS=-fPIC ./configure && make -j"$(nproc)")
+          sudo install -m 644 /tmp/cadical/build/libcadical.a /usr/local/lib/
+
+      - name: Build SAT certification tools (kissat, drat-trim)
+        if: matrix.project == 'solverNative'
+        run: |
+          mkdir -p tools/bin
+          git clone --depth 1 https://github.com/arminbiere/kissat.git /tmp/kissat
+          (cd /tmp/kissat && ./configure && make -j"$(nproc)")
+          cp /tmp/kissat/build/kissat tools/bin/
+          git clone --depth 1 https://github.com/marijnheule/drat-trim.git /tmp/drat-trim
+          (cd /tmp/drat-trim && make)
+          cp /tmp/drat-trim/drat-trim tools/bin/
+
+      - name: Build and test (Scala Native)
+        run: sbt ${{ matrix.project }}/test

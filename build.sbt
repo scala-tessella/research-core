@@ -6,9 +6,14 @@
 //            symbol engine (DelaneySymbols), the exact angle/moduli layer (MetricLayer), exported rank
 //            witnesses (RankWitness), the U(z) class machinery (UClass), reference data (TilingReference).
 //   solver [package research_core.solver] — the SAT assembler (SymbolAssembly) + DRAT/UNSAT certification
-//            harness (Certification, K1Certify, QuotientCertify, CertifyRunner; SAT4J in-process, external
-//            kissat/drat-trim optional). A subpackage of core (no split package); needed only for the
-//            combinatorial-completeness (exhaustiveness) surface, not for the metric specs.
+//            harness (Certification, K1Certify, QuotientCertify, CertifyRunner; SAT4J in-process on the JVM,
+//            external kissat/drat-trim optional). A subpackage of core (no split package); needed only for
+//            the combinatorial-completeness (exhaustiveness) surface, not for the metric specs.
+//
+// Both modules cross-build for the JVM and Scala Native (CrossType.Full: shared/ + jvm/ + native/ source
+// dirs). SAT4J is JVM-only; the Native live solver is the CaDiCaL IPASIR binding behind PlatformSolver.
+
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 ThisBuild / scalaVersion   := "3.8.4"
 ThisBuild / organization   := "io.github.scala-tessella"
@@ -25,29 +30,50 @@ ThisBuild / scmInfo        := Some(ScmInfo(
 ))
 
 lazy val commonSettings = Seq(
+  scalacOptions += "-deprecation",
   libraryDependencies ++= Seq(
-    "io.github.scala-tessella" %% "ring-seq"        % "0.9.0",
-    "org.scalatest"            %% "scalatest"       % "3.2.20"   % Test,
-    "org.scalacheck"           %% "scalacheck"      % "1.19.0"   % Test,
-    "org.scalatestplus"        %% "scalacheck-1-19" % "3.2.20.0" % Test
+    "io.github.scala-tessella" %%% "ring-seq"        % "0.9.0",
+    "org.typelevel"            %%% "cats-effect"     % "3.7.0",
+    "org.scalatest"            %%% "scalatest"       % "3.2.20"   % Test,
+    "org.scalacheck"           %%% "scalacheck"      % "1.19.0"   % Test,
+    "org.scalatestplus"        %%% "scalacheck-1-19" % "3.2.20.0" % Test
   )
 )
 
-lazy val core = project
+lazy val core = crossProject(JVMPlatform, NativePlatform)
+  .crossType(CrossType.Full)
   .in(file("core"))
   .settings(commonSettings*)
   .settings(name := "research-core")
 
-lazy val solver = project
+lazy val solver = crossProject(JVMPlatform, NativePlatform)
+  .crossType(CrossType.Full)
   .in(file("solver"))
   .dependsOn(core % "compile->compile;test->test")
   .settings(commonSettings*)
   .settings(
     name := "research-core-solver",
+    libraryDependencies += "co.fs2" %%% "fs2-io" % "3.13.0"
+  )
+  .jvmSettings(
     libraryDependencies += "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6"
+  )
+  .nativeSettings(
+    // libcadical (Homebrew on macOS, built from source in CI) provides the IPASIR symbols; it is C++,
+    // hence the platform's C++ runtime (LLVM libc++ on macOS, libstdc++ on Linux). GNU ld resolves
+    // libraries left to right, and these options precede the -lcadical that @link("cadical") appends —
+    // so the pair is stated HERE in dependency order (archive first, then its C++ runtime); the trailing
+    // @link-generated -lcadical is then a no-op, and order-insensitive ld64 doesn't care either way.
+    nativeConfig ~= { c =>
+      val libDirs    = Seq("/usr/local/lib", "/opt/homebrew/lib")
+        .filter(p => java.nio.file.Files.isDirectory(java.nio.file.Path.of(p)))
+      val cxxRuntime =
+        if (sys.props.getOrElse("os.name", "").toLowerCase.contains("mac")) "-lc++" else "-lstdc++"
+      c.withLinkingOptions(c.linkingOptions ++ libDirs.map("-L" + _) ++ Seq("-lcadical", cxxRuntime))
+    }
   )
 
 lazy val root = project
   .in(file("."))
-  .aggregate(core, solver)
+  .aggregate(core.jvm, core.native, solver.jvm, solver.native)
   .settings(name := "research-core-root", publish / skip := true)
