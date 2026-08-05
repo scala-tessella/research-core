@@ -44,6 +44,14 @@ strongest cross-solver enumeration-parity check the library can express.
   longer counts the forced cap-1 truncation as capped (by the forcing theorem it misses no honeycomb), so
   `Report.capped` semantics for forced species are unchanged.
 
+  Downstream impact assessed: none realized. `31-unit-edge-tilings` (0.2.1) and
+  `minimal-uniformity-three` (0.3.1) pin versions that predate `searchPatterns` entirely (it shipped in
+  0.5.0) and use no honeycomb API. `convex-uniform-honeycombs` (0.5.0) is the sole consumer of the
+  affected exhaustion certificate — re-running the full completeness audit with the truthful flag
+  reproduces its every assertion (26 species, 28 classes, all skeletons closed, zero flags): every
+  exhaustion search genuinely completed under the 500000 cap, so the pre-fix certificates were
+  materially valid and the defect was latent on that path.
+
 ### Changed
 
 - **`CertifyRunner`** externals (kissat, drat-trim) run through fs2-io processes on `IO`;
