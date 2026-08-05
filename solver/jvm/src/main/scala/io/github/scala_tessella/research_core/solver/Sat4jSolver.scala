@@ -6,9 +6,10 @@ import org.sat4j.specs.{ContradictionException, ISolver}
 
 /** The JVM [[SatSolver]]: SAT4J's default MiniSat-style solver, exactly as the enumerators have always
   * configured it. `ContradictionException` is translated to the solver-agnostic
-  * [[SatSolver.Contradiction]]; `exactlyOne` keeps SAT4J's native cardinality constraint.
+  * [[SatSolver.Contradiction]] and `TimeoutException` to [[SatSolver.Timeout]]; `exactlyOne` keeps SAT4J's
+  * native cardinality constraint.
   */
-final class Sat4jSolver private (val underlying: ISolver) extends SatSolver:
+final class Sat4jSolver private (val underlying: ISolver, timeoutSeconds: Int) extends SatSolver:
 
   def addClause(lits: Seq[Int]): Unit =
     try underlying.addClause(new VecInt(lits.toArray))
@@ -18,7 +19,9 @@ final class Sat4jSolver private (val underlying: ISolver) extends SatSolver:
     try underlying.addExactly(new VecInt(lits), 1)
     catch case _: ContradictionException => throw new SatSolver.Contradiction
 
-  def solve(): Boolean = underlying.isSatisfiable
+  def solve(): Boolean =
+    try underlying.isSatisfiable
+    catch case _: org.sat4j.specs.TimeoutException => throw new SatSolver.Timeout(timeoutSeconds)
 
   def model(): Array[Int] = underlying.model()
 
@@ -27,7 +30,7 @@ object Sat4jSolver:
   def apply(timeoutSeconds: Int = 3600): Sat4jSolver =
     val s = SolverFactory.newDefault()
     s.setTimeout(timeoutSeconds)
-    new Sat4jSolver(s)
+    new Sat4jSolver(s, timeoutSeconds)
 
 /** The JVM default live solver behind the shared enumerators. */
 private[solver] object PlatformSolver:

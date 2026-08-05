@@ -29,6 +29,13 @@ object SatSolver:
     */
   final class Contradiction extends RuntimeException(null, null, false, false)
 
+  /** `solve()` hit the solver's time budget — SAT4J's `TimeoutException` (JVM) and the IPASIR terminate
+    * callback (Native), translated to one platform-neutral signal. Deliberately NOT caught by the
+    * enumerators: a timed-out enumeration is not a completed one, so it must propagate.
+    */
+  final class Timeout(timeoutSeconds: Int)
+      extends RuntimeException(s"SAT solve exceeded the $timeoutSeconds s budget")
+
   /** [[SymbolAssembly.ClauseSink]] view of a live solver — the generic successor of `Sat4jSink`. */
   final class SolverSink(solver: SatSolver) extends SymbolAssembly.ClauseSink:
     def clause(lits: Seq[Int]): Unit       = solver.addClause(lits)

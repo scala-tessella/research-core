@@ -21,8 +21,10 @@ strongest cross-solver enumeration-parity check the library can express.
   solver-agnostic `SatSolver.Contradiction` replacing SAT4J's `ContradictionException` in control flow.
   The live solver is the per-platform `PlatformSolver`: SAT4J on the JVM (`Sat4jSolver`), CaDiCaL
   in-process through an IPASIR `@extern` binding on Scala Native (`CadicalSolver` — pairwise
-  `exactlyOne`, so the live encoding is literally the certified one there). `enumerateSigma0` gains a
-  `newSolver` factory parameter.
+  `exactlyOne`, so the live encoding is literally the certified one there; `timeoutSeconds` enforced via
+  the IPASIR terminate callback). `enumerateSigma0` gains a `newSolver` factory parameter, and solver
+  timeouts surface as the platform-neutral `SatSolver.Timeout` on both platforms (translated from SAT4J's
+  `TimeoutException` on the JVM).
 - **`Sha256`** (`solver`, shared) — pure-Scala SHA-256 for `frameKeyHash`
   (`java.security.MessageDigest` is absent from Scala Native's javalib), NIST-vector tested and
   property-checked against `MessageDigest` on the JVM, so frame hashes stay bit-identical across
