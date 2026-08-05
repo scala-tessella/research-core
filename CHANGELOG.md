@@ -33,6 +33,17 @@ strongest cross-solver enumeration-parity check the library can express.
   (fibers only at branch points, forking budgeted): at parity with ForkJoin on the JVM and ~1.5× faster
   than it on Native, where it is the intended engine. Callers stay on ForkJoin on the JVM.
 
+### Fixed
+
+- **`TransitivePatterns.searchPatterns` under-reported `capped`**: the `Some(v)` backtracking branch (the
+  one every real cap-hit unwinds through — measured 43/43 on the species corpus) never set the flag, so
+  truncated searches were reported as complete; the exhaustion certificate (`!capped && allKnown`)
+  consumed that flag. Both branches now report truncation precisely (candidates remaining when the cap
+  broke the loop), verified exact — zero false negatives AND zero false positives — against ground-truth
+  re-runs at cap + 1 over the whole corpus (`CappedProbeSpec`, kept as regression teeth). `analyze` no
+  longer counts the forced cap-1 truncation as capped (by the forcing theorem it misses no honeycomb), so
+  `Report.capped` semantics for forced species are unchanged.
+
 ### Changed
 
 - **`CertifyRunner`** externals (kissat, drat-trim) run through fs2-io processes on `IO`;

@@ -237,6 +237,11 @@ object TransitivePatterns:
               bt()
               chosen(v) = None
             i += 1
+          // candidates remained when the cap broke the loop: the search WAS truncated. This check was
+          // historically missing from this branch — and cap-hit unwinds pass (in practice: only) through
+          // Some(v) frames, so truncation went entirely unreported (measured: 43/43 truncated corpus
+          // searches reported uncapped). The exhaustion certificate consumes this flag; see CappedProbeSpec.
+          if i < glus.length then capped = true
         case None     =>
           chosen.indexWhere(_.isEmpty) match
             case -1 =>
@@ -252,7 +257,7 @@ object TransitivePatterns:
                   bt()
                   chosen(v) = None
                 i += 1
-              if found >= cap then capped = true
+              if i < glus.length then capped = true
     bt()
     (found, capped)
 
@@ -405,7 +410,9 @@ object TransitivePatterns:
         }
       )
       nPat += n
-      capped ||= c
+      // forced species search with cap = 1 BY THEOREM (further patterns are Stab-rebased duplicates of
+      // the single mono-species honeycomb), so that truncation misses no honeycomb and is not "capped"
+      capped ||= (c && !forced)
     val stable              = fps.values.toVector.distinct.size == fps.size
     Report(idx, stab.size, cosets.map(_.size), forced, skels.size, fps.size, stable, nPat, nRejected, capped)
 
