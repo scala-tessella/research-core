@@ -1,24 +1,19 @@
 name: Native benchmark
 
-# Manually triggered: the BackTrackerCESpec maxSize-18 benchmark ladder on one runner, so JVM and Scala
-# Native numbers are comparable. CI with LLVM 18 is the reference bench environment (macOS local runs
-# add clang-14 noise: thin LTO unstable there, per Scala Native's own warning).
+# The BackTrackerCESpec maxSize-18 benchmark on one runner, so JVM and Scala Native numbers are
+# comparable. The two configurations that matter: the JVM baseline and the Native release build on the
+# Boehm GC — plus a cheap Immix canary. Diagnostic history (2026-08-05, this file's git log): debug+Immix
+# correct everywhere; release-fast+Immix SIGSEGVs or hangs nondeterministically (clang 14/macOS and
+# clang 18/Linux, Scala Native 0.5.12, Interflow on or off, LTO or not); release-fast+Boehm correct —
+# CE engine 11.8s vs ~91s debug. The canary flips green when upstream fixes the Immix interaction.
 #
-# Known expectations (evidence so far):
-#   - debug is correct everywhere; EVERY LLVM-optimized build faults — release-fast crashes (SIGSEGV),
-#     release-fast with Interflow off (Optimizing skipped) STILL crashes, thin LTO builds then HANGS —
-#     across clang 14/macOS and clang 18/Linux. Optimizer and toolchain acquitted: the suspect is the
-#     interaction of LLVM optimization with Scala Native 0.5.12's multithreading runtime (Immix GC
-#     safepoints / memory ordering). The boehm-GC variant is the discriminating probe. All release
-#     steps are continue-on-error WITH per-step timeouts: a crash or hang is itself a result;
-#   - the ForkJoin engine may STACK-OVERFLOW under release modes (join-helping recursion, deep native
-#     stacks);
-#   - RESEARCH_BENCH_ENGINE=ce makes the spec benchmark the CE engine alone against pinned counts.
+# RESEARCH_BENCH_ENGINE=ce benchmarks the CE engine alone against pinned counts (the ForkJoin engine
+# can stack-overflow under release modes and is not the Native engine anyway).
 
 on:
   workflow_dispatch:
-  # workflow_dispatch is only registered by GitHub once this file reaches the default branch — until the
-  # branch merges, a push that touches THIS file is the trigger (fires once, then stays quiet)
+  # workflow_dispatch is only registered once this file reaches the default branch — until the branch
+  # merges, a push that touches THIS file is the trigger (fires once, then stays quiet)
   push:
     paths:
       - ".github/workflows/native-bench.yml"
@@ -26,11 +21,10 @@ on:
 jobs:
   bench:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 45
     env:
+      # pin the Scala Native toolchain to LLVM 18 (Scala Native requires clang >= 16)
       LLVM_BIN: /usr/lib/llvm-18/bin
-      # release-full codegen (Lower/ControlFlow) blew the default 1 GB sbt heap
-      SBT_OPTS: -Xmx4g
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -45,7 +39,7 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
-      - name: Install clang 18 and libgc (Boehm GC headers)
+      - name: Install clang 18 and libgc (Boehm GC)
         run: |
           sudo apt-get update
           sudo apt-get install -y clang-18 libgc-dev
@@ -56,25 +50,7 @@ jobs:
           set -o pipefail
           sbt 'coreJVM/testOnly *BackTrackerCESpec' | tee -a bench.log
 
-      - name: Native debug (both engines)
-        run: |
-          set -o pipefail
-          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
-
-      - name: Native release-fast (CE engine only)
-        continue-on-error: true
-        timeout-minutes: 15
-        env:
-          SCALANATIVE_MODE: release-fast
-          RESEARCH_BENCH_ENGINE: ce
-        run: |
-          set -o pipefail
-          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
-
-      # the discriminating probe: same optimized build, conservative Boehm GC instead of Immix — a clean
-      # run points the fault at the Immix safepoint/optimization interaction
-      - name: Native release-fast + Boehm GC (CE engine only)
-        continue-on-error: true
+      - name: Native release-fast + Boehm GC (CE engine)
         timeout-minutes: 15
         env:
           SCALANATIVE_MODE: release-fast
@@ -84,43 +60,13 @@ jobs:
           set -o pipefail
           sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
 
-      - name: Native release-fast, Interflow off (CE engine only)
+      # known to fault on Scala Native 0.5.12 — kept as a canary for the upstream Immix fix
+      - name: Immix canary (release-fast, CE engine)
         continue-on-error: true
-        timeout-minutes: 15
+        timeout-minutes: 8
         env:
           SCALANATIVE_MODE: release-fast
-          SCALANATIVE_OPTIMIZE: "false"
           RESEARCH_BENCH_ENGINE: ce
-        run: |
-          set -o pipefail
-          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
-
-      - name: Native release-full (CE engine only)
-        continue-on-error: true
-        timeout-minutes: 20
-        env:
-          SCALANATIVE_MODE: release-full
-          RESEARCH_BENCH_ENGINE: ce
-        run: |
-          set -o pipefail
-          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
-
-      - name: Native release-fast + thin LTO (CE engine only)
-        continue-on-error: true
-        timeout-minutes: 15
-        env:
-          SCALANATIVE_MODE: release-fast
-          SCALANATIVE_LTO: thin
-          RESEARCH_BENCH_ENGINE: ce
-        run: |
-          set -o pipefail
-          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
-
-      - name: Native release-fast (both engines — ForkJoin may stack-overflow)
-        continue-on-error: true
-        timeout-minutes: 15
-        env:
-          SCALANATIVE_MODE: release-fast
         run: |
           set -o pipefail
           sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
