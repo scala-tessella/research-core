@@ -260,13 +260,19 @@ object Sigma0Assembly:
           found += 1
           out += sigma.toVector
       else
-        for d <- classMembers(classOf(c)) if sigma(d) == -1 do
-          assign(c, d) match
-            case Some(done) =>
-              bt()
-              undoAll(done)
-              if found >= cap then { capped = true; return }
-            case None       => ()
+        // while, not for-do: a `return` inside the desugared foreach closure would be non-local
+        val members = classMembers(classOf(c))
+        var j       = 0
+        while j < members.length && found < cap do
+          val d = members(j)
+          if sigma(d) == -1 then
+            assign(c, d) match
+              case Some(done) =>
+                bt()
+                undoAll(done)
+              case None       => ()
+          j += 1
+        if found >= cap then capped = true
 
     bt()
     (out.result(), capped)

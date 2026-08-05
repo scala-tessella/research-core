@@ -99,6 +99,7 @@ object HoneycombAlphabet:
     * reverses the cyclic order and swaps each token's left/right).
     */
   def canonical(seq: Vector[Oriented]): CanonKey =
+    import scala.math.Ordering.Implicits.seqOrdering
     val fwd  = seq.map(o => (o.et.cell.ordinal, o.left, o.right))
     val bwd  = seq.reverse.map(o => (o.et.cell.ordinal, o.right, o.left))
     val reps =

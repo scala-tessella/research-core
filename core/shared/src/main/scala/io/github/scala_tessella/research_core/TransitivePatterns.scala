@@ -89,6 +89,7 @@ object TransitivePatterns:
       corners: Vector[(Int, Vector[Vec])],
       m: Mat
   ): Vector[(Int, Vector[(Long, Long, Long)])] =
+    import scala.math.Ordering.Implicits.seqOrdering
     corners.map((c, ds) => (c, ds.map(d => round4(m(d))).sorted)).sorted
 
   /** Stab(S): all orthogonal maps fixing the placed star (candidates from frame alignments over the gluing
@@ -223,25 +224,35 @@ object TransitivePatterns:
       }
     def bt(): Unit                      =
       if found >= cap then { capped = true; return }
+      // while, not for-do: a `return` inside the desugared foreach closure would be non-local
       consistent() match
         case Some(-1) => () // dead branch
         case Some(v)  =>
-          for glu <- domains(v) if r1ok(v, glu) do
-            chosen(v) = Some(glu)
-            bt()
-            chosen(v) = None
-            if found >= cap then return
+          val glus = domains(v)
+          var i    = 0
+          while i < glus.length && found < cap do
+            val glu = glus(i)
+            if r1ok(v, glu) then
+              chosen(v) = Some(glu)
+              bt()
+              chosen(v) = None
+            i += 1
         case None     =>
           chosen.indexWhere(_.isEmpty) match
             case -1 =>
               found += 1
               emit(chosen.map(_.get).toVector)
             case v  =>
-              for glu <- domains(v) if r1ok(v, glu) do
-                chosen(v) = Some(glu)
-                bt()
-                chosen(v) = None
-                if found >= cap then { capped = true; return }
+              val glus = domains(v)
+              var i    = 0
+              while i < glus.length && found < cap do
+                val glu = glus(i)
+                if r1ok(v, glu) then
+                  chosen(v) = Some(glu)
+                  bt()
+                  chosen(v) = None
+                i += 1
+              if found >= cap then capped = true
     bt()
     (found, capped)
 
