@@ -1,13 +1,16 @@
 name: Native benchmark
 
 # Manually triggered: the BackTrackerCESpec maxSize-18 benchmark ladder on one runner, so JVM and Scala
-# Native numbers are comparable. Local macOS runs of the release modes are blocked by clang 14 (thin LTO
-# unstable on macOS; release-fast miscompiles — garbage array index — per Scala Native's own clang < 16
-# warning), hence CI with LLVM 18 is the reference bench environment.
+# Native numbers are comparable. CI with LLVM 18 is the reference bench environment (macOS local runs
+# add clang-14 noise: thin LTO unstable there, per Scala Native's own warning).
 #
 # Known expectations:
+#   - release-fast has crashed with garbage-address faults on BOTH clang 14/macOS and clang 18/Linux
+#     while debug is correct everywhere — suspect Scala Native 0.5.12's Interflow optimizer under
+#     multithreading; the ladder isolates it via the SCALANATIVE_OPTIMIZE=false variant. All release
+#     steps are continue-on-error: a crash is itself a result and must not abort the ladder;
 #   - the ForkJoin engine may STACK-OVERFLOW under release modes (join-helping recursion, deep native
-#     stacks) — that step is continue-on-error and its failure is itself a result;
+#     stacks);
 #   - RESEARCH_BENCH_ENGINE=ce makes the spec benchmark the CE engine alone against pinned counts.
 
 on:
@@ -54,9 +57,33 @@ jobs:
           set -o pipefail
           sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
 
+      # release-fast crashed with a garbage-address SIGSEGV on BOTH clang 14/macOS and clang 18/Linux
+      # (debug is correct everywhere) — suspect: Scala Native's own optimizer (Interflow) miscompiling
+      # the multithreaded walk. The optimize-off variant keeps LLVM -O2 but disables Interflow: if it
+      # runs clean, the culprit is isolated and it becomes the usable release configuration.
       - name: Native release-fast (CE engine only)
+        continue-on-error: true
         env:
           SCALANATIVE_MODE: release-fast
+          RESEARCH_BENCH_ENGINE: ce
+        run: |
+          set -o pipefail
+          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
+
+      - name: Native release-fast, Interflow off (CE engine only)
+        continue-on-error: true
+        env:
+          SCALANATIVE_MODE: release-fast
+          SCALANATIVE_OPTIMIZE: "false"
+          RESEARCH_BENCH_ENGINE: ce
+        run: |
+          set -o pipefail
+          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
+
+      - name: Native release-full (CE engine only)
+        continue-on-error: true
+        env:
+          SCALANATIVE_MODE: release-full
           RESEARCH_BENCH_ENGINE: ce
         run: |
           set -o pipefail
