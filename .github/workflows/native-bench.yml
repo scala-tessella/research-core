@@ -12,6 +12,11 @@ name: Native benchmark
 
 on:
   workflow_dispatch:
+  # workflow_dispatch is only registered by GitHub once this file reaches the default branch — until the
+  # branch merges, a push that touches THIS file is the trigger (fires once, then stays quiet)
+  push:
+    paths:
+      - ".github/workflows/native-bench.yml"
 
 jobs:
   bench:
