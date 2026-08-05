@@ -51,6 +51,9 @@ strongest cross-solver enumeration-parity check the library can express.
 - **`Sat4jSink`** is now a top-level JVM-only class (formerly `SymbolAssembly.Sat4jSink`), kept for
   downstream source compatibility; `SymbolAssembly` itself is SAT4J-free and cross-compiles.
 - Native linking requires `libcadical` (e.g. Homebrew) on the library path.
+- Known Scala Native 0.5.12 limitation (documented in the README, measured by the `Native benchmark`
+  workflow): LLVM-optimized builds of the multithreaded enumeration fault under the default Immix GC —
+  use `SCALANATIVE_GC=boehm` for Native release builds; debug builds are unaffected.
 
 ## [0.5.0] — 2026-08-02
 

@@ -82,6 +82,14 @@ Practical guidance from measurement: SAT-bound work (the certification harness) 
 on Native; pure-combinatorics enumeration is markedly slower under Native debug builds — the JVM remains
 the primary target for enumeration-heavy runs.
 
+**Release-mode caveat (Scala Native 0.5.12)**: LLVM-optimized builds (`release-fast`/`release-full`)
+of the multithreaded enumeration crash or hang under the default **Immix** GC (SIGSEGV at garbage
+addresses or livelock; debug builds are correct) — observed on clang 14/macOS and clang 18/Linux alike,
+with Scala Native's own optimizer on or off. The same optimized build runs correctly and fast under
+**Boehm** (`SCALANATIVE_GC=boehm`, needs `libgc-dev`): use Boehm for any Native release build of the
+enumeration until the upstream Immix interaction is fixed. The `Native benchmark` workflow encodes the
+evidence ladder.
+
 Native prerequisites: clang ≥ 16 (CI pins LLVM 18; older clang works with a deprecation warning) and, for
 `solver`, `libcadical` on the library path (`brew install cadical`, or built from source with `-fPIC` as
 in `.github/workflows/ci.yml`). The external certification tools live in `tools/bin/{kissat,drat-trim}`
