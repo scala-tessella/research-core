@@ -58,11 +58,14 @@ lazy val solver = crossProject(JVMPlatform, NativePlatform)
     libraryDependencies += "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.6"
   )
   .nativeSettings(
-    // libcadical (Homebrew) provides the IPASIR symbols; it is C++, hence the C++ runtime
+    // libcadical (Homebrew on macOS, built from source in CI) provides the IPASIR symbols; it is C++,
+    // hence the platform's C++ runtime (LLVM libc++ on macOS, libstdc++ on Linux)
     nativeConfig ~= { c =>
-      val brewLibs = Seq("/usr/local/lib", "/opt/homebrew/lib")
+      val libDirs    = Seq("/usr/local/lib", "/opt/homebrew/lib")
         .filter(p => java.nio.file.Files.isDirectory(java.nio.file.Path.of(p)))
-      c.withLinkingOptions(c.linkingOptions ++ brewLibs.map("-L" + _) :+ "-lc++")
+      val cxxRuntime =
+        if (sys.props.getOrElse("os.name", "").toLowerCase.contains("mac")) "-lc++" else "-lstdc++"
+      c.withLinkingOptions(c.linkingOptions ++ libDirs.map("-L" + _) :+ cxxRuntime)
     }
   )
 
