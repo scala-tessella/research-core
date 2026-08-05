@@ -59,13 +59,16 @@ lazy val solver = crossProject(JVMPlatform, NativePlatform)
   )
   .nativeSettings(
     // libcadical (Homebrew on macOS, built from source in CI) provides the IPASIR symbols; it is C++,
-    // hence the platform's C++ runtime (LLVM libc++ on macOS, libstdc++ on Linux)
+    // hence the platform's C++ runtime (LLVM libc++ on macOS, libstdc++ on Linux). GNU ld resolves
+    // libraries left to right, and these options precede the -lcadical that @link("cadical") appends —
+    // so the pair is stated HERE in dependency order (archive first, then its C++ runtime); the trailing
+    // @link-generated -lcadical is then a no-op, and order-insensitive ld64 doesn't care either way.
     nativeConfig ~= { c =>
       val libDirs    = Seq("/usr/local/lib", "/opt/homebrew/lib")
         .filter(p => java.nio.file.Files.isDirectory(java.nio.file.Path.of(p)))
       val cxxRuntime =
         if (sys.props.getOrElse("os.name", "").toLowerCase.contains("mac")) "-lc++" else "-lstdc++"
-      c.withLinkingOptions(c.linkingOptions ++ libDirs.map("-L" + _) :+ cxxRuntime)
+      c.withLinkingOptions(c.linkingOptions ++ libDirs.map("-L" + _) ++ Seq("-lcadical", cxxRuntime))
     }
   )
 
