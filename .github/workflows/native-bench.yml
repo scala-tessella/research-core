@@ -4,11 +4,13 @@ name: Native benchmark
 # Native numbers are comparable. CI with LLVM 18 is the reference bench environment (macOS local runs
 # add clang-14 noise: thin LTO unstable there, per Scala Native's own warning).
 #
-# Known expectations:
-#   - release-fast has crashed with garbage-address faults on BOTH clang 14/macOS and clang 18/Linux
-#     while debug is correct everywhere — suspect Scala Native 0.5.12's Interflow optimizer under
-#     multithreading; the ladder isolates it via the SCALANATIVE_OPTIMIZE=false variant. All release
-#     steps are continue-on-error: a crash is itself a result and must not abort the ladder;
+# Known expectations (evidence so far):
+#   - debug is correct everywhere; EVERY LLVM-optimized build faults — release-fast crashes (SIGSEGV),
+#     release-fast with Interflow off (Optimizing skipped) STILL crashes, thin LTO builds then HANGS —
+#     across clang 14/macOS and clang 18/Linux. Optimizer and toolchain acquitted: the suspect is the
+#     interaction of LLVM optimization with Scala Native 0.5.12's multithreading runtime (Immix GC
+#     safepoints / memory ordering). The boehm-GC variant is the discriminating probe. All release
+#     steps are continue-on-error WITH per-step timeouts: a crash or hang is itself a result;
 #   - the ForkJoin engine may STACK-OVERFLOW under release modes (join-helping recursion, deep native
 #     stacks);
 #   - RESEARCH_BENCH_ENGINE=ce makes the spec benchmark the CE engine alone against pinned counts.
@@ -27,6 +29,8 @@ jobs:
     timeout-minutes: 120
     env:
       LLVM_BIN: /usr/lib/llvm-18/bin
+      # release-full codegen (Lower/ControlFlow) blew the default 1 GB sbt heap
+      SBT_OPTS: -Xmx4g
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -57,12 +61,9 @@ jobs:
           set -o pipefail
           sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
 
-      # release-fast crashed with a garbage-address SIGSEGV on BOTH clang 14/macOS and clang 18/Linux
-      # (debug is correct everywhere) — suspect: Scala Native's own optimizer (Interflow) miscompiling
-      # the multithreaded walk. The optimize-off variant keeps LLVM -O2 but disables Interflow: if it
-      # runs clean, the culprit is isolated and it becomes the usable release configuration.
       - name: Native release-fast (CE engine only)
         continue-on-error: true
+        timeout-minutes: 15
         env:
           SCALANATIVE_MODE: release-fast
           RESEARCH_BENCH_ENGINE: ce
@@ -70,8 +71,22 @@ jobs:
           set -o pipefail
           sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
 
+      # the discriminating probe: same optimized build, conservative Boehm GC instead of Immix — a clean
+      # run points the fault at the Immix safepoint/optimization interaction
+      - name: Native release-fast + Boehm GC (CE engine only)
+        continue-on-error: true
+        timeout-minutes: 15
+        env:
+          SCALANATIVE_MODE: release-fast
+          SCALANATIVE_GC: boehm
+          RESEARCH_BENCH_ENGINE: ce
+        run: |
+          set -o pipefail
+          sbt 'coreNative/testOnly *BackTrackerCESpec' | tee -a bench.log
+
       - name: Native release-fast, Interflow off (CE engine only)
         continue-on-error: true
+        timeout-minutes: 15
         env:
           SCALANATIVE_MODE: release-fast
           SCALANATIVE_OPTIMIZE: "false"
@@ -82,6 +97,7 @@ jobs:
 
       - name: Native release-full (CE engine only)
         continue-on-error: true
+        timeout-minutes: 20
         env:
           SCALANATIVE_MODE: release-full
           RESEARCH_BENCH_ENGINE: ce
@@ -91,6 +107,7 @@ jobs:
 
       - name: Native release-fast + thin LTO (CE engine only)
         continue-on-error: true
+        timeout-minutes: 15
         env:
           SCALANATIVE_MODE: release-fast
           SCALANATIVE_LTO: thin
@@ -101,6 +118,7 @@ jobs:
 
       - name: Native release-fast (both engines — ForkJoin may stack-overflow)
         continue-on-error: true
+        timeout-minutes: 15
         env:
           SCALANATIVE_MODE: release-fast
         run: |
