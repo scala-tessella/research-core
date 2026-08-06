@@ -31,6 +31,9 @@ ThisBuild / scmInfo        := Some(ScmInfo(
 
 lazy val commonSettings = Seq(
   scalacOptions += "-deprecation",
+  // suites run serially: several of them saturate the cores on purpose (parallel enumerations, the
+  // engine benchmark), so concurrent suites contaminate each other's timings and contend for memory
+  Test / parallelExecution := false,
   libraryDependencies ++= Seq(
     "io.github.scala-tessella" %%% "ring-seq"        % "0.9.0",
     "org.typelevel"            %%% "cats-effect"     % "3.7.0",

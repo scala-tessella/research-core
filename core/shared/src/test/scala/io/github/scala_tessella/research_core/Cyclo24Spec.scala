@@ -13,6 +13,10 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
   */
 class Cyclo24Spec extends AnyFlatSpec with Matchers with ScalaCheckPropertyChecks:
 
+  // 100 cases per property instead of ScalaTest's default 10 — the Cyclo generator is 8-dimensional
+  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+    PropertyCheckConfiguration(minSuccessful = 100)
+
   private val rats: Gen[Rat] =
     for
       n <- Gen.choose(-20, 20)
