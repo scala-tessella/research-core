@@ -72,7 +72,7 @@ object CompletenessAudit:
     found.toVector.sortBy(vNorm)
 
   /** A short independent basis from the found translations (greedy by norm, then one reduction sweep). */
-  private[research_core] def latticeBasis(ts: Vector[Vec]): Option[(Vec, Vec, Vec)] =
+  def latticeBasis(ts: Vector[Vec]): Option[(Vec, Vec, Vec)] =
     def det(a: Vec, b: Vec, c: Vec): Double =
       a._1 *
         (b._2 * c._3 - b._3 * c._2) -
@@ -87,7 +87,7 @@ object CompletenessAudit:
     yield (t1, t2, t3)
 
   /** Integer lattice coordinates of v in basis (t1,t2,t3), if v ∈ Λ within tolerance. */
-  private[research_core] def inLattice(basis: (Vec, Vec, Vec), v: Vec): Boolean =
+  def inLattice(basis: (Vec, Vec, Vec), v: Vec): Boolean =
     val (a, b, c)                             = basis
     val d                                     = a._1 *
       (b._2 * c._3 - b._3 * c._2) -

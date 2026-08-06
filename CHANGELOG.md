@@ -6,10 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
-## [Unreleased]
+## [0.6.1] — 2026-08-06
 
-Hardening only — no public-surface changes: the test suite grows from 104 to 130 JVM tests, and the
-build gains dcel's formatting and linting guard rails.
+Hardening plus one additive surface change: the 3D substrate's numeric helper layer goes public (below),
+the test suite grows from 104 to 130 JVM tests, and the build gains dcel's formatting and linting guard
+rails.
 
 ### Added
 
@@ -39,6 +40,14 @@ build gains dcel's formatting and linting guard rails.
 
 ### Changed
 
+- **The 3D substrate's helper layer widened from `private[research_core]` to public**, so a downstream
+  repository can build its own pair/k-set/realization machinery on the same primitives instead of
+  duplicating them: `MonoShell`'s vector algebra (`add`, `sub`, `neg`, `scale`, `dot`, `cross`, `norm`,
+  `unit`, `dist`), its tolerances (`matchTol`, `grayTol`) and star-ring probes (`ringDescriptors`,
+  `descriptorsMatch`, `compatible`); `TransitivePatterns`' development kit (`idMat`, `round4`,
+  `cornerData`, `starSig`, `inStab`, `walkFace` — previously fully private — and `searchPatterns`);
+  and `CompletenessAudit`'s lattice recognizers (`latticeBasis`, `inLattice`). The `debug*` hooks stay
+  package-private.
 - **Formatting and linting guard rails, ported from `dcel`**: `.scalafmt.conf` (scalafmt 3.11.2 — the
   build had claimed `scalafmtOnCompile` with no config, so the formatter had never actually run; the
   whole tree is now formatted) and `.scalafix.conf` (`DisableSyntax`: `null`, `asInstanceOf`,

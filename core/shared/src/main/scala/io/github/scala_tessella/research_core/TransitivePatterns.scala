@@ -58,7 +58,7 @@ object TransitivePatterns:
     def dist(o: Mat): Double =
       vDist(r1, o.r1) + vDist(r2, o.r2) + vDist(r3, o.r3)
 
-  private[research_core] val idMat = Mat((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
+  val idMat = Mat((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
 
   def matOf(rot: Rot): Mat =
     val c1 = rot((1.0, 0.0, 0.0))
@@ -76,16 +76,16 @@ object TransitivePatterns:
   // ---------- the star's symmetry group and the coset structure ----------
 
   /** Base corner data of a species: per corner, (cell ordinal, unit vertex directions). */
-  private[research_core] def cornerData(g: StarGeom): Vector[(Int, Vector[Vec])] =
+  def cornerData(g: StarGeom): Vector[(Int, Vector[Vec])] =
     g.st.corners.map { pl =>
       (pl.cell.ordinal, pl.verts.map(v => vUnit((v._1.mid, v._2.mid, v._3.mid))))
     }
 
-  private[research_core] def round4(v: Vec): (Long, Long, Long) =
+  def round4(v: Vec): (Long, Long, Long) =
     (math.round(v._1 * 1e4), math.round(v._2 * 1e4), math.round(v._3 * 1e4))
 
   /** Canonical signature of the star transformed by m: the sorted corner encoding. */
-  private[research_core] def starSig(
+  def starSig(
       corners: Vector[(Int, Vector[Vec])],
       m: Mat
   ): Vector[(Int, Vector[(Long, Long, Long)])] =
@@ -147,12 +147,12 @@ object TransitivePatterns:
   final case class Pattern(g: StarGeom, glus: Vector[Glu]):
     def iso(x: Int): Iso = Iso(matOf(glus(x).rot), g.u(x))
 
-  private[research_core] def inStab(m: Mat, stab: Vector[Mat]): Boolean = stab.exists(_.dist(m) < 1e-5)
+  def inStab(m: Mat, stab: Vector[Mat]): Boolean = stab.exists(_.dist(m) < 1e-5)
 
   /** Walk the face of arc `key` under a partial assignment. Returns Left(vertex needed), or Right(Some(word))
     * when closed, or Right(None) when the walk is geometrically inconsistent.
     */
-  private def walkFace(
+  def walkFace(
       g: StarGeom,
       assigned: Int => Option[Glu],
       key: (Int, Int)
@@ -189,7 +189,7 @@ object TransitivePatterns:
   /** DFS over pattern assignments within the given per-vertex domains; every consistent pattern is passed to
     * `emit`. Returns (patterns found, whether the search was capped).
     */
-  private[research_core] def searchPatterns(
+  def searchPatterns(
       g: StarGeom,
       domains: Vector[Vector[Glu]],
       stab: Vector[Mat],

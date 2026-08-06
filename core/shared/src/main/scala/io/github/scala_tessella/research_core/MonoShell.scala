@@ -34,16 +34,16 @@ object MonoShell:
 
   type Vec = (Double, Double, Double)
 
-  private[research_core] def sub(a: Vec, b: Vec): Vec      = (a._1 - b._1, a._2 - b._2, a._3 - b._3)
-  private[research_core] def add(a: Vec, b: Vec): Vec      = (a._1 + b._1, a._2 + b._2, a._3 + b._3)
-  private[research_core] def dot(a: Vec, b: Vec): Double   = a._1 * b._1 + a._2 * b._2 + a._3 * b._3
-  private[research_core] def cross(a: Vec, b: Vec): Vec    =
+  def sub(a: Vec, b: Vec): Vec      = (a._1 - b._1, a._2 - b._2, a._3 - b._3)
+  def add(a: Vec, b: Vec): Vec      = (a._1 + b._1, a._2 + b._2, a._3 + b._3)
+  def dot(a: Vec, b: Vec): Double   = a._1 * b._1 + a._2 * b._2 + a._3 * b._3
+  def cross(a: Vec, b: Vec): Vec    =
     (a._2 * b._3 - a._3 * b._2, a._3 * b._1 - a._1 * b._3, a._1 * b._2 - a._2 * b._1)
-  private[research_core] def scale(a: Vec, s: Double): Vec = (a._1 * s, a._2 * s, a._3 * s)
-  private[research_core] def norm(a: Vec): Double          = math.sqrt(dot(a, a))
-  private[research_core] def unit(a: Vec): Vec             = scale(a, 1.0 / norm(a))
-  private[research_core] def dist(a: Vec, b: Vec): Double  = norm(sub(a, b))
-  private[research_core] def neg(a: Vec): Vec              = (-a._1, -a._2, -a._3)
+  def scale(a: Vec, s: Double): Vec = (a._1 * s, a._2 * s, a._3 * s)
+  def norm(a: Vec): Double          = math.sqrt(dot(a, a))
+  def unit(a: Vec): Vec             = scale(a, 1.0 / norm(a))
+  def dist(a: Vec, b: Vec): Double  = norm(sub(a, b))
+  def neg(a: Vec): Vec              = (-a._1, -a._2, -a._3)
 
   /** Rotation (possibly improper) as an orthonormal frame map: source frame → target frame. */
   final case class Rot(a1: Vec, a2: Vec, a3: Vec, b1: Vec, b2: Vec, b3: Vec):
@@ -57,8 +57,8 @@ object MonoShell:
     val items: collection.mutable.ListBuffer[String] = collection.mutable.ListBuffer.empty
     def add(s: String): Unit                         = items += s
 
-  private[research_core] val matchTol = 1e-6
-  private[research_core] val grayTol  = 1e-3
+  val matchTol = 1e-6
+  val grayTol  = 1e-3
 
   // ---------- star geometry ----------
 
@@ -77,7 +77,7 @@ object MonoShell:
   /** The cell descriptors of the ring at tiling-vertex x, transported by `rot` (identity for the star
     * itself): per ring cell, (cell type, its two face germs (normal-as-line, interior direction)).
     */
-  private[research_core] def ringDescriptors(
+  def ringDescriptors(
       g: StarGeom,
       x: Int,
       rot: Vec => Vec
@@ -93,7 +93,7 @@ object MonoShell:
     }
 
   /** Multiset equality of ring descriptors (normals compared as lines, interiors as vectors). */
-  private[research_core] def descriptorsMatch(
+  def descriptorsMatch(
       a: Vector[(Int, Vector[(Vec, Vec)])],
       b: Vector[(Int, Vector[(Vec, Vec)])],
       flags: Flags
@@ -166,7 +166,7 @@ object MonoShell:
   /** Compatibility of the gluings at two neighbors x, x′: the edge between them must be mutual, and if
     * present both stars must induce the same ring around it.
     */
-  private[research_core] def compatible(
+  def compatible(
       g: StarGeom,
       x: Int,
       gx: Glu,
