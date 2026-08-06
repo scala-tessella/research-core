@@ -32,6 +32,10 @@ import SpeciesEnumerator.{species, Species, State}
   */
 object MonoShell:
 
+  // Deliberately NOT a named tuple (x: Double, ...): named access routes through NamedTuple conversion
+  // glue that Scala Native debug builds — the test suite's mode — cannot optimize away. Measured
+  // 2026-08-06 on the Vec-heavy species corpus: ~26% slower runtime and ~24% slower linking (JVM neutral,
+  // C2 eliminates it). Same reasoning binds CertifiedDihedrals.V3; SymbolRenderer.Pt is cold and stays named.
   type Vec = (Double, Double, Double)
 
   def sub(a: Vec, b: Vec): Vec      = (a._1 - b._1, a._2 - b._2, a._3 - b._3)
