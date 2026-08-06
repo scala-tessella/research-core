@@ -11,6 +11,7 @@ import io.github.scala_tessella.research_core.solver.SymbolAssembly.*
 
 import java.nio.file.{Files, Path}
 import scala.collection.mutable
+import scala.util.Using
 
 /** ADR-0008 D4 — the frame certification runner shared by the gate probes. Per frame: tee the live SAT
   * enumeration into DIMACS bodies, assemble the OBLIGATION instance (base CNF + the found models' blocking
@@ -109,12 +110,13 @@ object CertifyRunner:
         if prep.models > 0 then IO.pure((None, None))
         else
           IO.blocking {
-            val ubBody = prep.fdir.resolve("unbroken.body")
-            val ub     = DimacsSink(ubBody)
-            encodeSigma0(frame, Vector.empty, ub)
-            ub.close()
-            val ubCnf  = prep.fdir.resolve("unbroken.cnf")
-            assemble(ubCnf, ub.maxVar, ub.clauseCount, ubBody)
+            val ubBody            = prep.fdir.resolve("unbroken.body")
+            val (ubVars, ubCount) = Using.resource(DimacsSink(ubBody)) { ub =>
+              encodeSigma0(frame, Vector.empty, ub)
+              (ub.maxVar, ub.clauseCount)
+            }
+            val ubCnf             = prep.fdir.resolve("unbroken.cnf")
+            assemble(ubCnf, ubVars, ubCount, ubBody)
             ubCnf
           }.flatMap(ubCnf => certifyCnfIO(ubCnf, prep.fdir.resolve("unbroken.drat")))
             .map((k, d) => (Some(k), Some(d)))
@@ -152,28 +154,30 @@ object CertifyRunner:
       dir: Path,
       maxModels: Int
   ): Prepared =
-    val key              = frameKey(types, chosen)
-    val hash             = frameKeyHash(key)
-    val fdir             = dir.resolve(hash)
+    val key       = frameKey(types, chosen)
+    val hash      = frameKeyHash(key)
+    val fdir      = dir.resolve(hash)
     Files.createDirectories(fdir)
-    val baseBody         = fdir.resolve("base.body")
-    val blockBody        = fdir.resolve("blocking.body")
-    val base             = DimacsSink(baseBody)
-    val block            = DimacsSink(blockBody)
-    val full             = mutable.ListBuffer.empty[Array[Int]]
-    val (models, capped) =
-      enumerateSigma0(frame, maxModels, frameSymmetries(frame, chosen), base, block, full += _)
-    base.close()
-    block.close()
+    val baseBody  = fdir.resolve("base.body")
+    val blockBody = fdir.resolve("blocking.body")
+    val full      = mutable.ListBuffer.empty[Array[Int]]
+    // bracketed: the sinks must not leak when the enumeration throws (SatSolver.Timeout, IO errors), and
+    // must be closed — flushed — BEFORE the bodies are assembled below, hence counts captured on the way out
+    val (models, capped, maxVar, nBase, nBlock) =
+      Using.resources(DimacsSink(baseBody), DimacsSink(blockBody)) { (base, block) =>
+        val (models, capped) =
+          enumerateSigma0(frame, maxModels, frameSymmetries(frame, chosen), base, block, full += _)
+        (models, capped, base.maxVar, base.clauseCount, block.clauseCount)
+      }
     // JVM fidelity: every live model satisfies the emitted base CNF
-    val baseCnf          = fdir.resolve("base.cnf")
-    assemble(baseCnf, base.maxVar, base.clauseCount, baseBody)
-    val baseClauses      = parseCnf(baseCnf) // parse once, check every model in memory
-    val violations       = full.iterator.map(m => violatedClauses(baseClauses, m).size).sum
+    val baseCnf     = fdir.resolve("base.cnf")
+    assemble(baseCnf, maxVar, nBase, baseBody)
+    val baseClauses = parseCnf(baseCnf) // parse once, check every model in memory
+    val violations  = full.iterator.map(m => violatedClauses(baseClauses, m).size).sum
     // the obligation: base + blocking; UNSAT = exhaustiveness (pure refutation when models = 0)
-    val instance         = fdir.resolve("instance.cnf")
-    assemble(instance, base.maxVar, base.clauseCount + block.clauseCount, baseBody, blockBody)
-    Prepared(key, hash, fdir, base.maxVar, base.clauseCount, models.size, capped, violations, instance)
+    val instance    = fdir.resolve("instance.cnf")
+    assemble(instance, maxVar, nBase + nBlock, baseBody, blockBody)
+    Prepared(key, hash, fdir, maxVar, nBase, models.size, capped, violations, instance)
 
   val manifestHeader: String =
     "hash\tvars\tbaseClauses\tmodels\tcapped\tjvmViolations\tkissatUnsat\tdratVerified\t" +
