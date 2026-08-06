@@ -28,7 +28,9 @@ class K2CertifySpec extends AnyFlatSpec with Matchers:
       maxN = 2,
       maxSize = maxSize,
       parallelism = 1,
-      sink = out.synchronized(out += _),
+      // NOT `out.synchronized(out += _)`: synchronized is by-name, that form locks only the lambda's
+      // CONSTRUCTION and hands the generator an unsynchronized callback
+      sink = ds => out.synchronized(out += ds),
       tier1 = tier1
     )
     out.toVector

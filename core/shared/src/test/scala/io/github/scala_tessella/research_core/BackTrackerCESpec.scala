@@ -34,6 +34,7 @@ class BackTrackerCESpec extends AnyFlatSpec with Matchers:
       val (ce, ceMs)   = timed(DelaneySymbols.countDSetsParallelCE(18, par))
       info(s"ForkJoin engine: $fjpMs ms, CE engine: $ceMs ms (counts $fjp)")
       ce shouldBe fjp
+      fjp shouldBe (14613L, 7407L) // two engines agreeing proves nothing if both regress — pin the counts
 
   it should "agree with the sequential walk at parallelism 1" in:
     DelaneySymbols.countDSetsParallelCE(12, parallelism = 1) shouldBe

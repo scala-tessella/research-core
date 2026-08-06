@@ -35,3 +35,6 @@ class CappedProbeSpec extends AnyFlatSpec with Matchers:
     info(s"checked $checked (species, skeleton, cap) cases: $falseNeg false negatives, $falsePos false positives")
     checked should be > 0
     falseNeg shouldBe 0
+    // the fix made the flag PRECISE, not merely conservative — hold it to that (a benign conservative
+    // regression would surface here as false positives; loosen deliberately if that trade is ever made)
+    falsePos shouldBe 0
