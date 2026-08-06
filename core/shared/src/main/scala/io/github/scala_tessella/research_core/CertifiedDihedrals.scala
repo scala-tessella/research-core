@@ -1,10 +1,10 @@
 package io.github.scala_tessella.research_core
 
-/** Interval-certified dihedral angles for arbitrary unit-edge uniform polyhedra,
-  * derived from the vertex configuration ALONE (no coordinate tables): the vertex figure of a uniform
-  * polyhedron with configuration (p₁..p_k) is a cyclic polygon whose vertices are the unit-distant neighbors
-  * and whose side lengths are the corner chords 2cos(π/pᵢ); its circumradius is enclosed by certified
-  * bisection, the corner is reconstructed, and dihedrals come out as intervals.
+/** Interval-certified dihedral angles for arbitrary unit-edge uniform polyhedra, derived from the vertex
+  * configuration ALONE (no coordinate tables): the vertex figure of a uniform polyhedron with configuration
+  * (p₁..p_k) is a cyclic polygon whose vertices are the unit-distant neighbors and whose side lengths are the
+  * corner chords 2cos(π/pᵢ); its circumradius is enclosed by certified bisection, the corner is
+  * reconstructed, and dihedrals come out as intervals.
   *
   * Interval discipline: double arithmetic is correctly rounded (≤ 1/2 ulp), so results are widened by one ulp
   * per operation; for java.lang.Math trig/atan the documented accuracy is ≤ 1 ulp, widened here by two ulps.

@@ -27,9 +27,8 @@ import SpeciesEnumerator.{species, Species, State}
   * both stars induce the same ring around h (descriptor multisets again). The filter searches for a full
   * assignment by backtracking; UNSAT excludes the species from k = 1 (and from all mono-species honeycombs).
   * SAT is a candidate certificate only — realizability and transitivity are [[TransitivePatterns]]'s
-  * development. All geometric
-  * decisions run on midpoints with 1e-6 tolerances; margins near the threshold are flagged (expect none —
-  * true mismatches in this lattice geometry are ≥ 1e-3).
+  * development. All geometric decisions run on midpoints with 1e-6 tolerances; margins near the threshold are
+  * flagged (expect none — true mismatches in this lattice geometry are ≥ 1e-3).
   */
 object MonoShell:
 

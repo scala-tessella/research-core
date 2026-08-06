@@ -130,7 +130,7 @@ object HoneycombAlphabet:
       val deg = sum.degrees
       if sum == CoreAngle.full && seq.size >= 3 && seq.head.right == seq.last.left then
         val fig = EdgeFigure(seq.reverse.toVector)
-        found.getOrElseUpdate(fig.key, fig)
+        found.getOrElseUpdate(fig.key, fig): Unit
       else if seq.size < 6 && deg + 59.999 < 360.0 then
         for o <- byLeft.getOrElse(seq.head.right, Vector.empty) do rec(o :: seq, sum + o.et.angle)
     for o <- orientedTokens do rec(List(o), o.et.angle)

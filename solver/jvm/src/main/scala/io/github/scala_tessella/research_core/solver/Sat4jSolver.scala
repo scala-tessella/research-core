@@ -5,18 +5,17 @@ import org.sat4j.minisat.SolverFactory
 import org.sat4j.specs.{ContradictionException, ISolver}
 
 /** The JVM [[SatSolver]]: SAT4J's default MiniSat-style solver, exactly as the enumerators have always
-  * configured it. `ContradictionException` is translated to the solver-agnostic
-  * [[SatSolver.Contradiction]] and `TimeoutException` to [[SatSolver.Timeout]]; `exactlyOne` keeps SAT4J's
-  * native cardinality constraint.
+  * configured it. `ContradictionException` is translated to the solver-agnostic [[SatSolver.Contradiction]]
+  * and `TimeoutException` to [[SatSolver.Timeout]]; `exactlyOne` keeps SAT4J's native cardinality constraint.
   */
 final class Sat4jSolver private (val underlying: ISolver, timeoutSeconds: Int) extends SatSolver:
 
   def addClause(lits: Seq[Int]): Unit =
-    try underlying.addClause(new VecInt(lits.toArray))
+    try underlying.addClause(new VecInt(lits.toArray)): Unit
     catch case _: ContradictionException => throw new SatSolver.Contradiction
 
   def exactlyOne(lits: Array[Int]): Unit =
-    try underlying.addExactly(new VecInt(lits), 1)
+    try underlying.addExactly(new VecInt(lits), 1): Unit
     catch case _: ContradictionException => throw new SatSolver.Contradiction
 
   def solve(): Boolean =
@@ -41,5 +40,5 @@ private[solver] object PlatformSolver:
   * `ContradictionException` mid-stream (trivially UNSAT — callers catch); certification sinks must not.
   */
 final class Sat4jSink(solver: ISolver) extends SymbolAssembly.ClauseSink:
-  def clause(lits: Seq[Int]): Unit       = solver.addClause(new VecInt(lits.toArray))
-  def exactlyOne(lits: Array[Int]): Unit = solver.addExactly(new VecInt(lits), 1)
+  def clause(lits: Seq[Int]): Unit       = solver.addClause(new VecInt(lits.toArray)): Unit
+  def exactlyOne(lits: Array[Int]): Unit = solver.addExactly(new VecInt(lits), 1): Unit

@@ -189,15 +189,15 @@ object DelaneySymbols:
               }
               new Task(head).compute()
               forked.foreach(_.join())
-      try pool.invoke(new Task(root))
+      try { pool.invoke(new Task(root)); () }
       finally pool.shutdown()
 
     /** The Cats Effect twin of [[parallelForeach]] (the migration path to Scala Native, where the runtime is
       * CE's own work-stealing compute pool): a fiber is spawned only at BRANCH points — single-child chains
-      * are walked inline without suspending, so fiber count tracks branch points exactly as the ForkJoin
-      * task count does. `parallelism <= 1` falls back to the sequential walk; beyond that the CE global
-      * runtime's pool width (#cores), not `parallelism`, bounds the true concurrency. `f` MUST be
-      * thread-safe, exactly as for [[parallelForeach]].
+      * are walked inline without suspending, so fiber count tracks branch points exactly as the ForkJoin task
+      * count does. `parallelism <= 1` falls back to the sequential walk; beyond that the CE global runtime's
+      * pool width (#cores), not `parallelism`, bounds the true concurrency. `f` MUST be thread-safe, exactly
+      * as for [[parallelForeach]].
       */
     def parallelForeachCE(parallelism: Int, f: R => Unit): Unit =
       if parallelism <= 1 then foreach(f)
@@ -206,8 +206,8 @@ object DelaneySymbols:
         // fiber-per-branch is ~3x slower than ForkJoin here (fiber start/join dwarfs a task push), so
         // forking is BUDGETED: the first `parallelism * 256` branch children get fibers — enough frontier
         // for the pool to balance — and every branch after that is walked inline on its owning fiber
-        val budget = new java.util.concurrent.atomic.AtomicInteger(parallelism * 256)
-        def walk(st: S): Unit =
+        val budget              = new java.util.concurrent.atomic.AtomicInteger(parallelism * 256)
+        def walk(st: S): Unit   =
           extract(st).foreach(f)
           children(st).foreach(walk)
         def go(st: S): IO[Unit] =
@@ -550,7 +550,7 @@ object DelaneySymbols:
           else if orb.length == 2 then cones += 2
         var idx     = 0
         while idx < orbs.length do
-          if st.vs(idx) > 1 then (if orbs(idx).isChain then corners else cones) += st.vs(idx)
+          if st.vs(idx) > 1 then ((if orbs(idx).isChain then corners else cones) += st.vs(idx)): Unit
           idx += 1
         val front   = cones.sorted.reverse.mkString
         val middle  = if isLoopless(ds) then "" else "*"
@@ -723,7 +723,7 @@ object DelaneySymbols:
                 val key = dsym.canonicalKey
                 if seen.add(key) then
                   val t = Tiling(orbs12.length, sigs.flatten.map(normalize).toList, dsym.size)
-                  if keep(t, dsym) then out.add((t, dsym))
+                  if keep(t, dsym) then out.add((t, dsym)): Unit
     val running                   = new AtomicBoolean(true)
     val logger                    = new Thread(() =>
       while running.get do
@@ -795,7 +795,7 @@ object DelaneySymbols:
           val (ra, rb) = (find(a), find(b))
           if ra == rb then false else { parent(ra) = rb; true }
         val queue                          = mutable.Queue((1, d0))
-        union(1, d0)
+        union(1, d0): Unit
         while queue.nonEmpty do
           val (a, b) = queue.dequeue()
           var i      = 0
@@ -1068,7 +1068,7 @@ object DelaneySymbols:
         else if orb.length == 2 then cones += 2
       for orb <- orbits(ds.dset, 0, 1) ++ orbits(ds.dset, 1, 2) do
         val v = ds.v(orb.i, orb.j, orb.elements.head)
-        if v > 1 then (if orb.isChain then corners else cones) += v
+        if v > 1 then ((if orb.isChain then corners else cones) += v): Unit
       val front   = cones.sorted.reverse.mkString
       val middle  = if isLoopless(ds.dset) then "" else "*"
       val back    = corners.sorted.reverse.mkString
@@ -1103,7 +1103,7 @@ object DelaneySymbols:
         val (ra, rb) = (find(a), find(b))
         if ra == rb then false else { parent(ra) = rb; true }
       val queue                          = mutable.Queue((1, d0))
-      union(1, d0)
+      union(1, d0): Unit
       while queue.nonEmpty do
         val (a, b) = queue.dequeue()
         var i      = 0
@@ -1145,7 +1145,7 @@ object DelaneySymbols:
         val (ra, rb) = (find(a), find(b))
         if ra == rb then false else { parent(ra) = rb; true }
       val queue                          = mutable.Queue((1, d0))
-      union(1, d0)
+      union(1, d0): Unit
       while queue.nonEmpty do
         val (a, b) = queue.dequeue()
         var i      = 0
@@ -1165,7 +1165,7 @@ object DelaneySymbols:
         d += 1
       if ok then
         val q = quotient(ds, Array.tabulate(n + 1)(find))
-        out.getOrElseUpdate(q.canonicalKey, q)
+        out.getOrElseUpdate(q.canonicalKey, q): Unit
       d0 += 1
     out.values.toList
 
@@ -1204,6 +1204,8 @@ object DelaneySymbols:
     */
   extension (ds: DSymbol)
     def canonicalKey: String =
+      // hot lex-min tracking: a null sentinel beats Option boxing here
+      // scalafix:off DisableSyntax.null
       val n            = ds.size
       var best: String = null
       var s            = 1
@@ -1220,14 +1222,15 @@ object DelaneySymbols:
           while i <= Dim do
             val ei = ds.get(i, orig)
             if o2n(ei) == 0 then { o2n(ei) = next; n2o(next) = ei; next += 1 }
-            trace.append(o2n(ei)).append(',')
+            trace.append(o2n(ei)).append(','): Unit
             i += 1
-          trace.append(ds.m(0, 1, orig)).append('|').append(ds.m(1, 2, orig)).append(';')
+          trace.append(ds.m(0, 1, orig)).append('|').append(ds.m(1, 2, orig)).append(';'): Unit
           d += 1
         val t     = trace.toString
         if best == null || t < best then best = t
         s += 1
       best
+      // scalafix:on DisableSyntax.null
 
   /** Rebuild a symbol from its [[canonicalKey]] (the campaign TSVs' serialization): per chamber
     * `σ₀,σ₁,σ₂,m₀₁|m₁₂;` — v-values recovered as m/r per orbit. Inverse of the key up to relabeling:
@@ -1333,7 +1336,7 @@ object DelaneySymbols:
             regularPolygonVertices(dsym).foreach: sigs =>
               if sigs.length == sigs.toSet.size && sigs.length <= maxN && dsym.isMinimal then
                 val key = dsym.canonicalKey
-                if seen.add(key) then out.add((sigs.length, sigs, dsym))
+                if seen.add(key) then out.add((sigs.length, sigs, dsym)): Unit
     val running                   = new AtomicBoolean(true)
     val logger                    = new Thread(() =>
       while running.get do
@@ -1364,7 +1367,7 @@ object DelaneySymbols:
       parallelism,
       dset => {
         complete.incrementAndGet()
-        if euclideanFeasible(dset) then eucl.incrementAndGet()
+        if euclideanFeasible(dset) then eucl.incrementAndGet(): Unit
       }
     )
     (complete.get, eucl.get)
@@ -1379,7 +1382,7 @@ object DelaneySymbols:
       parallelism,
       dset => {
         complete.incrementAndGet()
-        if euclideanFeasible(dset) then eucl.incrementAndGet()
+        if euclideanFeasible(dset) then eucl.incrementAndGet(): Unit
       }
     )
     (complete.get, eucl.get)
@@ -1647,7 +1650,7 @@ object DelaneySymbols:
             regularPolygonVertices(mn).foreach: msigs =>
               if msigs.length == msigs.toSet.size && msigs.length <= maxN then
                 val key = mn.canonicalKey
-                if seen.add(key) then { reg.incrementAndGet(); out.add((msigs.length, msigs, key)) }
+                if seen.add(key) then { reg.incrementAndGet(); out.add((msigs.length, msigs, key)): Unit }
 
     val running = new AtomicBoolean(true)
     val logger  = new Thread(() =>
@@ -1709,7 +1712,7 @@ object DelaneySymbols:
             nReg += 1
             val mn = dsym.minimalSymbol
             regularPolygonVertices(mn).foreach: msigs =>
-              if msigs.length == msigs.toSet.size && msigs.length <= maxN then seen.add(mn.canonicalKey)
+              if msigs.length == msigs.toSet.size && msigs.length <= maxN then seen.add(mn.canonicalKey): Unit
           tBody += System.nanoTime() - b0
         tDsymBlock += System.nanoTime() - db
     val tot      = System.nanoTime() - t0
@@ -1725,6 +1728,8 @@ object DelaneySymbols:
     * roots, undefined ops shown as `x`. Fill-order-independent, so it deduplicates isomorphic PARTIAL maps.
     */
   private def canonicalDSetKey(ds: DSet): String =
+    // hot lex-min tracking: a null sentinel beats Option boxing here
+    // scalafix:off DisableSyntax.null
     val n            = ds.size
     var best: String = null
     var s            = 1
@@ -1746,6 +1751,7 @@ object DelaneySymbols:
       if ok then { val t = sb.toString; if best == null || t < best then best = t }
       s += 1
     best
+    // scalafix:on DisableSyntax.null
 
   /** Corona-first counterpart of [[orientedGenerationStats]] using VISITED-SET dedup (canonical partial key)
     * instead of `checkCanonicity`, plus the early [[verticesAngleFeasible]] prune. Counts DISTINCT partial
@@ -1767,7 +1773,7 @@ object DelaneySymbols:
                 val mn = dsym.minimalSymbol
                 regularPolygonVertices(mn).foreach: msigs =>
                   if msigs.length == msigs.toSet.size && msigs.length <= maxN then
-                    regSeen.add(mn.canonicalKey)
+                    regSeen.add(mn.canonicalKey): Unit
         case Some((d, i)) =>
           val cd  = color(d)
           var e   = d + 1
@@ -1831,7 +1837,7 @@ object DelaneySymbols:
               if dsym.isEuclidean then
                 regularPolygonVertices(dsym).foreach: sigs =>
                   if sigs.length == sigs.toSet.size && sigs.length <= maxN && dsym.isMinimal then
-                    regSeen.add(dsym.canonicalKey)
+                    regSeen.add(dsym.canonicalKey): Unit
         case Some((d, i)) =>
           var e   = d
           val cap = math.min(st.ds.size + 1, maxSize)

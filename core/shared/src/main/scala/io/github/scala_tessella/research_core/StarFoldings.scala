@@ -3,7 +3,7 @@ package io.github.scala_tessella.research_core
 import MonoShell.geomOf
 import SpeciesEnumerator.species
 import StarChambers.{Chamber, StarComplex}
-import TransitivePatterns.{cornerData, stabilizers, Mat}
+import TransitivePatterns.{cornerData, stabilizers}
 
 /** FOLDINGS of the species star complexes — the three-dimensional transposition of the two-dimensional
   * star-folding layer. A vertex orbit of a k-uniform honeycomb may carry a nontrivial stabilizer in the

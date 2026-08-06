@@ -14,7 +14,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 class FracSpec extends AnyFlatSpec with Matchers with ScalaCheckPropertyChecks:
 
   // 100 cases per property instead of ScalaTest's default 10 — milliseconds on these generators
-  override implicit val generatorDrivenConfig: PropertyCheckConfiguration =
+  implicit override val generatorDrivenConfig: PropertyCheckConfiguration =
     PropertyCheckConfiguration(minSuccessful = 100)
 
   // small operands: the field axioms are exercised well inside Long overflow territory

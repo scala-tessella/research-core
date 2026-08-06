@@ -7,11 +7,11 @@ import org.scalatest.matchers.should.Matchers
 import java.nio.file.Files
 
 /** Direct teeth for the certification leaves — until now covered only through the tools-guarded
-  * `CertifyRunner` end-to-end path, so on a machine without kissat/drat-trim NONE of this surface ran.
-  * These are platform-neutral and always run: the sink contracts (pairwise auxiliary-free exactly-one,
-  * the trivial-refutation detector), the DIMACS emit/assemble/parse round-trip, the model-evaluation
-  * checks, and the frame-key format and hash pins (artifact directory names are part of the recorded
-  * manifests — the 16-hex-char SHA-256 prefix must never drift).
+  * `CertifyRunner` end-to-end path, so on a machine without kissat/drat-trim NONE of this surface ran. These
+  * are platform-neutral and always run: the sink contracts (pairwise auxiliary-free exactly-one, the
+  * trivial-refutation detector), the DIMACS emit/assemble/parse round-trip, the model-evaluation checks, and
+  * the frame-key format and hash pins (artifact directory names are part of the recorded manifests — the
+  * 16-hex-char SHA-256 prefix must never drift).
   */
 class CertificationSpec extends AnyFlatSpec with Matchers:
 
@@ -39,8 +39,8 @@ class CertificationSpec extends AnyFlatSpec with Matchers:
     sink.clauseCount shouldBe 2
 
   "DimacsSink + assemble + parseCnf" should "round-trip a clause stream" in:
-    val dir  = Files.createTempDirectory("certification-spec")
-    val body = dir.resolve("test.body")
+    val dir             = Files.createTempDirectory("certification-spec")
+    val body            = dir.resolve("test.body")
     val (maxVar, count) = scala.util.Using.resource(DimacsSink(body)) { sink =>
       sink.clause(List(1, -2))
       sink.exactlyOne(Array(2, 3))
@@ -57,14 +57,14 @@ class CertificationSpec extends AnyFlatSpec with Matchers:
     val model = Array(1, -2, 3)
     clauseSatisfied(List(-2), model) shouldBe true
     clauseSatisfied(List(2), model) shouldBe false
-    clauseSatisfied(List(4), model) shouldBe false  // beyond the model: false
+    clauseSatisfied(List(4), model) shouldBe false // beyond the model: false
     clauseSatisfied(List(-4), model) shouldBe true // its negation: true
     val clauses = Array(Array(1, 2), Array(2), Array(-1, -3), Array(-4))
     violatedClauses(clauses, model) shouldBe Vector(1, 2)
 
   it should "agree between the pre-parsed and Path overloads" in:
-    val dir = Files.createTempDirectory("certification-spec-path")
-    val cnf = dir.resolve("check.cnf")
+    val dir   = Files.createTempDirectory("certification-spec-path")
+    val cnf   = dir.resolve("check.cnf")
     Files.writeString(cnf, "p cnf 3 3\n1 2 0\n2 0\n-1 -3 0\n")
     val model = Array(1, -2, 3)
     violatedClauses(cnf, model) shouldBe violatedClauses(parseCnf(cnf), model)

@@ -4,9 +4,8 @@ import StarFoldings.Folded
 
 /** The σ₀ ASSEMBLY — one unknown involution joining k folded star complexes into a three-dimensional
   * Delaney–Dress symbol candidate, the transposition of the two-dimensional engine with one more internal
-  * involution.
-  * Chambers are the disjoint union of the orbits' folded complexes; σ₀ crosses the flag's edge to the
-  * neighbor vertex, fixed points allowed (edge-midpoint mirrors). The conditions:
+  * involution. Chambers are the disjoint union of the orbits' folded complexes; σ₀ crosses the flag's edge to
+  * the neighbor vertex, fixed points allowed (edge-midpoint mirrors). The conditions:
   *
   *   - MATCHING COMPATIBILITY: σ₀-paired chambers share their face and the cell across the edge, so the m₀₁
   *     (face size), m₂₃ (ring size) and cell-type data must agree;
@@ -118,12 +117,11 @@ object Sigma0Assembly:
       inv
     }
 
-    /** DECK-CONJUGATION LEX-LEADER: keep σ₀ only when it is
-      * lexicographically ≤ every conjugate g·σ₀·g⁻¹. Partial version, sound and representative-complete: scan
-      * positions in order over the contiguous both-defined prefix; the first strict difference decides; an
-      * undefined side leaves the comparison undecided (no prune). The orbit's lex-min solution is never
-      * pruned — its partial states agree with the full vector on defined positions, so every decided
-      * comparison returns the full vector's verdict.
+    /** DECK-CONJUGATION LEX-LEADER: keep σ₀ only when it is lexicographically ≤ every conjugate g·σ₀·g⁻¹.
+      * Partial version, sound and representative-complete: scan positions in order over the contiguous
+      * both-defined prefix; the first strict difference decides; an undefined side leaves the comparison
+      * undecided (no prune). The orbit's lex-min solution is never pruned — its partial states agree with the
+      * full vector on defined positions, so every decided comparison returns the full vector's verdict.
       */
     def lexLeaderOk(): Boolean =
       autos.indices.forall { gi =>

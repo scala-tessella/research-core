@@ -1,6 +1,6 @@
 package io.github.scala_tessella.research_core
 
-import SpeciesEnumerator.{species, Species, State}
+import SpeciesEnumerator.{species, Species}
 
 /** The CHAMBER COMPLEX of a species star — the flags of a honeycomb at a vertex carrying the species, with
   * the three internal involutions. This is the "vertex star" side of the three-dimensional Delaney–Dress
@@ -9,20 +9,18 @@ import SpeciesEnumerator.{species, Species, State}
   * assembly with one more internal involution.
   *
   * A flag (v, e, f, c) at the base vertex v is encoded from [[SpeciesEnumerator]]'s certified spherical
-  * complex as (corner,
-  * side, end): the CELL is the corner, the FACE is one of the corner's sides (arc i spans vids(i),
-  * vids(i+1)), and the EDGE is one of that face's two edges at v, named by its end tiling-vertex vids(i) or
-  * vids(i+1). The involutions:
+  * complex as (corner, side, end): the CELL is the corner, the FACE is one of the corner's sides (arc i spans
+  * vids(i), vids(i+1)), and the EDGE is one of that face's two edges at v, named by its end tiling-vertex
+  * vids(i) or vids(i+1). The involutions:
   *
   *   - σ₁ (change edge within the face): flip the end;
   *   - σ₂ (change face within the cell): the corner's other side at the same end vertex;
   *   - σ₃ (change cell across the face): the arc's other owner, end matched by tiling-vertex.
   *
   * All three are fixed-point-free involutions (the star complex is closed with every arc two-owned — the
-  * enumerator's
-  * acceptance), σ₁ and σ₃ commute, the (σ₁σ₂)-composition has order p over a p-corner (the m₁₂ data) and the
-  * (σ₂σ₃)-composition order r over an r-ring edge (the m₂₃ data), and the chamber count is 4·#arcs. The face
-  * size at a chamber (the m₀₁ data σ₀-assembly needs) is the glued face size of its arc.
+  * enumerator's acceptance), σ₁ and σ₃ commute, the (σ₁σ₂)-composition has order p over a p-corner (the m₁₂
+  * data) and the (σ₂σ₃)-composition order r over an r-ring edge (the m₂₃ data), and the chamber count is
+  * 4·#arcs. The face size at a chamber (the m₀₁ data σ₀-assembly needs) is the glued face size of its arc.
   */
 object StarChambers:
 

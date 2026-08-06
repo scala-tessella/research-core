@@ -5,9 +5,9 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 /** The pure-Scala [[Sha256]] property-checked against the JVM's `MessageDigest` — the cross-platform
-  * frame-key hashes must be bit-identical to what the harness produced before (artifact directory names
-  * are part of the recorded manifests). The platform-neutral NIST vectors live in the SHARED
-  * `Sha256VectorsSpec`, so Scala Native verifies the digest too.
+  * frame-key hashes must be bit-identical to what the harness produced before (artifact directory names are
+  * part of the recorded manifests). The platform-neutral NIST vectors live in the SHARED `Sha256VectorsSpec`,
+  * so Scala Native verifies the digest too.
   */
 class Sha256Spec extends AnyFlatSpec with Matchers with ScalaCheckPropertyChecks:
 

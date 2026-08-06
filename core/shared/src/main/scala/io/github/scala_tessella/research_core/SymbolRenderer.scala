@@ -65,7 +65,7 @@ object SymbolRenderer:
         val (_, cs, reps) =
           corners.getOrElseUpdate(key(ch.f), (p, mutable.Set.empty, mutable.Map.empty))
         cs += key(ch.v)
-        reps.getOrElseUpdate(key(ch.v), ch.v)
+        reps.getOrElseUpdate(key(ch.v), ch.v): Unit
         // σ₀: other vertex across the edge
         val n0            = Cham(ds.get(0, ch.c), reflect(ch.v, ch.e, ch.f), ch.e, ch.f)
         // σ₁: other edge at the vertex, same face

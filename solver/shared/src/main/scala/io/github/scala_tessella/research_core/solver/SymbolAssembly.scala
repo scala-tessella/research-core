@@ -120,7 +120,7 @@ object SymbolAssembly:
         // record WHICH σ was applied: a σ₁-fixed end (mirror through the face corner) and a σ₂-fixed end
         // (mirror along the edge) are structurally DIFFERENT stars — an op-blind trace conflated the two
         // 4-chain foldings of 4⁴ and silently dropped one (the G2 19/20 bug)
-        sb.append(star.m01(cur)).append(op).append(if nxt == cur then 'F' else '-')
+        sb.append(star.m01(cur)).append(op).append(if nxt == cur then 'F' else '-'): Unit
         cur = nxt
         op = 3 - op
       sb.toString
@@ -355,10 +355,10 @@ object SymbolAssembly:
 
   /** All σ₀ involutions of the frame satisfying the three constraints: CDCL over the [[encodeSigma0]]
     * instance via `newSolver` (SAT4J by default — [[Sat4jSolver]]). Enumeration is hand-rolled (NOT
-    * `ModelIterator`): blocking only the true σ₀ pair-variables
-    * keeps each blocking clause ≤ #chambers wide; ModelIterator blocks the FULL model incl. thousands of
-    * face-path auxiliaries, which OOM'd a 10g heap on the symmetric-rich n=5 sets (tens of thousands of
-    * models). `maxModels` is a flood-guard — a capped result is reported, never silent.
+    * `ModelIterator`): blocking only the true σ₀ pair-variables keeps each blocking clause ≤ #chambers wide;
+    * ModelIterator blocks the FULL model incl. thousands of face-path auxiliaries, which OOM'd a 10g heap on
+    * the symmetric-rich n=5 sets (tens of thousands of models). `maxModels` is a flood-guard — a capped
+    * result is reported, never silent.
     *
     * Certification hooks (ADR-0008, all defaulted to no-ops): `baseSink` receives the full encoding (tee'd
     * with the live solver — if SAT4J hits a mid-stream contradiction the emitted prefix ends at the

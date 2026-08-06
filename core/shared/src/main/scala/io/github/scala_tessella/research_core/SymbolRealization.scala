@@ -4,9 +4,8 @@ import MonoShell.{ringDescriptors, Flags, StarGeom, Vec}
 import SpeciesEnumerator.species
 import StarChambers.Chamber
 import StarFoldings.{fold, symmetryOf}
-import Sigma0Assembly.unionOf
-import SymbolCatalog.{symOf, Sym}
-import TransitivePatterns.{developBall, fingerprintOf, matOf, Iso, Mat, Pattern}
+import SymbolCatalog.Sym
+import TransitivePatterns.{developBall, fingerprintOf, Iso, Mat, Pattern}
 
 /** The REALIZATION side of the k = 1 symbol gate — the minimal symbol of every certified honeycomb, derived
   * from its certified pattern, for key-for-key comparison with the combinatorial census of [[SymbolCatalog]].

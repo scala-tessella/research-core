@@ -9,12 +9,12 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.util.Using
 
-/** Teeth for the track-C quotient obligation encoding, tool-free: the obligation is solved LIVE through
-  * the platform [[SatSolver]] instead of external kissat, so it runs everywhere. On a MINIMAL symbol the
+/** Teeth for the track-C quotient obligation encoding, tool-free: the obligation is solved LIVE through the
+  * platform [[SatSolver]] instead of external kissat, so it runs everywhere. On a MINIMAL symbol the
   * generator list is empty and the empty-list obligation certifies minimality itself (scaladoc of
   * [[QuotientCertify]]) — so on every oracle minimal symbol `generators` must be empty and `encode`'s
-  * instance must be UNSAT. Plus the structural contract of `closureModel` (a full ± assignment over the
-  * pair variables).
+  * instance must be UNSAT. Plus the structural contract of `closureModel` (a full ± assignment over the pair
+  * variables).
   */
 class QuotientCertifySpec extends AnyFlatSpec with Matchers:
 
@@ -22,7 +22,7 @@ class QuotientCertifySpec extends AnyFlatSpec with Matchers:
     DelaneySymbols.enumerateSymbols(maxN = 1, maxSize = 12).map((_, sigs, ds) => sigs.head -> ds)
 
   "generators" should "be empty on every minimal oracle symbol" in:
-    for (t, ds) <- oracle do withClue(s"$t: ") { QuotientCertify.generators(ds) shouldBe empty }
+    for (t, ds) <- oracle do withClue(s"$t: ")(QuotientCertify.generators(ds) shouldBe empty)
 
   "encode with the empty generator list" should "be UNSAT on every minimal oracle symbol (live solver)" in:
     for (t, ds) <- oracle do

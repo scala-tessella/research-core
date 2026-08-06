@@ -1,6 +1,5 @@
 package io.github.scala_tessella.research_core.solver
 
-import io.github.scala_tessella.research_core.DelaneySymbols
 import io.github.scala_tessella.research_core.DelaneySymbols.DSet
 import io.github.scala_tessella.research_core.solver.SatSolver.SolverSink
 import io.github.scala_tessella.research_core.solver.SymbolAssembly.{ClauseSink, NullSink, TeeSink}

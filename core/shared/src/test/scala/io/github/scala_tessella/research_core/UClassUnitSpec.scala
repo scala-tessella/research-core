@@ -40,7 +40,7 @@ class UClassUnitSpec extends AnyFlatSpec with Matchers:
   it should "keep candidates a subset of designations (candidates filter designations)" in:
     val relaxed: List[(Tiling, DSymbol)] = DelaneySymbols.enumerateRelaxedDetailed(maxN = 1, maxSize = 12)
     relaxed should not be empty
-    val (t, ds)            = relaxed.head
-    val z: VertexSignature = t.vertices.head
+    val (t, ds)                          = relaxed.head
+    val z: VertexSignature               = t.vertices.head
     UClass.candidates(ds, z).toSet.subsetOf(UClass.designations(ds, z).toSet) shouldBe true
     UClass.noneForcedRegular(ds, Set.empty, Seq.empty) shouldBe true // empty irregular short-circuits

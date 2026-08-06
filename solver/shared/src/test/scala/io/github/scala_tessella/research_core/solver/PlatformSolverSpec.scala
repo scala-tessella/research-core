@@ -7,9 +7,9 @@ import scala.util.Using
 
 /** The [[SatSolver]] CONTRACT, tested against the platform's live solver — SAT4J on the JVM, CaDiCaL via
   * IPASIR on Scala Native — so both implementations answer to the same spec: variable-ordered model
-  * semantics, root-level UNSAT in either style the contract admits (eager [[SatSolver.Contradiction]] or
-  * lazy `solve() == false`), incremental blocking-clause re-solve (the enumerators' loop), and the time
-  * budget surfacing as [[SatSolver.Timeout]] on a resolution-hard instance.
+  * semantics, root-level UNSAT in either style the contract admits (eager [[SatSolver.Contradiction]] or lazy
+  * `solve() == false`), incremental blocking-clause re-solve (the enumerators' loop), and the time budget
+  * surfacing as [[SatSolver.Timeout]] on a resolution-hard instance.
   */
 class PlatformSolverSpec extends AnyFlatSpec with Matchers:
 

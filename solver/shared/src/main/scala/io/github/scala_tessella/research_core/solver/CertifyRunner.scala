@@ -82,7 +82,7 @@ object CertifyRunner:
   /** The emitted artifacts and in-memory verdicts of the enumeration tier of one frame — everything the
     * external certification steps consume.
     */
-  private final case class Prepared(
+  final private case class Prepared(
       key: String,
       hash: String,
       fdir: Path,
@@ -112,7 +112,7 @@ object CertifyRunner:
           IO.blocking {
             val ubBody            = prep.fdir.resolve("unbroken.body")
             val (ubVars, ubCount) = Using.resource(DimacsSink(ubBody)) { ub =>
-              encodeSigma0(frame, Vector.empty, ub)
+              encodeSigma0(frame, Vector.empty, ub): Unit
               (ub.maxVar, ub.clauseCount)
             }
             val ubCnf             = prep.fdir.resolve("unbroken.cnf")
@@ -154,13 +154,13 @@ object CertifyRunner:
       dir: Path,
       maxModels: Int
   ): Prepared =
-    val key       = frameKey(types, chosen)
-    val hash      = frameKeyHash(key)
-    val fdir      = dir.resolve(hash)
+    val key                                     = frameKey(types, chosen)
+    val hash                                    = frameKeyHash(key)
+    val fdir                                    = dir.resolve(hash)
     Files.createDirectories(fdir)
-    val baseBody  = fdir.resolve("base.body")
-    val blockBody = fdir.resolve("blocking.body")
-    val full      = mutable.ListBuffer.empty[Array[Int]]
+    val baseBody                                = fdir.resolve("base.body")
+    val blockBody                               = fdir.resolve("blocking.body")
+    val full                                    = mutable.ListBuffer.empty[Array[Int]]
     // bracketed: the sinks must not leak when the enumeration throws (SatSolver.Timeout, IO errors), and
     // must be closed — flushed — BEFORE the bodies are assembled below, hence counts captured on the way out
     val (models, capped, maxVar, nBase, nBlock) =
@@ -170,12 +170,12 @@ object CertifyRunner:
         (models, capped, base.maxVar, base.clauseCount, block.clauseCount)
       }
     // JVM fidelity: every live model satisfies the emitted base CNF
-    val baseCnf     = fdir.resolve("base.cnf")
+    val baseCnf                                 = fdir.resolve("base.cnf")
     assemble(baseCnf, maxVar, nBase, baseBody)
-    val baseClauses = parseCnf(baseCnf) // parse once, check every model in memory
-    val violations  = full.iterator.map(m => violatedClauses(baseClauses, m).size).sum
+    val baseClauses                             = parseCnf(baseCnf) // parse once, check every model in memory
+    val violations                              = full.iterator.map(m => violatedClauses(baseClauses, m).size).sum
     // the obligation: base + blocking; UNSAT = exhaustiveness (pure refutation when models = 0)
-    val instance    = fdir.resolve("instance.cnf")
+    val instance                                = fdir.resolve("instance.cnf")
     assemble(instance, maxVar, nBase + nBlock, baseBody, blockBody)
     Prepared(key, hash, fdir, maxVar, nBase, models.size, capped, violations, instance)
 

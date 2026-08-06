@@ -3,9 +3,9 @@ package io.github.scala_tessella.research_core.solver
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-/** The FIPS 180-4 vectors for the pure-Scala [[Sha256]] — SHARED, so both platforms verify the digest
-  * (frame hashes must be bit-identical across platforms). The JVM-only `Sha256Spec` adds the
-  * `MessageDigest` property comparison on top.
+/** The FIPS 180-4 vectors for the pure-Scala [[Sha256]] — SHARED, so both platforms verify the digest (frame
+  * hashes must be bit-identical across platforms). The JVM-only `Sha256Spec` adds the `MessageDigest`
+  * property comparison on top.
   */
 class Sha256VectorsSpec extends AnyFlatSpec with Matchers:
 

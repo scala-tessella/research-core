@@ -4,12 +4,12 @@ import HoneycombAlphabet.*
 import HoneycombAlphabet.CellType
 import CertifiedDihedrals.{Iv, V3}
 
-/** The species table — ALL edge-to-edge tilings of the sphere of directions by the rigid
-  * corner figures of the 13 core cells. A vertex species (the star of a honeycomb vertex up to congruence,
-  * reflections included) IS such a tiling: cells become spherical polygons with arc sides of length equal to
-  * the face interior angles (60/90/120/135/150), shared faces become shared arcs, and honeycomb edges become
-  * tiling vertices whose surrounding angles — exact dihedrals in the (15°, α) lattice — must close to exactly
-  * 360°, i.e. be one of the edge figures catalogued by [[HoneycombAlphabet]].
+/** The species table — ALL edge-to-edge tilings of the sphere of directions by the rigid corner figures of
+  * the 13 core cells. A vertex species (the star of a honeycomb vertex up to congruence, reflections
+  * included) IS such a tiling: cells become spherical polygons with arc sides of length equal to the face
+  * interior angles (60/90/120/135/150), shared faces become shared arcs, and honeycomb edges become tiling
+  * vertices whose surrounding angles — exact dihedrals in the (15°, α) lattice — must close to exactly 360°,
+  * i.e. be one of the edge figures catalogued by [[HoneycombAlphabet]].
   *
   * Assembly is a geometric DFS: one seed corner per cell type (fixed placement; the alphabet is restricted to
   * ordinal ≥ seed so each species is found from its least cell), growth always fills a boundary arc at a

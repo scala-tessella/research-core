@@ -8,15 +8,15 @@ import StarFoldings.{fold, subgroupsOf, symmetryOf}
 import Sigma0Assembly.{enumerateSigma0, unionOf, ChamberUnion}
 import SymbolCatalog.{canonicalKey, isMinimal, valid, Sym}
 
-/** Structural sanity of the honeycomb substrate — the engines only, on their own terms: no enumeration
-  * COUNT is asserted here, because counts are results and results belong to the verification repository of
-  * the paper that states them. What is asserted is that each engine satisfies the invariants its own
-  * contract promises, checked independently of the code path that produces them:
+/** Structural sanity of the honeycomb substrate — the engines only, on their own terms: no enumeration COUNT
+  * is asserted here, because counts are results and results belong to the verification repository of the
+  * paper that states them. What is asserted is that each engine satisfies the invariants its own contract
+  * promises, checked independently of the code path that produces them:
   *
-  *   - the assembled spherical complexes are closed (every arc owned twice) and flat at every tiling
-  *     vertex, the acceptance criterion re-read off the finished state rather than off the search;
-  *   - the chamber complex satisfies the flag laws (three fixed-point-free involutions, σ₁σ₃ = σ₃σ₁,
-  *     4 chambers per arc);
+  *   - the assembled spherical complexes are closed (every arc owned twice) and flat at every tiling vertex,
+  *     the acceptance criterion re-read off the finished state rather than off the search;
+  *   - the chamber complex satisfies the flag laws (three fixed-point-free involutions, σ₁σ₃ = σ₃σ₁, 4
+  *     chambers per arc);
   *   - subgroup enumeration agrees with brute force, and Lagrange holds on the order-48 cubic star group;
   *   - the propagating σ₀ enumerator agrees with a BRUTE-FORCE ORACLE (all involutions with fixed points,
   *     filtered by directly-written axiom formulas) on small foldings;
@@ -52,7 +52,7 @@ class HoneycombSubstrateSpec extends AnyFlatSpec with Matchers:
         cx.chambers.size shouldBe 4 * sp.state.arcs.size
         for s <- Vector(cx.s1, cx.s2, cx.s3) do
           s.indices.foreach { c =>
-            s(s(c)) shouldBe c   // involution
+            s(s(c)) shouldBe c // involution
             s(c) should not be c // fixed-point-free
           }
         cx.s1.indices.foreach(c => cx.s1(cx.s3(c)) shouldBe cx.s3(cx.s1(c)))
@@ -73,16 +73,16 @@ class HoneycombSubstrateSpec extends AnyFlatSpec with Matchers:
         subgroupsOf(g).toSet shouldBe brute
 
   it should "satisfy Lagrange and conjugation-closure on the cubic star's order-48 group" in:
-    val sym                                     = symmetryOf(cubic)
+    val sym                          = symmetryOf(cubic)
     sym.perms.size shouldBe 48
-    val subs                                    = subgroupsOf(sym.perms)
+    val subs                         = subgroupsOf(sym.perms)
     subs.foreach(sub => 48 % sub.size shouldBe 0)
     subs.map(_.size).max shouldBe 48
-    def invert(p: StarFoldings.Perm)             =
+    def invert(p: StarFoldings.Perm) =
       val inv = Array.fill(p.size)(0)
       for x <- p.indices do inv(p(x)) = x
       inv.toVector
-    val set                                     = subs.toSet
+    val set                          = subs.toSet
     for h <- subs; g <- sym.perms do set should contain(h.map(x => invert(g).map(x).map(g)))
 
   // ---------- the σ₀ enumerator against an independent oracle ----------
@@ -116,16 +116,17 @@ class HoneycombSubstrateSpec extends AnyFlatSpec with Matchers:
     val conn                  =
       val seen  = collection.mutable.Set(0)
       var front = List(0)
-      while front.nonEmpty do front = front.flatMap(c => List(s0(c), u.s1(c), u.s2(c), u.s3(c)).filter(seen.add))
+      while front.nonEmpty do
+        front = front.flatMap(c => List(s0(c), u.s1(c), u.s2(c), u.s3(c)).filter(seen.add))
       seen.size == n
     matching && commute && faces && conn
 
   "the σ₀ enumerator" should "equal the brute-force oracle on small foldings" in:
-    val symCubic  = symmetryOf(cubic)
-    val symOctetC = symmetryOf(octetC)
-    val symOctetH = symmetryOf(octetH)
+    val symCubic                           = symmetryOf(cubic)
+    val symOctetC                          = symmetryOf(octetC)
+    val symOctetH                          = symmetryOf(octetH)
     def full(s: StarFoldings.StarSymmetry) = fold(s, s.perms.toSet)
-    val cases     = Vector(
+    val cases                              = Vector(
       Vector(full(symCubic)),
       Vector(full(symOctetC)),
       Vector(full(symOctetH)),
@@ -141,12 +142,12 @@ class HoneycombSubstrateSpec extends AnyFlatSpec with Matchers:
   // ---------- canonical keys and minimality ----------
 
   "the canonical key" should "be invariant under chamber relabeling" in:
-    val sym       = symmetryOf(octetH)
-    val u         = unionOf(Vector(fold(sym, sym.perms.toSet)))
-    val (sols, _) = enumerateSigma0(u)
-    val syms      = sols.map(SymbolCatalog.symOf(u, Vector(octetH), _))
+    val sym                                  = symmetryOf(octetH)
+    val u                                    = unionOf(Vector(fold(sym, sym.perms.toSet)))
+    val (sols, _)                            = enumerateSigma0(u)
+    val syms                                 = sols.map(SymbolCatalog.symOf(u, Vector(octetH), _))
     syms should not be empty
-    val rnd       = new scala.util.Random(7)
+    val rnd                                  = new scala.util.Random(7)
     def relabel(s: Sym, p: Vector[Int]): Sym =
       def conj(g: Vector[Int]) =
         val out = Array.fill(s.size)(0)
@@ -156,7 +157,16 @@ class HoneycombSubstrateSpec extends AnyFlatSpec with Matchers:
         val out = Array.fill(s.size)(0)
         for c <- 0 until s.size do out(p(c)) = v(c)
         out.toVector
-      Sym(conj(s.s0), conj(s.s1), conj(s.s2), conj(s.s3), data(s.m01), data(s.m23), data(s.cell), data(s.speciesOf))
+      Sym(
+        conj(s.s0),
+        conj(s.s1),
+        conj(s.s2),
+        conj(s.s3),
+        data(s.m01),
+        data(s.m23),
+        data(s.cell),
+        data(s.speciesOf)
+      )
     for s <- syms; _ <- 1 to 5 do
       canonicalKey(relabel(s, rnd.shuffle(Vector.range(0, s.size)))) shouldBe canonicalKey(s)
 

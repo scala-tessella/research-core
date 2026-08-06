@@ -3,13 +3,13 @@ package io.github.scala_tessella.research_core
 import HoneycombAlphabet.*
 import HoneycombAlphabet.CellType
 
-/** The AREA equation for vertex figures. At a honeycomb vertex the cell corners tile the
-  * sphere of directions, so their solid angles (spherical excesses) sum to exactly 720 excess-degrees. All
-  * core corner excesses lie in the two-tier lattice (excess = Σ dihedrals − (k−2)·180 = r + n·α), so the area
-  * equation SPLITS exactly like the edge equation: Σr = 720 and Σn = 0. Together with the per-face- size
-  * parity condition (every arc of the spherical tiling is shared by two corners, so each face size must occur
-  * an even number of times over the multiset), this bounds the cell multiset of EVERY possible vertex species
-  * — the 3D analogue of the 21-species arithmetic table, at multiset level.
+/** The AREA equation for vertex figures. At a honeycomb vertex the cell corners tile the sphere of
+  * directions, so their solid angles (spherical excesses) sum to exactly 720 excess-degrees. All core corner
+  * excesses lie in the two-tier lattice (excess = Σ dihedrals − (k−2)·180 = r + n·α), so the area equation
+  * SPLITS exactly like the edge equation: Σr = 720 and Σn = 0. Together with the per-face- size parity
+  * condition (every arc of the spherical tiling is shared by two corners, so each face size must occur an
+  * even number of times over the multiset), this bounds the cell multiset of EVERY possible vertex species —
+  * the 3D analogue of the 21-species arithmetic table, at multiset level.
   */
 object SpeciesSupports:
 

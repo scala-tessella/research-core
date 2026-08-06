@@ -6,6 +6,56 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+Hardening only — no public-surface changes: the test suite grows from 104 to 130 JVM tests, and the
+build gains dcel's formatting and linting guard rails.
+
+### Added
+
+- **`PlatformSolverSpec`** (shared, replacing the native-only `CadicalSolverSpec`) — the [`SatSolver`]
+  contract against the platform's live solver on BOTH platforms; SAT4J's previously untested
+  `Timeout` translation now runs on the JVM.
+- **`K1CertifySpec`** — the K1 encoding vs the single-orbit tier-free universe generator, op for op at
+  C ≤ 8, plus non-vacuous exclusion of the strictly-2-orbit slice (`K1Certify` had zero in-repo
+  coverage).
+- **`CertificationSpec`** — direct units for the certification leaves, previously reachable only through
+  the tools-guarded e2e path: sink contracts (incl. `CountingSink.sawEmptyClause`), the DIMACS
+  emit/assemble/parse round-trip, both `violatedClauses` overloads, and golden pins for the frame-key
+  format and 16-hex-char hash.
+- **`MetricLayerSpec`** — the metric layer the verification repositories stand on, tested through its
+  documented internal identities on the 11 oracle minimal symbols (regular point solves the system and
+  closes every face, numeric ≡ exact ℚ(ζ₂₄) closure track, rank–nullity, tangent basis of moduli
+  dimension, vacuous exact-symmetry realizability of minimal symbols).
+- **`QuotientCertifySpec`** — the track-C obligation solved LIVE through the platform `SatSolver`
+  (no external kissat): `generators` empty and the empty-list obligation UNSAT on every minimal oracle
+  symbol — the minimality certificate, tool-free and cross-platform.
+- **`HoneycombGateSmokeSpec`** (JVM-only) — the full completeness audit (26 species, 28 classes, zero
+  flags) as an in-repo guard for `CompletenessAudit`/`TransitivePatterns`/`MonoShell`, plus
+  `SymbolRealization` deriving its self-checked minimal symbols with the audit's class counts.
+- **`Sha256VectorsSpec`** (shared) — the NIST vectors now run on Scala Native too; the unbroken
+  pure-refutation tier of `CertifyRunner` is now positively exercised (3.3.6.6 frames: 0 models,
+  `Some(true)` on both unbroken verdicts — previously vacuously passable).
+
+### Changed
+
+- **Formatting and linting guard rails, ported from `dcel`**: `.scalafmt.conf` (scalafmt 3.11.2 — the
+  build had claimed `scalafmtOnCompile` with no config, so the formatter had never actually run; the
+  whole tree is now formatted) and `.scalafix.conf` (`DisableSyntax`: `null`, `asInstanceOf`,
+  `isInstanceOf`, XML banned — `noWhile` deliberately OFF for this codebase's hot-loop style —
+  plus `LeakingImplicitClassVal`), with sbt-scalafix/semanticdb wiring, a `qa` alias, and CI running
+  `scalafmtCheckAll` + `scalafixAll --check` before the tests.
+- **Compiler hygiene**: `-feature -unchecked -Wvalue-discard -Wnonunit-statement -Wunused:imports`,
+  fatal (`-Werror`) in main sources and non-fatal in tests; ~35 discarded non-Unit values now carry
+  explicit `: Unit` ascriptions, six unused imports removed, and the legitimate `null`/cast sites carry
+  scoped scalafix suppressions with reasons.
+- **`CertifyRunner` brackets its DIMACS sinks** (`scala.util.Using`): no leaked file handles or
+  unflushed writers when the enumeration throws (e.g. `SatSolver.Timeout`).
+- Property checks run 100 cases (was 10); suites run serially (`Test / parallelExecution := false`) so
+  core-saturating suites stop contaminating each other's timings; `K2CertifySpec`'s universe sink is
+  actually synchronized; `CertifyRunnerSpec` cleans its temp trees; `BackTrackerCESpec` pins the
+  maxSize-18 counts unconditionally; `CappedProbeSpec` also asserts zero false positives.
+
 ## [0.6.0] — 2026-08-05
 
 The cross-platform release: `core` and `solver` cross-build for the JVM and Scala Native

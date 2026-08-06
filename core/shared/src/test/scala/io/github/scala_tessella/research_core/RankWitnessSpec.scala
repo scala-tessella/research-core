@@ -74,8 +74,8 @@ class RankWitnessSpec extends AnyFlatSpec with Matchers:
     RankWitness.verify(m, bad) shouldBe false
 
   it should "reject a corrupted kernel vector (no longer annihilated)" in:
-    val m = mat(List(List(1, 2), List(2, 4)))
-    val w = RankWitness.produce(m)
+    val m   = mat(List(List(1, 2), List(2, 4)))
+    val w   = RankWitness.produce(m)
     w.kernel should not be empty
     val k0  = w.kernel.head
     val bad = w.copy(kernel = k0.updated(0, k0(0) + Cyclo.one) +: w.kernel.tail)

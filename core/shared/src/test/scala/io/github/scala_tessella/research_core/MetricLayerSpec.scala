@@ -6,13 +6,13 @@ import io.github.scala_tessella.research_core.Signatures.{VertexSignature, norma
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-/** ADR-0009 G2/G3 consistency teeth for the metric layer, on the 11 Archimedean oracle minimal symbols —
-  * the surface the verification repositories (`31-unit-edge-tilings`, `minimal-uniformity-three`) stand
-  * on, previously untested in-repo. Every assertion is a documented INTERNAL identity, not an imported
-  * value: the regular point solves the exact linear system and closes every face; the numeric closure
-  * track agrees with the exact ℚ(ζ₂₄) track; the exact linear matrix obeys rank–nullity against the Frac
-  * RREF nullspace; the tangent basis has the moduli dimension by construction and Gauss–Newton moduli
-  * points still close every face; minimal symbols are exact-symmetry realizable vacuously.
+/** ADR-0009 G2/G3 consistency teeth for the metric layer, on the 11 Archimedean oracle minimal symbols — the
+  * surface the verification repositories (`31-unit-edge-tilings`, `minimal-uniformity-three`) stand on,
+  * previously untested in-repo. Every assertion is a documented INTERNAL identity, not an imported value: the
+  * regular point solves the exact linear system and closes every face; the numeric closure track agrees with
+  * the exact ℚ(ζ₂₄) track; the exact linear matrix obeys rank–nullity against the Frac RREF nullspace; the
+  * tangent basis has the moduli dimension by construction and Gauss–Newton moduli points still close every
+  * face; minimal symbols are exact-symmetry realizable vacuously.
   */
 class MetricLayerSpec extends AnyFlatSpec with Matchers:
 
@@ -23,11 +23,11 @@ class MetricLayerSpec extends AnyFlatSpec with Matchers:
 
   "the regular point" should "solve the exact linear angle system of every oracle symbol" in:
     for (t, ds) <- oracle do
-      withClue(s"$t: ") { satisfies(angleSystem(ds), regularPoint(ds)) shouldBe true }
+      withClue(s"$t: ")(satisfies(angleSystem(ds), regularPoint(ds)) shouldBe true)
 
   it should "close every face numerically (it IS the uniform tiling)" in:
     for (t, ds) <- oracle do
-      withClue(s"$t: ") { maxClosureResidual(ds, regularPoint(ds).map(_.toDouble)) should be < 1e-9 }
+      withClue(s"$t: ")(maxClosureResidual(ds, regularPoint(ds).map(_.toDouble)) should be < 1e-9)
 
   "the exact ℚ(ζ₂₄) track" should "agree with the numeric track on closure rank and moduli dimension" in:
     for (t, ds) <- oracle do
@@ -54,7 +54,7 @@ class MetricLayerSpec extends AnyFlatSpec with Matchers:
       }
 
   "exactSymmetryRealizable" should "hold vacuously on every (minimal) oracle symbol" in:
-    for (t, ds) <- oracle do withClue(s"$t: ") { exactSymmetryRealizable(ds) shouldBe true }
+    for (t, ds) <- oracle do withClue(s"$t: ")(exactSymmetryRealizable(ds) shouldBe true)
 
   "chamberAngles" should "give right angles everywhere on 4⁴" in:
     val ds = oracle(sig("4.4.4.4"))

@@ -5,12 +5,12 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 /** JVM-only smoke over the honeycomb result engines that are otherwise asserted only downstream
-  * (`convex-uniform-honeycombs`): the full completeness audit re-closes everything with zero flags — one
-  * run covers `CompletenessAudit`, `TransitivePatterns`, `MonoShell` and the certification chain — and
+  * (`convex-uniform-honeycombs`): the full completeness audit re-closes everything with zero flags — one run
+  * covers `CompletenessAudit`, `TransitivePatterns`, `MonoShell` and the certification chain — and
   * `SymbolRealization` derives the minimal symbols of a sample of species with its internal loud checks
-  * (symbol axioms, minimality, stabilizer subgroup) passing and the class counts matching the audit.
-  * JVM-only placement keeps the Native suite's wall time flat; the engines are platform-neutral code
-  * already compiled (not linked) on Native.
+  * (symbol axioms, minimality, stabilizer subgroup) passing and the class counts matching the audit. JVM-only
+  * placement keeps the Native suite's wall time flat; the engines are platform-neutral code already compiled
+  * (not linked) on Native.
   */
 class HoneycombGateSmokeSpec extends AnyFlatSpec with Matchers:
 

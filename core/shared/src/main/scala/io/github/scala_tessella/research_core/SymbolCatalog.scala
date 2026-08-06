@@ -202,14 +202,14 @@ object SymbolCatalog:
 
   /** The k-orbit sweep of a species k-set: every folding TUPLE (most-folded first, i.e. smallest unions
     * first), every σ₀ on the k-orbit union, minimal symbols deduped by canonical key with full folding-tuple
-    * provenance. Completeness, k-ary: a genuine k-orbit Krötenheerdt honeycomb's minimal
-    * symbol has chamber set flags/Γ = ⊔_r (flags_r/Stab(v_r)) — each vertex stabilizer acts on its star as a
-    * subgroup of the star symmetry group — so the sweep meets it at exactly that folding tuple; the k orbits
-    * carry pairwise DISTINCT species (Krötenheerdt), so no congruence merges them and the species decorations
-    * stratify the key space by k. Tuples whose PART-COMPATIBILITY GRAPH (parts linked iff some chamber pair
-    * matches on (m₀₁, m₂₃, cell)) is disconnected are skipped as CROSSLESS: σ₁..σ₃ preserve parts, σ₀ can
-    * pair chambers only within compatibility classes, so the connectivity axiom is unsatisfiable. At k = 2
-    * this is exactly the cross-compatible-pair skip.
+    * provenance. Completeness, k-ary: a genuine k-orbit Krötenheerdt honeycomb's minimal symbol has chamber
+    * set flags/Γ = ⊔_r (flags_r/Stab(v_r)) — each vertex stabilizer acts on its star as a subgroup of the
+    * star symmetry group — so the sweep meets it at exactly that folding tuple; the k orbits carry pairwise
+    * DISTINCT species (Krötenheerdt), so no congruence merges them and the species decorations stratify the
+    * key space by k. Tuples whose PART-COMPATIBILITY GRAPH (parts linked iff some chamber pair matches on
+    * (m₀₁, m₂₃, cell)) is disconnected are skipped as CROSSLESS: σ₁..σ₃ preserve parts, σ₀ can pair chambers
+    * only within compatibility classes, so the connectivity axiom is unsatisfiable. At k = 2 this is exactly
+    * the cross-compatible-pair skip.
     */
   def kEntries(
       sps: Vector[Int],

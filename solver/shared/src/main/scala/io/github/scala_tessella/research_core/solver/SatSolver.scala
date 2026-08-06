@@ -1,8 +1,8 @@
 package io.github.scala_tessella.research_core.solver
 
 /** The incremental CDCL surface the enumerators actually use — extracted so the live solver can be SAT4J on
-  * the JVM and an IPASIR binding (CaDiCaL) on Scala Native. Deliberately free of any solver import: this
-  * file is platform-neutral.
+  * the JVM and an IPASIR binding (CaDiCaL) on Scala Native. Deliberately free of any solver import: this file
+  * is platform-neutral.
   *
   * Contract:
   *   - variables are positive ints, clauses are non-empty literal lists (DIMACS convention);
@@ -27,7 +27,8 @@ object SatSolver:
   /** Solver-agnostic replacement for SAT4J's `ContradictionException`: adding the clause made the formula
     * root-level UNSAT. Stackless — it is pure control flow in the enumeration loops.
     */
-  final class Contradiction extends RuntimeException(null, null, false, false)
+  final class Contradiction
+      extends RuntimeException(null, null, false, false) // scalafix:ok DisableSyntax.null
 
   /** `solve()` hit the solver's time budget — SAT4J's `TimeoutException` (JVM) and the IPASIR terminate
     * callback (Native), translated to one platform-neutral signal. Deliberately NOT caught by the

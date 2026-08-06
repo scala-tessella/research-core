@@ -6,11 +6,11 @@ import org.scalatest.matchers.should.Matchers
 
 import java.nio.file.Files
 
-/** End-to-end teeth for the fs2-io/Cats Effect external-process layer of [[CertifyRunner]] — the plumbing
-  * the DRAT certification harness stands on. Cancelled (not failed) when `tools/bin/{kissat,drat-trim}`
-  * are not installed, like the guarded probes. Both certification tiers are exercised POSITIVELY: the
-  * model-bearing tier on the 4⁴ sweep, the pure-refutation unbroken tier on an angle-valid-but-non-tiling
-  * type whose frames carry no σ₀ model at all.
+/** End-to-end teeth for the fs2-io/Cats Effect external-process layer of [[CertifyRunner]] — the plumbing the
+  * DRAT certification harness stands on. Cancelled (not failed) when `tools/bin/{kissat,drat-trim}` are not
+  * installed, like the guarded probes. Both certification tiers are exercised POSITIVELY: the model-bearing
+  * tier on the 4⁴ sweep, the pure-refutation unbroken tier on an angle-valid-but-non-tiling type whose frames
+  * carry no σ₀ model at all.
   */
 class CertifyRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndAfterAll:
 
@@ -18,7 +18,7 @@ class CertifyRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndAfterAll
 
   private def deleteRecursively(f: java.io.File): Unit =
     val children = f.listFiles()
-    if children != null then children.foreach(deleteRecursively)
+    if children != null then children.foreach(deleteRecursively) // scalafix:ok DisableSyntax.null
     f.delete()
 
   override def afterAll(): Unit = deleteRecursively(root.toFile)
@@ -50,7 +50,7 @@ class CertifyRunnerSpec extends AnyFlatSpec with Matchers with BeforeAndAfterAll
     val frames = SymbolAssembly.frames(types)
     frames should not be empty
     val certs  = frames.map((frame, chosen) => CertifyRunner.certifyFrame(types, frame, chosen, dir))
-    for cert <- certs do withClue(cert.key + ": ") { cert.certified shouldBe true }
+    for cert <- certs do withClue(cert.key + ": ")(cert.certified shouldBe true)
     // 4⁴ is realizable, so the sweep must find models somewhere — the obligation is not vacuous
     certs.map(_.models).sum should be > 0
 

@@ -41,9 +41,9 @@ import TransitivePatterns.*
   * carries exactly its certified honeycomb, caps notwithstanding, and a skeleton exhausted without an
   * accepted pattern (search uncapped in that case) carries none.
   *
-  * These four certificates are what a completeness argument consumes on top of the cell alphabet, the
-  * species table, the shell filter and the pattern enumeration; the argument itself is stated and asserted
-  * by the verification repository of the result, not here.
+  * These four certificates are what a completeness argument consumes on top of the cell alphabet, the species
+  * table, the shell filter and the pattern enumeration; the argument itself is stated and asserted by the
+  * verification repository of the result, not here.
   */
 object CompletenessAudit:
 

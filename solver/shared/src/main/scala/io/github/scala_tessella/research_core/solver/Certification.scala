@@ -94,7 +94,7 @@ object Certification:
     Using.resource(Files.newBufferedReader(cnf)) { r =>
       val out  = Array.newBuilder[Array[Int]]
       var line = r.readLine()
-      while line != null do
+      while line != null do // scalafix:ok DisableSyntax.null
         if !(line.isBlank || line.startsWith("c") || line.startsWith("p")) then
           out += line.trim.split("\\s+").iterator.map(_.toInt).takeWhile(_ != 0).toArray
         line = r.readLine()

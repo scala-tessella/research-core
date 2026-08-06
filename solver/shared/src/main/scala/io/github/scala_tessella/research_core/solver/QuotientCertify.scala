@@ -38,7 +38,7 @@ object QuotientCertify:
         val (ra, rb) = (find(a), find(b))
         if ra == rb then false else { parent(ra) = rb; true }
       val queue                 = mutable.Queue((1, d0))
-      union(1, d0)
+      union(1, d0): Unit
       while queue.nonEmpty do
         val (a, b) = queue.dequeue()
         for i <- 0 to 2 do
@@ -58,7 +58,7 @@ object QuotientCertify:
       val (ra, rb) = (find(a), find(b))
       if ra == rb then false else { parent(ra) = rb; true }
     val queue                 = mutable.Queue((1, d0))
-    union(1, d0)
+    union(1, d0): Unit
     while queue.nonEmpty do
       val (a, b) = queue.dequeue()
       for i <- 0 to 2 do

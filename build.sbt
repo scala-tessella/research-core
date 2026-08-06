@@ -19,6 +19,11 @@ ThisBuild / scalaVersion   := "3.8.4"
 ThisBuild / organization   := "io.github.scala-tessella"
 ThisBuild / versionScheme  := Some("early-semver")
 ThisBuild / scalafmtOnCompile := true
+// Enable semanticdb for Scalafix (Scala 3)
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+
+addCommandAlias("qa", ";scalafmtAll;scalafixAll;test")
 ThisBuild / homepage       := Some(url("https://github.com/scala-tessella/research-core"))
 ThisBuild / licenses       := Seq("Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt"))
 ThisBuild / developers     := List(
@@ -30,7 +35,17 @@ ThisBuild / scmInfo        := Some(ScmInfo(
 ))
 
 lazy val commonSettings = Seq(
-  scalacOptions += "-deprecation",
+  // Compiler hygiene (dcel's set): key warnings on, fatal in main (Compile) but not in tests
+  scalacOptions ++= Seq(
+    "-deprecation",        // warn on deprecated APIs
+    "-feature",            // warn on feature imports/usages
+    "-unchecked",          // extra checks for pattern matches, etc.
+    "-Wvalue-discard",     // warn when a non-Unit value is ignored
+    "-Wnonunit-statement", // warn on statements that return non-Unit
+    "-Wunused:imports"     // needed by Scalafix to use OrganizeImports.removeUnused
+  ),
+  Compile / scalacOptions ++= Seq("-Werror"),
+  Test / scalacOptions --= Seq("-Werror"),
   // suites run serially: several of them saturate the cores on purpose (parallel enumerations, the
   // engine benchmark), so concurrent suites contaminate each other's timings and contend for memory
   Test / parallelExecution := false,

@@ -21,6 +21,12 @@ jobs:
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
 
+      - name: Format check
+        run: sbt scalafmtCheckAll
+
+      - name: Scalafix check
+        run: sbt "scalafixAll --check"
+
       # kissat + drat-trim into tools/bin so the DRAT certification path is exercised, not cancelled
       - name: Build SAT certification tools (kissat, drat-trim)
         run: |

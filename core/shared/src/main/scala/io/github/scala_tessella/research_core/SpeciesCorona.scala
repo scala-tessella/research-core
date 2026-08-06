@@ -1,7 +1,7 @@
 package io.github.scala_tessella.research_core
 
 import HoneycombAlphabet.CanonKey
-import SpeciesEnumerator.{species, Species, State}
+import SpeciesEnumerator.{species, State}
 
 /** Corona structure over the vertex species of [[SpeciesEnumerator]] — which survive corona extension, and
   * the adjacency data a multi-orbit derivation consumes.
