@@ -111,7 +111,11 @@ object SymbolRenderer:
     for (p, pts) <- faces do
       // Locale.ROOT: the default locale may use comma decimals (e.g. it_IT), which breaks SVG points
       val d = pts.map((x, y) => s"${fmt(x)},${fmt(-y)}").mkString(" ")
-      sb ++= s"""<polygon points="$d" fill="${fillOf(p)}" stroke="#222" stroke-width="0.03"/>\n"""
+      // 0.05, not 0.03: IUCr journals require printed line weights of 0.35-1.5 pt, and 0.03 tiling units
+      // renders at ~0.31 pt once a panel is scaled into a two-panel-wide composite (measured on the
+      // 31-unit-edge-tilings figures, 2026-08-11). Strokes scale with placement, so re-check whenever a
+      // figure is placed at much under half its intrinsic width.
+      sb ++= s"""<polygon points="$d" fill="${fillOf(p)}" stroke="#222" stroke-width="0.05"/>\n"""
     sb ++= "</svg>\n"
     sb.toString
 
