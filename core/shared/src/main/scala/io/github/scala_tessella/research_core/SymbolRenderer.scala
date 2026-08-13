@@ -1,6 +1,7 @@
 package io.github.scala_tessella.research_core
 
 import io.github.scala_tessella.research_core.DelaneySymbols.DSymbol
+import io.github.scala_tessella.research_core.render.SvgFigure
 
 import scala.collection.mutable
 
@@ -17,14 +18,19 @@ import scala.collection.mutable
   * Developing the QUOTIENT symbol unfolds the orbifold onto the plane, so v-values > 1 and chains (σ-fixed
   * chambers — crossing a mirror lands in the same chamber, mirrored) need no special handling; dedup is by
   * (chamber, rounded geometry). Pure doubles — no ℤ[ζ₁₂] restriction, so 4.8² renders like everything else.
-  * Faces are reconstructed by grouping developed corners around each face centre and emitted as SVG.
+  * Faces are reconstructed by grouping developed corners around each face centre.
+  *
+  * THE DEVELOPMENT LIVES HERE, THE FORMAT DOES NOT. Emitting is [[render.SvgFigure]]'s job, and takes faces
+  * rather than a symbol, so a different developer — one typed on another repository's `DSymbol`, or on a
+  * moduli point instead of the regular apothem — reaches the same emitters. [[toSvg]] is forwarded from here
+  * for the callers that only ever wanted "develop this symbol and hand me the document".
   *
   * IO-free by design (the `core` module is Scala.js-clean): [[toSvg]] returns the document as a string and
   * writing it is the caller's business — a one-liner over `java.nio.file.Files.writeString`.
   */
 object SymbolRenderer:
 
-  type Pt = (x: Double, y: Double)
+  type Pt = render.Pt
 
   def apothem(p: Int): Double      = 0.5 / math.tan(math.Pi / p)
   def circumradius(p: Int): Double = 0.5 / math.sin(math.Pi / p)
@@ -40,7 +46,6 @@ object SymbolRenderer:
 
   final private case class Cham(c: Int, v: Pt, e: Pt, f: Pt)
 
-  private def fmt(v: Double): String    = String.format(java.util.Locale.ROOT, "%.5f", v)
   private def round6(x: Double): Long   = math.round(x * 1e6)
   private def key(pt: Pt): (Long, Long) = (round6(pt.x), round6(pt.y))
 
@@ -83,42 +88,12 @@ object SymbolRenderer:
         val pts        = reps.values.toVector.sortBy(v => math.atan2(v.y - centre.y, v.x - centre.x))
         (p, pts)
 
-  private[research_core] val fillOf = Map(
-    3  -> "#f4d35e",
-    4  -> "#ee6c4d",
-    6  -> "#7fb069",
-    8  -> "#9b5de5",
-    12 -> "#3d84a8"
-  ).withDefaultValue("#cccccc")
-
-  /** Render developed faces as a self-contained SVG with a banner line (types, level) baked in. The viewBox
-    * is in tiling units; explicit pixel `width`/`height` (~80 px per unit edge) make viewers open it at a
-    * sensible size instead of unit-scale (~13 px).
+  /** Render developed faces as a self-contained SVG. Forwards to [[render.SvgFigure.toSvg]], where the format
+    * lives.
     */
   def toSvg(faces: Vector[(Int, Vector[Pt])], banner: String): String =
-    val all              = faces.flatMap(_._2)
-    val (xs, ys)         = (all.map(_.x), all.map(_.y))
-    val (x0, y0, x1, y1) = (xs.min - 0.2, ys.min - 0.2, xs.max + 0.2, ys.max + 0.2)
-    val bannerH          = (y1 - y0) * 0.06
-    val pxPerUnit        = 80.0
-    val (wPx, hPx)       = ((x1 - x0) * pxPerUnit, (y1 - y0 + bannerH) * pxPerUnit)
-    val sb               = StringBuilder()
-    sb ++=
-      s"""<svg xmlns="http://www.w3.org/2000/svg" width="${wPx.round}" height="${hPx.round}" viewBox="$x0 ${-y1 -
-          bannerH} ${x1 - x0} ${y1 - y0 + bannerH}">\n"""
-    sb ++= s"""<text x="${x0 + 0.1}" y="${-y1 - bannerH * 0.25}" font-size="${bannerH *
-        0.6}" font-family="monospace">$banner</text>\n"""
-    for (p, pts) <- faces do
-      // Locale.ROOT: the default locale may use comma decimals (e.g. it_IT), which breaks SVG points
-      val d = pts.map((x, y) => s"${fmt(x)},${fmt(-y)}").mkString(" ")
-      // 0.05, not 0.03: IUCr journals require printed line weights of 0.35-1.5 pt, and 0.03 tiling units
-      // renders at ~0.31 pt once a panel is scaled into a two-panel-wide composite (measured on the
-      // 31-unit-edge-tilings figures, 2026-08-11). Strokes scale with placement, so re-check whenever a
-      // figure is placed at much under half its intrinsic width.
-      sb ++= s"""<polygon points="$d" fill="${fillOf(p)}" stroke="#222" stroke-width="0.05"/>\n"""
-    sb ++= "</svg>\n"
-    sb.toString
+    SvgFigure.toSvg(faces, banner)
 
   /** Develop and emit one tiling's SVG document. */
   def toSvg(ds: DSymbol, banner: String, radius: Double = 6.0): String =
-    toSvg(develop(ds, radius), banner)
+    SvgFigure.toSvg(develop(ds, radius), banner)

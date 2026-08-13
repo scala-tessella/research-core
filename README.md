@@ -40,10 +40,26 @@ reachable from `solver` while they stay hidden from library users.
   `minor`, re-checkable by any computer algebra system.
 - `UClass` — the U(z) class machinery (unit-edge tilings around a vertex figure): `candidates`,
   `designations`, `forcedRegular`, `noneForcedRegular`, `cyclicSubset`, `targets`.
-- `SymbolRenderer` — barycentric development of a tiling straight from its minimal symbol, and SVG
-  emission: `develop`, `toSvg`, `apothem`, `circumradius`, `reflect`. IO-free (the caller writes the
+- `SymbolRenderer` — barycentric development of a tiling straight from its minimal symbol: `develop`,
+  `apothem`, `circumradius`, `reflect`, plus `toSvg` forwarded from `render`. IO-free (the caller writes the
   returned string).
 - `TilingReference` — reference data (e.g. `n1`, the 11 Archimedean vertex configurations).
+
+The figure format layer (`research_core.render`), added in 0.7.0 — everything about how a drawing becomes a
+file, so a journal's artwork rule lands in one place instead of five. Emitters take developed faces, never a
+symbol, so a developer typed on another repository's `DSymbol` reaches all of them. All IO-free:
+
+- `Pt` — the shared point of a figure, a named tuple. An alias elsewhere (`type Pt = render.Pt`) denotes the
+  same type, which is what lets a figure cross a repository boundary without a conversion.
+- `FigurePolicy` — THE stroke policy: `StrokeUnits`, `PtPerUnit`, `StrokePt`, the printed band `MinPt`/`MaxPt`,
+  and `printedPt`/`inBand` for checking a placement.
+- `Palette` — face fill by polygon size: `fillOf`, `rgbOf`.
+- `SvgFigure` — the atlas format: `toSvg`.
+- `PdfFigure` — a standalone vector PDF panel, the format the papers `\includegraphics`: `toPdf`.
+- `FigureCanvas` — a page-description IR with PDF **and** EPS backends, one drawing to both formats:
+  `Shape` (`Poly`, `Seg`, `Label`, `Curved`), `Figure`, `fitted`, `textWidth`, `toPdf`, `toEps`.
+- `PdfDocument` — the hand-written PDF 1.4 container the PDF emitters share: `preamble`, `page`, `contents`,
+  `apply`.
 
 The three-dimensional substrate (unit-edge honeycombs of `E³` by convex uniform cells):
 

@@ -6,6 +6,59 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.7.0] — 2026-08-13
+
+**The figure renderers are consolidated.** Rendering machinery for the research programme's paper figures was
+duplicated across two repositories and *six* emitters, carrying three unrelated line-width policies. The
+format-level parts now live in one new package, `research_core.render`, and the stroke is a single shared
+constant.
+
+Why it was worth doing: on 2026-08-11 a set of paper figures was found to violate a journal artwork guide
+requiring printed line weights of 0.35–1.5 pt — they printed at ~0.31 pt. The one-line fix had to be applied
+in two repositories and still missed four further emitters. That cost is now paid once.
+
+**No rendered geometry changed.** The 20 published panels and the 14 artwork files regenerate
+**byte-identical** — verified by re-running their probes against the committed files.
+
+### Added
+
+- **`research_core.render`** — the format layer, listed in the README. Every emitter takes developed faces
+  rather than a symbol, so a developer typed on another repository's `DSymbol` reaches all of them, and every
+  one is IO-free as the rest of `core` is.
+  - **`FigurePolicy`** — the one stroke policy: `StrokeUnits` (0.05 tiling units), `PtPerUnit` (22.0),
+    `StrokePt` (0.8, for artwork emitted at final size), the printed band `MinPt`/`MaxPt`, and
+    `printedPt`/`inBand` so a placement can be *checked* rather than commented.
+  - **`PdfFigure.toPdf`** — moved here from `uniform-tilings`, and **refactored to return a `String`**: it
+    called `java.nio.file.Files.writeString`, which this module's Native cross-build could not carry.
+  - **`FigureCanvas`** — moved here from `uniform-tilings`; a page-description IR with PDF **and** EPS
+    backends, so a figure is described once and emitted in both. The design the other emitters are special
+    cases of, and where new ones should start. Its `write` stayed behind as caller-side IO.
+  - **`PdfDocument`** — the hand-written PDF 1.4 container, extracted from the four copies of the same
+    object/xref/trailer boilerplate that had accumulated.
+  - **`SvgFigure`**, **`Palette`**, **`Pt`** — the SVG emitter, the face-fill colours (`fillOf` was
+    `private[research_core]`, now public because the composites need it) and the shared point type.
+- **`RenderSpec`** — the format layer tested as a format: the xref offsets point at the objects they claim,
+  both backends describe the same drawing, the EPS stays pure ASCII — and, the point of the package, **the
+  printed line-weight band is an assertion over `FigurePolicy`** at both documented placements, with the two
+  widths that prompted all this asserted out of band.
+
+### Changed
+
+- **`SymbolRenderer` keeps the development and hands off the format.** `toSvg` now forwards to
+  `render.SvgFigure`; `develop`, `apothem`, `circumradius` and `reflect` are unchanged. `Pt` is an alias for
+  `render.Pt` — the same type, since named tuples are structural — so callers see no change.
+- **`PdfDocument` formats its xref offsets with `Locale.ROOT`.** They were built with the `f` interpolator,
+  which formats in the *default* locale; identical bytes under every Latin-digit locale, so nothing deposited
+  moves, but the table can no longer be written in digits a reader cannot parse.
+
+### Notes for `uniform-tilings`
+
+Its `SymbolRenderer` fork is **not** deleted outright, because `develop` there is typed on that repository's
+own `DelaneySymbols.DSymbol` — a genuinely divergent engine carrying the rung-4a walk machinery this one does
+not have. The dividing line held instead: format-level machinery moved, domain projection stayed with its
+types. What remains there is `develop` plus `export` clauses re-exporting this package under the names its
+call sites already used.
+
 ## [0.6.1] — 2026-08-06
 
 Hardening plus one additive surface change: the 3D substrate's numeric helper layer goes public (below),
