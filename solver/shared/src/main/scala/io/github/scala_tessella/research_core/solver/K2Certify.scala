@@ -6,8 +6,8 @@ import io.github.scala_tessella.research_core.solver.SymbolAssembly.{ClauseSink,
 
 import scala.collection.mutable
 
-/** ADR-0009 paper certification, track A2 — the SAT encoding behind the k ≤ 2 completeness obligation: "there
-  * is NO D-set on C chambers, with ≤ 2 vertex orbits, satisfying the tier-1 curvature relaxation, beyond the
+/** Paper certification, track A2 — the SAT encoding behind the k ≤ 2 completeness obligation: "there is NO
+  * D-set on C chambers, with ≤ 2 vertex orbits, satisfying the tier-1 curvature relaxation, beyond the
   * enumerated list". Search object: a LABELED D-set on chambers 1..C, as in [[K1Certify]] — involutions as
   * unordered pair variables, the 2-manifold axiom (σ₀σ₂)² = id as commutation clauses, and BFS-consistent
   * numbering (each isomorphism class appears once per valid start, [[DelaneySymbols.bfsRelabelings]]) — plus

@@ -8,9 +8,9 @@ import io.github.scala_tessella.research_core.TypeCompatibility
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-/** The Phase-2 SAT symbol assembler (ADR-0039), validated fixture-first: the ORACLE's minimal symbols are a
-  * perfect ground-truth population — every one must decompose into the star model (each 12-orbit isomorphic
-  * to an enumerated folding of its type) and SATISFY every σ₀ constraint the SAT instance encodes, BEFORE any
+/** The Phase-2 SAT symbol assembler, validated fixture-first: the ORACLE's minimal symbols are a perfect
+  * ground-truth population — every one must decompose into the star model (each 12-orbit isomorphic to an
+  * enumerated folding of its type) and SATISFY every σ₀ constraint the SAT instance encodes, BEFORE any
   * solver enumeration is trusted. Then gate G1: the solver reproduces n = 1 key-for-key vs the oracle.
   */
 class SymbolAssemblySpec extends AnyFlatSpec with Matchers:

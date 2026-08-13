@@ -5,11 +5,11 @@ import io.github.scala_tessella.research_core.Signatures.{VertexSignature, norma
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-/** The fair top-down type-set derivation (ADR-0040 = ADR-0039 Phase 1), validated ground-up: hand-computed
-  * leaves first, then each stage against its DOCUMENTED expectation (Kepler/Sommerville's 21, Sommerville's
-  * six impossible figures, Krotenheerdt's 4.8²-isolation and the Archimedean 11), then the load-bearing
-  * no-false-negative sweep: every reference type-set for n ≤ 5 must be a candidate (the filters are
-  * necessary-only, so a miss would be a soundness bug, not an accuracy gap).
+/** The fair top-down type-set derivation, validated ground-up: hand-computed leaves first, then each stage
+  * against its DOCUMENTED expectation (Kepler/Sommerville's 21, Sommerville's six impossible figures,
+  * Krotenheerdt's 4.8²-isolation and the Archimedean 11), then the load-bearing no-false-negative sweep:
+  * every reference type-set for n ≤ 5 must be a candidate (the filters are necessary-only, so a miss would be
+  * a soundness bug, not an accuracy gap).
   */
 class TypeCompatibilitySpec extends AnyFlatSpec with Matchers:
 
@@ -120,7 +120,7 @@ class TypeCompatibilitySpec extends AnyFlatSpec with Matchers:
   // Characterization (pinned 2026-07-07): the measured candidate inventory — the over-generation Phase 2
   // inherits (realized, for comparison: 11 / 15 / 36 / 21 / 12 DISTINCT type-sets at n = 1..5). Candidates
   // at n = 8 are NON-empty by design: the A068600 n=8 zero is the types-=-orbits rigidity, not type-set
-  // incompatibility (ADR-0039 Phase 0 correction) — refuting these is Phase-2 work.
+  // incompatibility (the Phase 0 correction) — refuting these is Phase-2 work.
   it should "pin the candidate inventory sizes (the measured over-generation)" in:
     (1 to 8).map(n => n -> candidates(n).size).toMap shouldBe Map(
       1 -> 11,

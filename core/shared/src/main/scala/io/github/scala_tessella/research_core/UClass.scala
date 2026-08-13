@@ -3,8 +3,8 @@ package io.github.scala_tessella.research_core
 import io.github.scala_tessella.research_core.DelaneySymbols.DSymbol
 import io.github.scala_tessella.research_core.Signatures.VertexSignature
 
-/** ADR-0009 G4 — the U class, formalized on Delaney–Dress symbols. A unit-edge tiling belongs to U(z), z one
-  * of the 21 arithmetic vertex types, iff
+/** G4 — the U class, formalized on Delaney–Dress symbols. A unit-edge tiling belongs to U(z), z one of the 21
+  * arithmetic vertex types, iff
   *
   *   1. some vertex is ALL-REGULAR with configuration exactly z (as a cyclic sequence);
   *   2. every vertex's regular sub-configuration (RVS) is non-empty;

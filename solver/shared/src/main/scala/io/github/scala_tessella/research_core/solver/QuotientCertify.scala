@@ -6,9 +6,9 @@ import io.github.scala_tessella.research_core.solver.SymbolAssembly.ClauseSink
 import java.nio.file.Path
 import scala.collection.mutable
 
-/** ADR-0009 paper certification, track C — the SAT encoding behind the quotient-list completeness obligation:
-  * "symbol S has no proper m-constant op-congruence avoiding every listed generator". A model is a
-  * congruence, directly propositional — variables `e(a,b)` (chambers identified) with
+/** Paper certification, track C — the SAT encoding behind the quotient-list completeness obligation: "symbol
+  * S has no proper m-constant op-congruence avoiding every listed generator". A model is a congruence,
+  * directly propositional — variables `e(a,b)` (chambers identified) with
   *
   *   - TRANSITIVITY over all chamber triples;
   *   - OP-CONGRUENCE: a ~ b → σᵢ(a) ~ σᵢ(b);

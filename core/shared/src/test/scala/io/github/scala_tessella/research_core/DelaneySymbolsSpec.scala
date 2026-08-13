@@ -7,8 +7,8 @@ import io.github.scala_tessella.research_core.TypeCompatibility.viableFigures as
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-/** Validation of the Delaney–Dress symbol enumerator ([[DelaneySymbols]], ADR-0022) — the intrinsic,
-  * coordinate-free combinatorial-map route to the Krotenheerdt tilings (OEIS A068600).
+/** Validation of the Delaney–Dress symbol enumerator ([[DelaneySymbols]]) — the intrinsic, coordinate-free
+  * combinatorial-map route to the Krotenheerdt tilings (OEIS A068600).
   *
   * The headline correctness fact is n = 1: it reproduces ALL 11 Archimedean tilings (including `4.8.8`, which
   * the ζ[ζ₁₂] engines cannot represent), exactly — no spurious cells (the 3.3.6.6 / 3.4.4.6 false-period
@@ -109,7 +109,7 @@ class DelaneySymbolsSpec extends AnyFlatSpec with Matchers:
     all(d1.map(t => DelaneySymbols.hasRotation(t._3))) shouldBe true
 
   // maxConeOrder reads the MAX rotation order off the minimal symbol — the C₂(=banded)/higher signature used by
-  // the banded-family characterization (ADR-0037). Checked on the complete n=1 set against textbook symmetry.
+  // the banded-family characterization. Checked on the complete n=1 set against textbook symmetry.
   it should "report the correct max rotation order for n=1 tilings (incl. C₂ for the banded 3³.4²)" in:
     val d1                 = distinctSyms(1, 12)
     def orderOf(t: String) = d1.find(_._2.toSet == Set(sig(t))).map(c => DelaneySymbols.maxConeOrder(c._3))
@@ -185,7 +185,7 @@ class DelaneySymbolsSpec extends AnyFlatSpec with Matchers:
     })
   private def parseTiling(t: String): Set[VertexSignature] = t.split(';').map(parseVertex).toSet
 
-  // ≈3 min at maxSize 22 (the D-set generation tree is the cost; see ADR-0022). Un-ignore to verify the engine
+  // ≈3 min at maxSize 22 (the D-set generation tree is the cost). Un-ignore to verify the engine
   // reproduces the FULL count AND the exact vertex-type sets — not just a subset.
   ignore should "agree element-for-element with the reference at n = 2 (exact) and n = 3 (no spurious)" in:
     val found            = DelaneySymbols.enumerate(maxN = 3, maxSize = 22)

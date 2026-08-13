@@ -6,7 +6,7 @@ import io.github.scala_tessella.research_core.Signatures.{VertexSignature, norma
   * DISTINCT vertex types). Used to validate that every engine returns *exactly* the right tilings — not
   * merely the right quantity.
   *
-  * RELIABILITY / PROVENANCE (deliberately explicit — see ADR-0021 session):
+  * RELIABILITY / PROVENANCE (deliberately explicit):
   *   - `counts` (n = 1..7) are authoritative: OEIS A068600 = 11, 20, 39, 33, 15, 10, 7.
   *   - `n1` (the 11 Archimedean) and `n2` (the 20 two-uniform vertex-type pairs) are reliable: n=1 is
   *     universally documented; n=2 was transcribed from Wikipedia "List of k-uniform tilings" and its count
@@ -19,10 +19,10 @@ import io.github.scala_tessella.research_core.Signatures.{VertexSignature, norma
   *     image-only) — only the counts (10, 7) are known.
   *
   * THE VALIDATION PRINCIPLE this enables: a SOUND engine (rejects every non-tiling — e.g. the overlapping
-  * false-period cells 3.3.6.6 / 3.4.4.6, see ADR-0021) that DEDUPLICATES by canonical key and returns exactly
-  * `counts(n)` tilings must be returning *exactly* the true set — a sound, deduplicated subset whose size
-  * equals the known total is the whole set. So for n ≥ 3, "exactly the right tilings" is certified by
-  * soundness + dedup + matching `counts(n)`, without needing a fragile per-signature table.
+  * false-period cells 3.3.6.6 / 3.4.4.6) that DEDUPLICATES by canonical key and returns exactly `counts(n)`
+  * tilings must be returning *exactly* the true set — a sound, deduplicated subset whose size equals the
+  * known total is the whole set. So for n ≥ 3, "exactly the right tilings" is certified by soundness + dedup
+  * + matching `counts(n)`, without needing a fragile per-signature table.
   */
 object TilingReference:
 

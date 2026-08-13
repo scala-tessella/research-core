@@ -6,11 +6,11 @@ import io.github.scala_tessella.research_core.Signatures.{VertexSignature, norma
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-/** ADR-0009 G2/G3 consistency teeth for the metric layer, on the 11 Archimedean oracle minimal symbols — the
-  * surface the verification repositories (`31-unit-edge-tilings`, `minimal-uniformity-three`) stand on,
-  * previously untested in-repo. Every assertion is a documented INTERNAL identity, not an imported value: the
-  * regular point solves the exact linear system and closes every face; the numeric closure track agrees with
-  * the exact ℚ(ζ₂₄) track; the exact linear matrix obeys rank–nullity against the Frac RREF nullspace; the
+/** G2/G3 consistency teeth for the metric layer, on the 11 Archimedean oracle minimal symbols — the surface
+  * the verification repositories (`31-unit-edge-tilings`, `minimal-uniformity-three`) stand on, previously
+  * untested in-repo. Every assertion is a documented INTERNAL identity, not an imported value: the regular
+  * point solves the exact linear system and closes every face; the numeric closure track agrees with the
+  * exact ℚ(ζ₂₄) track; the exact linear matrix obeys rank–nullity against the Frac RREF nullspace; the
   * tangent basis has the moduli dimension by construction and Gauss–Newton moduli points still close every
   * face; minimal symbols are exact-symmetry realizable vacuously.
   */

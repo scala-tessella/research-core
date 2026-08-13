@@ -13,12 +13,12 @@ import java.nio.file.{Files, Path}
 import scala.collection.mutable
 import scala.util.Using
 
-/** ADR-0008 D4 — the frame certification runner shared by the gate probes. Per frame: tee the live SAT
-  * enumeration into DIMACS bodies, assemble the OBLIGATION instance (base CNF + the found models' blocking
-  * clauses — pure refutation when there are no models), JVM-check every model against the base CNF, then
-  * kissat (expect UNSAT, exit 20) and drat-trim (expect `s VERIFIED`, exit 0) on the obligation. For
-  * refutation frames the assumption-free tier also emits and certifies the UNBROKEN CNF (no lex-leader
-  * clauses). Artifacts under `dir/<frameKeyHash>/`; one manifest row per frame.
+/** D4 — the frame certification runner shared by the gate probes. Per frame: tee the live SAT enumeration
+  * into DIMACS bodies, assemble the OBLIGATION instance (base CNF + the found models' blocking clauses — pure
+  * refutation when there are no models), JVM-check every model against the base CNF, then kissat (expect
+  * UNSAT, exit 20) and drat-trim (expect `s VERIFIED`, exit 0) on the obligation. For refutation frames the
+  * assumption-free tier also emits and certifies the UNBROKEN CNF (no lex-leader clauses). Artifacts under
+  * `dir/<frameKeyHash>/`; one manifest row per frame.
   *
   * Externals run through fs2-io processes on Cats Effect (portable to Scala Native); the `certifyCnf` /
   * `certifyFrame` facades keep the original synchronous signatures over the `IO` variants.

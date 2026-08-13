@@ -5,9 +5,9 @@ import io.github.scala_tessella.research_core.Signatures.{VertexSignature, norma
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-/** The ADR-0041 generalization (m-Archimedean n-uniform, type MULTISETS), gated on Čtrnáct/Galebach's known
-  * cells (validation oracle only): structural regressions first (the Krotenheerdt case is unchanged; the m=1
-  * column is zero beyond n=1 — Krötenheerdt's own theorem), then the first ladder cells (3,2)=22, (4,2)=33,
+/** The generalization (m-Archimedean n-uniform, type MULTISETS), gated on Čtrnáct/Galebach's known cells
+  * (validation oracle only): structural regressions first (the Krotenheerdt case is unchanged; the m=1 column
+  * is zero beyond n=1 — Krötenheerdt's own theorem), then the first ladder cells (3,2)=22, (4,2)=33,
   * (4,3)=85. The heavier rows run in `CellGateProbe`.
   */
 class MultisetAssemblySpec extends AnyFlatSpec with Matchers:

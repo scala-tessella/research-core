@@ -7,8 +7,8 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.collection.mutable
 
-/** ADR-0009 paper certification, track A2 — fast teeth for the [[K2Certify]] encoding (the heavy per-C
-  * obligations live in `K2CompletenessProbe`, guarded):
+/** Paper certification, track A2 — fast teeth for the [[K2Certify]] encoding (the heavy per-C obligations
+  * live in `K2CompletenessProbe`, guarded):
   *
   *   - AGREEMENT at C ≤ 8: the SAT enumeration equals, op-for-op, the BFS relabelings of the tier-1 universe
   *     generator — two independent enumerators, one universe, including genuinely 2-orbit classes;

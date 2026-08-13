@@ -2,7 +2,7 @@ package io.github.scala_tessella.research_core
 
 import io.github.scala_tessella.research_core.Signatures.{VertexSignature, normalize}
 
-/** Fair top-down type-set derivation (ADR-0040 = ADR-0039 Phase 1).
+/** Fair top-down type-set derivation (Phase 1).
   *
   * Derives, answer-blind, the candidate vertex-type-sets for the Krotenheerdt enumeration — including the
   * polygon ALPHABET itself (nothing is hardcoded in this library):
@@ -17,8 +17,8 @@ import io.github.scala_tessella.research_core.Signatures.{VertexSignature, norma
   *     plus connectivity — the fair per-type-set work-list for the Phase-2 realizer.
   *
   * Every filter is a NECESSARY condition of an edge-to-edge regular-polygon tiling realizing the set (each
-  * scaladoc states why), so no realizable type-set is ever pruned; the inventory over-generates by design
-  * (ADR-0036) and Phase 2 confirms/refutes each candidate.
+  * scaladoc states why), so no realizable type-set is ever pruned; the inventory over-generates by design and
+  * Phase 2 confirms/refutes each candidate.
   */
 object TypeCompatibility:
 

@@ -12,9 +12,9 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters.*
 
 /** Enumeration of the Krotenheerdt tilings (OEIS A068600) as **2-dimensional Delaney–Dress symbols** — the
-  * intrinsic, coordinate-free combinatorial-map approach decided in ADR-0022. A direct Scala port of Olaf
-  * Delgado-Friedrichs' `genDSyms` (github.com/odf/julia-dsymbols), restricted to dim 2, plus a
-  * regular-polygon / Krotenheerdt filter.
+  * intrinsic, coordinate-free combinatorial-map approach. A direct Scala port of Olaf Delgado-Friedrichs'
+  * `genDSyms` (github.com/odf/julia-dsymbols), restricted to dim 2, plus a regular-polygon / Krotenheerdt
+  * filter.
   *
   * A 2D Delaney–Dress symbol is the barycentric subdivision of a tiling into **chambers** (vertex·edge·face
   * flags), quotiented by the symmetry group, carrying three involutions `op(0), op(1), op(2)` (cross the
@@ -23,10 +23,10 @@ import scala.jdk.CollectionConverters.*
   *   - a **12-orbit** (fix the vertex) is a VERTEX; its `m₁₂` = vertex degree.
   *   - a **02-orbit** (fix the edge) is an EDGE; `m₀₂` = 2 always (the 2-manifold condition).
   *
-  * Why this is the right tool (ADR-0022): construction is intrinsic (no guessed lattice, no plane residues),
-  * so an enumerated symbol that is euclidean (curvature 0), orientable and all-360° is a GENUINE flat tiling
-  * by the developing-map theorem — the 3.3.6.6 / 3.4.4.6 false-period overlaps cannot arise. The minimal
-  * symbol is a canonical key (no type-set duplication), and cost is bounded by chamber count, not covolume.
+  * Why this is the right tool: construction is intrinsic (no guessed lattice, no plane residues), so an
+  * enumerated symbol that is euclidean (curvature 0), orientable and all-360° is a GENUINE flat tiling by the
+  * developing-map theorem — the 3.3.6.6 / 3.4.4.6 false-period overlaps cannot arise. The minimal symbol is a
+  * canonical key (no type-set duplication), and cost is bounded by chamber count, not covolume.
   */
 object DelaneySymbols:
 
@@ -270,7 +270,7 @@ object DelaneySymbols:
       d += 1
     None
 
-  // Admissible orbit r-values — REGULAR mode only; `relaxed = true` (ADR-0009) skips this prune entirely,
+  // Admissible orbit r-values — REGULAR mode only; `relaxed = true` skips this prune entirely,
   // since irregular unit-sided tiles admit any face size ≥ 3 and any vertex degree ≥ 3 (both enforced later
   // via `Orbit.minV`), and the flat world is still carved out by `partialEuclideanFeasible` + curvature.
   // For a euclidean tiling by regular {3,4,6,8,12}-gons: a 01-orbit (a TILE) has
@@ -616,7 +616,7 @@ object DelaneySymbols:
 
   /** Like [[vertexConfig]] but each entry carries the face's 01-ORBIT INDEX (position in `orbs`) alongside
     * its side count — the geometric cyclic sequence of (face orbit, size) around the vertex through `d`.
-    * Needed by the U-class check (ADR-0009 G4), where face orbits are designated regular or irregular.
+    * Needed by the U-class check (G4), where face orbits are designated regular or irregular.
     */
   def vertexConfigOrbits(ds: DSymbol, d: Int): Option[List[(Int, Int)]] =
     val frag = mutable.ArrayBuffer.empty[(Int, Int)]
@@ -688,17 +688,17 @@ object DelaneySymbols:
   def enumerate(maxN: Int, maxSize: Int): List[(Int, Set[VertexSignature])] =
     enumerateDetailed(maxN, maxSize).map(t => (t.n, t.types))
 
-  /** ADR-0009 G1 — the RELAXED combinatorial layer: euclidean symbols with `≤ maxN` vertex orbits, NO
-    * regular-polygon filters (faces ≥ 3 / degrees ≥ 3 only, via `Orbit.minV`) and NO minimality filter — a
-    * non-minimal symbol with one vertex orbit is a genuine isogonal equivariant type, the same net carrying a
-    * proper subgroup of its full symmetry (how G&S's 91 isogonal types sit on 11 nets). Each equivariant type
-    * is emitted exactly once (canonical generation dedups), paired with its symbol.
+  /** G1 — the RELAXED combinatorial layer: euclidean symbols with `≤ maxN` vertex orbits, NO regular-polygon
+    * filters (faces ≥ 3 / degrees ≥ 3 only, via `Orbit.minV`) and NO minimality filter — a non-minimal symbol
+    * with one vertex orbit is a genuine isogonal equivariant type, the same net carrying a proper subgroup of
+    * its full symmetry (how G&S's 91 isogonal types sit on 11 nets). Each equivariant type is emitted exactly
+    * once (canonical generation dedups), paired with its symbol.
     */
-  /** PARALLEL (work-stealing) twin of [[enumerateRelaxedDetailed]], for the k ≥ 2 campaigns (ADR-0009 G4):
-    * same per-dset pipeline, `relaxed` generation, deduped by canonical key. Live `log` every 15 s. `keep`
-    * filters INLINE what is retained (dedup still sees everything) — a memory valve for whole-catalogue
-    * sweeps with high `maxN`, where materializing every symbol would not fit the heap (the D5 fusion-attack
-    * base-surface scan keeps only the regular symbols out of ~365k distinct at 22 chambers).
+  /** PARALLEL (work-stealing) twin of [[enumerateRelaxedDetailed]], for the k ≥ 2 campaigns (G4): same
+    * per-dset pipeline, `relaxed` generation, deduped by canonical key. Live `log` every 15 s. `keep` filters
+    * INLINE what is retained (dedup still sees everything) — a memory valve for whole-catalogue sweeps with
+    * high `maxN`, where materializing every symbol would not fit the heap (the D5 fusion-attack base-surface
+    * scan keeps only the regular symbols out of ~365k distinct at 22 chambers).
     */
   def enumerateRelaxedParallel(
       maxN: Int,
@@ -829,7 +829,7 @@ object DelaneySymbols:
         idx += 1
       result.isZero
 
-  // ---- bridge for externally-built CLOSED maps (ADR-0025 bucketed-assembly verify / key / dedup) -------
+  // ---- bridge for externally-built CLOSED maps (bucketed-assembly verify / key / dedup) -------
 
   /** Wrap the three chamber involutions of a CLOSED oriented 2-manifold map as a `v = 1` Delaney–Dress
     * symbol. `op(d)` holds `(σ₀, σ₁, σ₂)` for chamber `d`; chambers are 1-based, `op(0)` is unused, and every
@@ -877,9 +877,9 @@ object DelaneySymbols:
       new DSymbol(dualDSet, orbs, index, vs)
 
   /** All complete D-sets with ≤ `maxSize` chambers and exactly ONE vertex ((1,2))-orbit, canonically labeled,
-    * with NO curvature pruning — the certification universe for the k = 1 completeness obligation (ADR-0009,
-    * paper certification track A): the SAT side blocks precisely these (in every BFS relabeling) and proves
-    * nothing else exists; the euclidean/v filtering is the exact JVM tail.
+    * with NO curvature pruning — the certification universe for the k = 1 completeness obligation (paper
+    * certification track A): the SAT side blocks precisely these (in every BFS relabeling) and proves nothing
+    * else exists; the euclidean/v filtering is the exact JVM tail.
     */
   def relaxedDSets(maxSize: Int): Vector[DSet] =
     val out = Vector.newBuilder[DSet]
@@ -919,13 +919,13 @@ object DelaneySymbols:
       d += 1
     bad
 
-  /** ADR-0009 paper certification, track A2 — the TIER-1 curvature relaxation, exact integer arithmetic in
-    * twelfths. THE LEMMA (the one new pen-and-paper ingredient of the A2 certificate): every euclidean-
-    * feasible D-set ([[euclideanFeasible]]) satisfies `#good ≥ 3·C − 12·vSum`, where `good(d)` ⟺ chamber
-    * `d`'s (0,1)-orbit has branching number r ∈ {1, 3} ⟺ `(σ₀σ₁)³(d) = d` (the alternating orbit's π-period
-    * equals r for chains and cycles alike), and `12·vSum` is the vertex side of the curvature sum: per
-    * (1,2)-orbit, chain of length L contributes 4 / 6 / 12 (L = 1 / 2 / ≥ 3) and a cycle of length L
-    * contributes 8 / 12 / 24 (L = 2 / 4 / ≥ 6), i.e. 12·k/minV with minV = max(1, ⌈3/r⌉).
+  /** Paper certification, track A2 — the TIER-1 curvature relaxation, exact integer arithmetic in twelfths.
+    * THE LEMMA (the one new pen-and-paper ingredient of the A2 certificate): every euclidean- feasible D-set
+    * ([[euclideanFeasible]]) satisfies `#good ≥ 3·C − 12·vSum`, where `good(d)` ⟺ chamber `d`'s (0,1)-orbit
+    * has branching number r ∈ {1, 3} ⟺ `(σ₀σ₁)³(d) = d` (the alternating orbit's π-period equals r for chains
+    * and cycles alike), and `12·vSum` is the vertex side of the curvature sum: per (1,2)-orbit, chain of
+    * length L contributes 4 / 6 / 12 (L = 1 / 2 / ≥ 3) and a cycle of length L contributes 8 / 12 / 24 (L = 2
+    * / 4 / ≥ 6), i.e. 12·k/minV with minV = max(1, ⌈3/r⌉).
     *
     * PROOF. 12·κ_max = −6C + 12·vSum + 12·tileSum. A tile orbit with r ∈ {1, 3} contributes exactly 4/12 per
     * chamber (chain L=1: (1/3)/1; cycle L=2: (2/3)/2; chain L=3: 1/3; cycle L=6: 2/6); any other r
@@ -946,14 +946,14 @@ object DelaneySymbols:
     val good   = ds.size - closedBadTileChambers(ds) // complete D-set: every orbit closed, bad = C − good
     good >= 3 * ds.size - vSum12
 
-  /** ADR-0009 paper certification, track A2 — the k ≤ 2 certification universe: ALL complete D-sets with ≤
-    * `maxSize` chambers and ≤ `maxN` vertex ((1,2))-orbits, canonically labeled, NO curvature pruning
-    * ([[relaxedDSets]] one level up: the SAT side has no curvature, so the euclidean/v filtering must stay in
-    * the exact JVM tail). The generation tree is pruned by the MONOTONIC closed-vertex-orbit count
-    * ([[closedVertexCount]]): a closed (1,2)-orbit never merges in any completion, so a partial with more
-    * than `maxN` of them yields none of the universe — sound and early-firing, the [[orbitBoundedStats]]
-    * prune transposed to the relaxed unpruned world. Streaming and parallel: `sink` MUST be thread-safe;
-    * returns the emitted count. Heartbeat on `log` every 15 s.
+  /** Paper certification, track A2 — the k ≤ 2 certification universe: ALL complete D-sets with ≤ `maxSize`
+    * chambers and ≤ `maxN` vertex ((1,2))-orbits, canonically labeled, NO curvature pruning ([[relaxedDSets]]
+    * one level up: the SAT side has no curvature, so the euclidean/v filtering must stay in the exact JVM
+    * tail). The generation tree is pruned by the MONOTONIC closed-vertex-orbit count ([[closedVertexCount]]):
+    * a closed (1,2)-orbit never merges in any completion, so a partial with more than `maxN` of them yields
+    * none of the universe — sound and early-firing, the [[orbitBoundedStats]] prune transposed to the relaxed
+    * unpruned world. Streaming and parallel: `sink` MUST be thread-safe; returns the emitted count. Heartbeat
+    * on `log` every 15 s.
     *
     * With `tier1 = true` the universe is additionally cut to the [[tier1Feasible]] D-sets (the sound
     * curvature relaxation that the SAT side can express), with the matching MONOTONE tree prune: a universe
@@ -1129,7 +1129,7 @@ object DelaneySymbols:
     * op-congruence identifying chamber 1 with `d0` (the [[reduceOnce]] scan, collecting instead of stopping).
     * Every proper quotient of a connected symbol identifies 1 with SOME other chamber, so it is covered by
     * one of these — and moduli pull back injectively along coverings, so any max-over-quotients test may scan
-    * just this list (ADR-0009 G3).
+    * just this list (G3).
     */
   def properQuotients(ds: DSymbol): List[DSymbol] =
     val n   = ds.size
@@ -1200,7 +1200,7 @@ object DelaneySymbols:
 
   /** A canonical key for a CLOSED symbol: the lexicographically minimal BFS-renumbered trace of the three
     * involutions plus `(m₀₁, m₁₂)` per chamber, over every start chamber. Two symbols are isomorphic iff
-    * their keys are equal — the coordinate-free dedup id ADR-0025 asks for.
+    * their keys are equal — the coordinate-free dedup id a bucketed assembler needs.
     */
   extension (ds: DSymbol)
     def canonicalKey: String =
@@ -1260,7 +1260,7 @@ object DelaneySymbols:
     * orientable), a `{3,4,6,8,12}` regular-polygon tiling with valid 360° vertices: `n` = vertex orbits of
     * the MINIMAL symbol, `vertices` their configs, `key` the minimal symbol's canonical key. The caller
     * applies the Krötenheerdt condition (`n` orbits = `n` distinct types). No overlap test is needed — an
-    * intrinsic closed all-360° map is a genuine flat tiling (ADR-0022).
+    * intrinsic closed all-360° map is a genuine flat tiling.
     */
   def classifyClosedMap(op: Array[Array[Int]]): Option[(Int, List[VertexSignature], String)] =
     val full = closedMapSymbol(op)
@@ -1270,7 +1270,7 @@ object DelaneySymbols:
       regularPolygonVertices(min).map(sigs => (sigs.length, sigs, min.canonicalKey))
 
   /** [[enumerateDetailed]] augmented with each tiling's minimal-symbol canonical key, so an external
-    * enumerator (e.g. the ADR-0025 bucketed assembler) can be cross-checked key-for-key, not just by count.
+    * enumerator (e.g. a bucketed assembler) can be cross-checked key-for-key, not just by count.
     */
   def keyedTilings(maxN: Int, maxSize: Int): List[(Int, Set[VertexSignature], String)] =
     val out = List.newBuilder[(Int, Set[VertexSignature], String)]
@@ -1460,7 +1460,7 @@ object DelaneySymbols:
           orbits(ds.dset, 1, 2).exists(o => ds.v(1, 2, o.elements.head) > 1)
       !faceOrVert && orbits(ds.dset, 0, 2).exists(o => ds.v(0, 2, o.elements.head) > 1)
 
-  // ---- ADR-0023 Stage 1: ORIENTED-slice generator (rotation orbifolds o/2222/333/442/632) --------------
+  // ---- Stage 1: ORIENTED-slice generator (rotation orbifolds o/2222/333/442/632) --------------
 
   // Interleaved euclidean prune: interior angle of a regular {3,4,6,8,12}-gon is an INTEGER degree.
   private val polyAngle: Array[Int]   =
@@ -1602,10 +1602,10 @@ object DelaneySymbols:
             e += 1
           out.result()
 
-  /** Enumerate the regular-polygon euclidean tilings via the ORIENTED slice (ADR-0023 Stage 1): generate
-    * oriented closed D-sets, assign euclidean v-values, keep regular `{3,4,6,8,12}`-gon tilings, then key and
-    * bucket by the FULL [[minimalSymbol]] (so `n` = vertex orbits under the complete symmetry, incl.
-    * mirrors). Deduped by minimal canonical key. Returns `(n, vertices, key)`.
+  /** Enumerate the regular-polygon euclidean tilings via the ORIENTED slice (Stage 1): generate oriented
+    * closed D-sets, assign euclidean v-values, keep regular `{3,4,6,8,12}`-gon tilings, then key and bucket
+    * by the FULL [[minimalSymbol]] (so `n` = vertex orbits under the complete symmetry, incl. mirrors).
+    * Deduped by minimal canonical key. Returns `(n, vertices, key)`.
     */
   def orientedRegularSymbols(maxN: Int, maxSize: Int): List[(Int, List[VertexSignature], String)] =
     val out  = List.newBuilder[(Int, List[VertexSignature], String)]
@@ -1722,7 +1722,7 @@ object DelaneySymbols:
       f"generation=${tGen / 1e9}%.1fs euclFeasible=${tEuc / 1e9}%.1fs DSymGen=${tDsymGen /
           1e9}%.1fs body=${tBody / 1e9}%.1fs"
 
-  // ---- ADR-0023 corona-first spike: does the 360° prune cut the PARTIAL tree, or only completed D-sets? ----
+  // ---- corona-first spike: does the 360° prune cut the PARTIAL tree, or only completed D-sets? ----
 
   /** Canonical key of a (possibly partial) oriented D-set: lexicographically minimal BFS relabelling over all
     * roots, undefined ops shown as `x`. Fill-order-independent, so it deduplicates isomorphic PARTIAL maps.
@@ -1797,7 +1797,7 @@ object DelaneySymbols:
     go(DSet.empty1, c0)
     (nodes, regSeen.size.toLong)
 
-  // ---- ADR-0023 orbit-bounded enumeration: prune by CLOSED-vertex count (monotonic ⇒ fires early) -------
+  // ---- orbit-bounded enumeration: prune by CLOSED-vertex count (monotonic ⇒ fires early) -------
 
   /** Number of fully-CLOSED 12-orbits (vertices) in `ds`. A closed 12-orbit can never merge with another as
     * more chambers are added, so this count is MONOTONIC non-decreasing — making "≤ k vertices" a SOUND,

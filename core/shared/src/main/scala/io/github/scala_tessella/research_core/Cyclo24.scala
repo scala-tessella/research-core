@@ -1,9 +1,9 @@
 package io.github.scala_tessella.research_core
 
-/** ADR-0009 paper certification, track B — exact arithmetic in the cyclotomic field ℚ(ζ₂₄), ζ = e^{iπ/12}:
-  * basis 1, ζ, …, ζ⁷ over ℚ with ζ⁸ = ζ⁴ − 1 (the 24th cyclotomic polynomial is x⁸ − x⁴ + 1). Coefficients
-  * are BIG-INTEGER rationals, so Gaussian elimination can never overflow. The point: at the regular point
-  * every closure-Jacobian entry is a sum of sines and cosines of integer multiples of π/12 (faces are
+/** Paper certification, track B — exact arithmetic in the cyclotomic field ℚ(ζ₂₄), ζ = e^{iπ/12}: basis 1, ζ,
+  * …, ζ⁷ over ℚ with ζ⁸ = ζ⁴ − 1 (the 24th cyclotomic polynomial is x⁸ − x⁴ + 1). Coefficients are
+  * BIG-INTEGER rationals, so Gaussian elimination can never overflow. The point: at the regular point every
+  * closure-Jacobian entry is a sum of sines and cosines of integer multiples of π/12 (faces are
   * {3,4,6,8,12}-gons), i.e. lives in this field — `cos kπ/12 = (ζᵏ + ζ⁻ᵏ)/2`, `sin kπ/12 = (ζᵏ − ζ⁻ᵏ)(−ζ⁶)/2`
   * (since i = ζ⁶) — so closure ranks become EXACT field computations.
   */

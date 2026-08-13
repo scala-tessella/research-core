@@ -9,7 +9,7 @@ import io.github.scala_tessella.research_core.solver.SatSolver.SolverSink
 
 import scala.collection.mutable
 
-/** Per-type-set Delaney-symbol assembly by SAT (ADR-0039 Phase 2, SAT4J baseline).
+/** Per-type-set Delaney-symbol assembly by SAT (Phase 2, SAT4J baseline).
   *
   * A Krotenheerdt n-uniform tiling's minimal symbol decomposes into n vertex STARS — the `(1,2)`-orbits,
   * whose internal structure (σ₁, σ₂, m₀₁) is fully determined by the vertex TYPE and a FOLDING (the vertex
@@ -23,9 +23,9 @@ import scala.collection.mutable
   *
   * enumerated by a CDCL solver (SAT4J `ModelIterator`), then classified by the EXISTING oracle tail —
   * `isEuclidean`, `regularPolygonVertices`, `isMinimal`, `canonicalKey` — so results dedup in the shared key
-  * space and soundness is inherited, not re-implemented. By the 12n bound (ADR-0039) this search space
-  * contains every tiling of the set; non-minimal solutions are duplicates of more-folded assemblies and are
-  * discarded, so completeness per (set, foldings-swept) holds while dedup stays exact.
+  * space and soundness is inherited, not re-implemented. By the 12n bound this search space contains every
+  * tiling of the set; non-minimal solutions are duplicates of more-folded assemblies and are discarded, so
+  * completeness per (set, foldings-swept) holds while dedup stays exact.
   */
 object SymbolAssembly:
 
@@ -163,7 +163,7 @@ object SymbolAssembly:
   /** All structure-preserving self-maps of a (folded) star — σ₁/σ₂/m₀₁-preserving chamber permutations. The
     * star is σ₁σ₂-connected, so a map is FORCED by the image of chamber 0 (propagate `map(σᵢx) = σᵢ(map x)`);
     * at most `size` candidates, each kept iff propagation is consistent and m₀₁-preserving. Rotations AND
-    * reflections both arise this way. Used as SAT symmetry-breaking targets (ADR-0041).
+    * reflections both arise this way. Used as SAT symmetry-breaking targets.
     */
   def starAutomorphisms(star: Star): Vector[Vector[Int]] =
     val n = star.size
@@ -239,11 +239,11 @@ object SymbolAssembly:
       else stars(starOf(c)).degree
     }
 
-  // ---- clause sinks (ADR-0008) --------------------------------------------------------------------------
+  // ---- clause sinks ----------------------------------------------------------------------------------
 
   /** Where the encoded σ₀ CNF goes: the live SAT4J solver today; a DIMACS emission (and a tee of both) for
-    * DRAT certification (ADR-0008). Decoupling the encoding from the solver is what lets the same clause
-    * stream be independently re-solved (kissat) and checked (drat-trim).
+    * DRAT certification. Decoupling the encoding from the solver is what lets the same clause stream be
+    * independently re-solved (kissat) and checked (drat-trim).
     */
   trait ClauseSink:
     def clause(lits: Seq[Int]): Unit
@@ -269,8 +269,8 @@ object SymbolAssembly:
     * breaking also uses; auxiliaries (face-closure one-hot layers, lex-leader equality chains) follow.
     * Clauses: exactly-one partner per chamber; binary σ₂-equivariance; star-cut connectivity; face closure by
     * a one-hot (σ₀σ₁)-path per σ₁-representative chamber (layer k = position after k steps; unit-forced back
-    * to the start at layer p); sound lex-leader symmetry breaking (ADR-0041). Clauses are STREAMED into the
-    * sink as generated — buffering them OOM'd on n=4-sized frames.
+    * to the start at layer p); sound lex-leader symmetry breaking. Clauses are STREAMED into the sink as
+    * generated — buffering them OOM'd on n=4-sized frames.
     */
   def encodeSigma0(frame: Frame, symmetries: Vector[Vector[Int]], sink: ClauseSink): Map[(Int, Int), Int] =
     val m                                = frame.size
@@ -330,7 +330,7 @@ object SymbolAssembly:
       for k <- 1 to p do exactly1(domain.map(y(k)))
       clause(y(p)(c))
 
-    // symmetry breaking (ADR-0041): each π is a constraint symmetry of the x-projection (star
+    // symmetry breaking: each π is a constraint symmetry of the x-projection (star
     // automorphism / identical-star swap), so requiring x ≤lex x∘π (fixed pair-var order, eq-prefix
     // chain) keeps at least the orbit-lex-min of every solution class — sound, kills swap floods
     val orderedPairs = if symmetries.isEmpty then Vector.empty else pairs.map(pr => pr -> pairVar(pr))
@@ -360,12 +360,12 @@ object SymbolAssembly:
     * the symmetric-rich n=5 sets (tens of thousands of models). `maxModels` is a flood-guard — a capped
     * result is reported, never silent.
     *
-    * Certification hooks (ADR-0008, all defaulted to no-ops): `baseSink` receives the full encoding (tee'd
-    * with the live solver — if SAT4J hits a mid-stream contradiction the emitted prefix ends at the
-    * contradicting clause, which is still a SOUND refutation instance: every valid σ₀ satisfies the full
-    * encoding, hence any prefix, so prefix-UNSAT refutes the frame); `blockingSink` receives each found
-    * model's blocking clause (base + blocking = the terminal-UNSAT obligation; meaningless if capped);
-    * `onModel` receives each full SAT4J model (pair vars + auxiliaries) for the DIMACS fidelity check.
+    * Certification hooks (all defaulted to no-ops): `baseSink` receives the full encoding (tee'd with the
+    * live solver — if SAT4J hits a mid-stream contradiction the emitted prefix ends at the contradicting
+    * clause, which is still a SOUND refutation instance: every valid σ₀ satisfies the full encoding, hence
+    * any prefix, so prefix-UNSAT refutes the frame); `blockingSink` receives each found model's blocking
+    * clause (base + blocking = the terminal-UNSAT obligation; meaningless if capped); `onModel` receives each
+    * full SAT4J model (pair vars + auxiliaries) for the DIMACS fidelity check.
     */
   def enumerateSigma0(
       frame: Frame,
@@ -471,8 +471,8 @@ object SymbolAssembly:
   def normalizedMultiset(types: Seq[VertexSignature]): List[VertexSignature] =
     types.map(normalize).toList.sorted
 
-  /** The sound lex-leader targets of a frame (ADR-0041): every nontrivial star automorphism lifted to the
-    * global chambers, plus the swap of each adjacent IDENTICAL star pair.
+  /** The sound lex-leader targets of a frame: every nontrivial star automorphism lifted to the global
+    * chambers, plus the swap of each adjacent IDENTICAL star pair.
     */
   def frameSymmetries(frame: Frame, chosen: Vector[Star]): Vector[Vector[Int]] =
     val perStar = chosen.indices.toVector.flatMap: i =>
@@ -492,8 +492,8 @@ object SymbolAssembly:
 
   /** Every frame of a multiset's sweep — one folding combination per identical-type group (combinations with
     * repetition: frame-level swap dedup), each with its chosen stars and symmetry-breaking targets.
-    * [[solveMultiset]] and the certification driver (ADR-0008 D4) iterate exactly this list: the certified
-    * sweep is THE SAME sweep, not a reimplementation.
+    * [[solveMultiset]] and the certification driver (D4) iterate exactly this list: the certified sweep is
+    * THE SAME sweep, not a reimplementation.
     */
   def multisetFrames(types: Seq[VertexSignature]): Vector[(Vector[Star], Frame, Vector[Vector[Int]])] =
     val sorted                                                     = normalizedMultiset(types)
@@ -507,20 +507,20 @@ object SymbolAssembly:
       (chosen, frame, frameSymmetries(frame, chosen))
     }
 
-  /** The multiset sweep as (frame, chosen stars) pairs — the ADR-0009 certification probes (CertifyRunner and
-    * friends) iterate this and recompute the symmetries themselves via [[frameSymmetries]]. A thin view over
+  /** The multiset sweep as (frame, chosen stars) pairs — the certification probes (CertifyRunner and friends)
+    * iterate this and recompute the symmetries themselves via [[frameSymmetries]]. A thin view over
     * [[multisetFrames]]: same frames, same order.
     */
   def frames(types: Seq[VertexSignature]): Vector[(Frame, Vector[Star])] =
     multisetFrames(types).map((chosen, frame, _) => (frame, chosen))
 
-  /** ADR-0041: enumerate every tiling whose vertex-type MULTISET is exactly `types` — n orbits over
-    * possibly-repeated types (m-Archimedean n-uniform; the Krotenheerdt case is the all-distinct special
-    * case). One star per orbit; folding choices for IDENTICAL stars are swept as combinations-with-repetition
-    * (frame-level swap dedup — permuting identical stars yields isomorphic frames). The sigma_0 enumeration
-    * and classify tail are unchanged: classify never required distinct types, and a same-type orbit pair
-    * merged by the true symmetry shows up as a NON-minimal symbol here (discarded) and as the minimal symbol
-    * of the smaller multiset (counted there) — exactly the (n, m) bookkeeping the table needs.
+  /** Enumerate every tiling whose vertex-type MULTISET is exactly `types` — n orbits over possibly-repeated
+    * types (m-Archimedean n-uniform; the Krotenheerdt case is the all-distinct special case). One star per
+    * orbit; folding choices for IDENTICAL stars are swept as combinations-with-repetition (frame-level swap
+    * dedup — permuting identical stars yields isomorphic frames). The sigma_0 enumeration and classify tail
+    * are unchanged: classify never required distinct types, and a same-type orbit pair merged by the true
+    * symmetry shows up as a NON-minimal symbol here (discarded) and as the minimal symbol of the smaller
+    * multiset (counted there) — exactly the (n, m) bookkeeping the table needs.
     */
   def solveMultiset(types: Seq[VertexSignature], maxModels: Int = 20000): SetResult =
     val tilings = mutable.Map.empty[String, DSymbol]
@@ -540,7 +540,7 @@ object SymbolAssembly:
     solveMultiset(ts.toList, maxModels)
 
   /** The multiset work-list of cell (n, m): every fair support of size m x every positive composition of n
-    * into m parts. Shared by [[solveCell]] and the certification driver (ADR-0008 D4).
+    * into m parts. Shared by [[solveCell]] and the certification driver (D4).
     */
   def cellMultisets(n: Int, m: Int): Vector[List[VertexSignature]] =
     require(m >= 1 && n >= m, s"need 1 <= m <= n, got m=$m n=$n")
@@ -553,10 +553,10 @@ object SymbolAssembly:
       c       <- comps(n, order.size)
     yield order.lazyZip(c).flatMap((t, k) => Vector.fill(k)(t)).toList
 
-  /** ADR-0041 cell driver: all m-Archimedean n-uniform tilings — every fair support of size m (the ADR-0040
-    * filters are multiplicity-blind necessities on the realized type SET) x every positive multiplicity
-    * assignment summing to n. Cells are disjoint (a tiling's type multiset is intrinsic), so the table value
-    * is the summed key count.
+  /** Cell driver: all m-Archimedean n-uniform tilings — every fair support of size m (the filters are
+    * multiplicity-blind necessities on the realized type SET) x every positive multiplicity assignment
+    * summing to n. Cells are disjoint (a tiling's type multiset is intrinsic), so the table value is the
+    * summed key count.
     */
   def solveCell(
       n: Int,
@@ -566,10 +566,10 @@ object SymbolAssembly:
   ): Map[List[VertexSignature], SetResult] =
     parMap(cellMultisets(n, m), parallelism)(ms => ms -> solveMultiset(ms, maxModels)).toMap
 
-  /** The gate driver: solve every fair candidate type-set of size `n` (ADR-0040) and return the deduped
-    * canonical keys — comparable key-for-key with `DelaneySymbols.keyedTilings`. Candidate sets are
-    * independent, so `parallelism > 1` fans them over a fixed pool (each solve owns its solver; the shared
-    * derivations are immutable). Keep pool x heap within the machine limits (31 GiB RAM, 1 GiB swap).
+  /** The gate driver: solve every fair candidate type-set of size `n` and return the deduped canonical keys —
+    * comparable key-for-key with `DelaneySymbols.keyedTilings`. Candidate sets are independent, so
+    * `parallelism > 1` fans them over a fixed pool (each solve owns its solver; the shared derivations are
+    * immutable). Keep pool x heap within the machine limits (31 GiB RAM, 1 GiB swap).
     */
   def enumerate(n: Int, maxModels: Int = 20000, parallelism: Int = 1): Map[Set[VertexSignature], SetResult] =
     parMap(TypeCompatibility.candidates(n).toVector, parallelism)(ts =>

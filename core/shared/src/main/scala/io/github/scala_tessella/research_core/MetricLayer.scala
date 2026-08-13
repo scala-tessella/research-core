@@ -4,8 +4,8 @@ import io.github.scala_tessella.research_core.DelaneySymbols.DSymbol
 
 import scala.collection.mutable
 
-/** ADR-0009 G2 — the METRIC layer of the equilateral relaxation: which angle assignments realize a euclidean
-  * symbol as an edge-to-edge plane tiling with every edge of unit length.
+/** G2 — the METRIC layer of the equilateral relaxation: which angle assignments realize a euclidean symbol as
+  * an edge-to-edge plane tiling with every edge of unit length.
   *
   * Variables: one interior angle γ per CORNER ORBIT (σ₁-pair of chambers), in units of π. Constraints:
   *
@@ -392,14 +392,14 @@ object MetricLayer:
     val (corner, _) = cornerIndex(ds)
     Array.tabulate(ds.size + 1)(d => if d == 0 then 0.0 else math.Pi * x(corner(d)))
 
-  /** ADR-0009 G3 — EXACT-symmetry realizability near the regular point: some unit-edge realization has metric
-    * symmetry EXACTLY the symbol's group. A symmetry upgrade of a realization is a proper covering onto a
-    * smaller symbol, moduli pull back injectively along coverings (so quotient dims only shrink, and
-    * first-step quotients dominate), and finitely many proper subspaces cover the tangent space iff one
-    * equals it — hence the criterion: the moduli dimension strictly exceeds EVERY proper quotient's. Minimal
-    * symbols pass vacuously (their regular point IS the maximal-symmetry uniform tiling); a non-minimal rigid
-    * symbol always fails (straight unit edges cannot be wiggled into less symmetry). Verdicts are
-    * tangent-space local at the regular point (see the ADR-0009 G2/G3 caveats).
+  /** G3 — EXACT-symmetry realizability near the regular point: some unit-edge realization has metric symmetry
+    * EXACTLY the symbol's group. A symmetry upgrade of a realization is a proper covering onto a smaller
+    * symbol, moduli pull back injectively along coverings (so quotient dims only shrink, and first-step
+    * quotients dominate), and finitely many proper subspaces cover the tangent space iff one equals it —
+    * hence the criterion: the moduli dimension strictly exceeds EVERY proper quotient's. Minimal symbols pass
+    * vacuously (their regular point IS the maximal-symmetry uniform tiling); a non-minimal rigid symbol
+    * always fails (straight unit edges cannot be wiggled into less symmetry). Verdicts are tangent-space
+    * local at the regular point (see the G2/G3 caveats).
     */
   def exactSymmetryRealizable(ds: DSymbol): Boolean =
     val d = moduliDimension(ds)

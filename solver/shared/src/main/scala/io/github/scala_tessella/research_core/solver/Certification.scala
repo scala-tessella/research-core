@@ -7,9 +7,9 @@ import java.nio.file.{Files, Path, StandardOpenOption}
 import scala.collection.mutable
 import scala.util.Using
 
-/** DRAT certification support (ADR-0008 D2): DIMACS emission of the σ₀ CNF, the pure-JVM model-evaluation
-  * check, and deterministic frame keys. Dev/CI machinery — the enumeration itself stays on SAT4J; the
-  * external kissat/drat-trim steps consume what is emitted here.
+/** DRAT certification support (D2): DIMACS emission of the σ₀ CNF, the pure-JVM model-evaluation check, and
+  * deterministic frame keys. Dev/CI machinery — the enumeration itself stays on SAT4J; the external
+  * kissat/drat-trim steps consume what is emitted here.
   */
 object Certification:
 
@@ -101,10 +101,10 @@ object Certification:
       out.result()
     }
 
-  /** The 0-based indices of the clauses of a DIMACS file the model VIOLATES — the fidelity check (ADR-0008
-    * Gate 1): a genuine model of the live SAT4J instance must violate NOTHING in the emitted base CNF, and
-    * exactly its own blocking clause in a full obligation file. One-shot form; parse once via [[parseCnf]]
-    * when checking many models against the same file.
+  /** The 0-based indices of the clauses of a DIMACS file the model VIOLATES — the fidelity check (Gate 1): a
+    * genuine model of the live SAT4J instance must violate NOTHING in the emitted base CNF, and exactly its
+    * own blocking clause in a full obligation file. One-shot form; parse once via [[parseCnf]] when checking
+    * many models against the same file.
     */
   def violatedClauses(cnf: Path, model: Array[Int]): Vector[Int] =
     violatedClauses(parseCnf(cnf), model)

@@ -2,7 +2,7 @@ package io.github.scala_tessella.research_core
 
 import io.github.scala_tessella.research_core.Cyclo24.Cyclo
 
-/** ADR-0009 paper certification, track D — algebraic RANK WITNESSES: a rank-r verdict is certified by
+/** Paper certification, track D — algebraic RANK WITNESSES: a rank-r verdict is certified by
   *
   *   - an r×r PIVOT MINOR with nonzero determinant (rank ≥ r), and
   *   - an explicit KERNEL BASIS of size cols − r with unit-coordinate structure — each vector is 1 at its own

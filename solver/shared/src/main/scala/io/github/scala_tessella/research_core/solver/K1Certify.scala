@@ -6,9 +6,9 @@ import io.github.scala_tessella.research_core.solver.SymbolAssembly.{ClauseSink,
 
 import scala.collection.mutable
 
-/** ADR-0009 paper certification, track A — the SAT encoding behind the k = 1 completeness obligation: "there
-  * is NO D-set on C chambers, with one vertex orbit, beyond the enumerated list". Search object: a LABELED
-  * D-set on chambers 1..C —
+/** Paper certification, track A — the SAT encoding behind the k = 1 completeness obligation: "there is NO
+  * D-set on C chambers, with one vertex orbit, beyond the enumerated list". Search object: a LABELED D-set on
+  * chambers 1..C —
   *
   *   - three involutions σ₀, σ₁, σ₂ as unordered pair variables (self-pairs = fixed points), exactly one
   *     partner per (i, chamber);
