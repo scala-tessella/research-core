@@ -45,7 +45,11 @@ lazy val commonSettings = Seq(
     "-Wunused:imports"     // needed by Scalafix to use OrganizeImports.removeUnused
   ),
   Compile / scalacOptions ++= Seq("-Werror"),
-  Test / scalacOptions --= Seq("-Werror"),
+  // ScalaTest's matchers RETURN an Assertion, so every assertion that is not the last statement of its
+  // test trips -Wvalue-discard and -Wnonunit-statement. That is structural to the library, not a smell in
+  // the suites: it cost 148 warnings across 13 spec files before they were turned off here. Both stay
+  // FATAL in Compile, where they catch the real thing; -Wunused:imports stays on in both scopes.
+  Test / scalacOptions --= Seq("-Werror", "-Wvalue-discard", "-Wnonunit-statement"),
   // suites run serially: several of them saturate the cores on purpose (parallel enumerations, the
   // engine benchmark), so concurrent suites contaminate each other's timings and contend for memory
   Test / parallelExecution := false,

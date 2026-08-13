@@ -1,7 +1,7 @@
 package io.github.scala_tessella.research_core
 
 import io.github.scala_tessella.research_core.render.*
-import io.github.scala_tessella.research_core.render.FigureCanvas.{Figure, Shape}
+import io.github.scala_tessella.research_core.render.FigureCanvas.Shape
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
