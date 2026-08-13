@@ -6,6 +6,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+Housekeeping only — no change to the `core` or `solver` public surface, and no behaviour change: the two
+entries below touch compiler flags, one test import and comment prose.
+
+### Changed
+
+- **The ADR citations are gone from the code.** The ADRs live in `uniform-tilings`, a private repository,
+  so every `ADR-0009`/`ADR-0022`/`ADR-0041` in this library's scaladoc was a pointer a reader cannot
+  follow — 61 of them across 19 files, most in the published API documentation. The surrounding prose was
+  already carrying the explanation, so in nearly every case the citation was the one part of the sentence
+  adding nothing; where the ADR number *was* the subject, the description is promoted to lead. The gate,
+  track, phase and stage labels (`G1`–`G4`, tracks `A`/`A2`/`B`/`C`/`D`, `D2`/`D4`, `Phase 1`/`2`,
+  `Stage 1`) are kept: they are this codebase's own vocabulary, cross-referenced between files, and mean
+  the same thing without a document number attached.
+- **`-Wvalue-discard` and `-Wnonunit-statement` are off in `Test`**, and stay FATAL in `Compile`.
+  ScalaTest's matchers return an `Assertion`, so every assertion that is not the last statement of its test
+  tripped them: 148 warnings across 13 spec files, 130 of which predated 0.7.0. The build already conceded
+  the point by dropping `-Werror` in `Test`; this finishes that decision rather than half-making it, and
+  takes the run to zero warnings on JVM and Native alike. `-Wunused:imports` stays on in both scopes.
+
+### Fixed
+
+- **`RenderSpec` imported `FigureCanvas.Figure` without using it** — caught by CI on 0.7.0, which reports
+  its warning count.
+
 ## [0.7.0] — 2026-08-13
 
 **The figure renderers are consolidated.** Rendering machinery for the research programme's paper figures was
@@ -338,6 +364,8 @@ when pinning this release.
   repository can certify a CNF/DRAT pair directly (external `kissat` + `drat-trim`, verdict taken from the
   exact `s VERIFIED` line) without going through the bundled runner entry points.
 
+[Unreleased]: https://github.com/scala-tessella/research-core/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/scala-tessella/research-core/compare/v0.6.1...v0.7.0
 [0.4.0]: https://github.com/scala-tessella/research-core/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/scala-tessella/research-core/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/scala-tessella/research-core/compare/v0.2.1...v0.3.0
