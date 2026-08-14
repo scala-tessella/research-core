@@ -443,14 +443,12 @@ object DelaneySymbols:
     def m(i: Int, j: Int, d: Int): Int = rOf(i, j, d) * v(i, j, d)
 
   def collectOrbits(ds: DSet): (Vector[Orbit], Array[Array[Int]]) =
-    val all   = Vector.newBuilder[Orbit]
     val index = Array.fill(Dim + 1, ds.size + 1)(0)
     var built = Vector.empty[Orbit]
     var i     = 1
     while i <= Dim do
       for orb <- orbits(ds, i - 1, i) do
         built = built :+ orb
-        all += orb
         for d <- orb.elements do index(i)(d) = built.length - 1
       i += 1
     (built, index)
