@@ -148,11 +148,12 @@ class RenderSpec extends AnyFlatSpec with Matchers:
   behavior of "the palette"
 
   it should "convert every fill to the components the PDF and PostScript backends want" in:
-    for p <- Vector(3, 4, 6, 8, 12, 5) do
+    for p <- Vector(3, 4, 5, 6, 7, 8, 9, 10, 12) do
       val (r, g, b) = Palette.rgbOf(p)
       for c <- Vector(r, g, b) do c should (be >= 0.0 and be <= 1.0)
       val hex       = f"#${(r * 255).round}%02x${(g * 255).round}%02x${(b * 255).round}%02x"
       hex shouldBe Palette.fillOf(p)
 
   it should "fall back to grey for a polygon size it does not know" in:
-    Palette.fillOf(7) shouldBe "#cccccc"
+    // the giant gons stay deliberately unmapped — each is the unique biggest polygon of its figure
+    Palette.fillOf(42) shouldBe "#cccccc"
