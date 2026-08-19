@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.7.1] — 2026-08-19
+
+**Pentagons get a canonical fill.** `render.Palette` gains `5 -> "#c9366f"` (deep rose). The palette's own
+revisit clause fired: the minimal-uniformity figures for (5².10) and (4.5.20) pair pentagons with 10- and
+20-gons, and all three sizes fell to the default grey — indistinguishable by fill between convex near-round
+shapes. The large gons stay default grey (each is the unique biggest polygon of its figure). Greyscale
+separation: 5 vs default grey ΔL* ≈ 35, 5 vs 4 ≈ 14. No other entry changes; figures without pentagons
+regenerate byte-identical.
+
 ## [0.7.0] — 2026-08-13
 
 **The figure renderers are consolidated.** Rendering machinery for the research programme's paper figures was
