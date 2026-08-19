@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.7.2] — 2026-08-19
+
+**The published palette release.** The 0.7.1 tag's pipeline failed on a stale test fixture:
+`RenderSpec`'s fallback-to-grey probe used the 7-gon as its "unknown size", which 0.7.1 itself had just
+made a known colour. 0.7.2 is 0.7.1 plus that test fix — the fallback probe is now the 42-gon (a giant
+that stays deliberately unmapped) and the components round-trip test covers all nine fills. No library
+code changes; 0.7.1 was never published, so 0.7.2 is the artifact carrying the palette below.
+
 ## [0.7.1] — 2026-08-19
 
 **Pentagons get a canonical fill.** `render.Palette` gains `5 -> "#c9366f"` (deep rose). The palette's own
