@@ -12,7 +12,10 @@ listed in the README is the compatibility contract.
 revisit clause fired: the minimal-uniformity figures for (5².10) and (4.5.20) pair pentagons with 10- and
 20-gons, and all three sizes fell to the default grey — indistinguishable by fill between convex near-round
 shapes. The large gons stay default grey (each is the unique biggest polygon of its figure). Greyscale
-separation: 5 vs default grey ΔL* ≈ 35, 5 vs 4 ≈ 14. No other entry changes; figures without pentagons
+separation: 5 vs default grey ΔL* ≈ 35, 5 vs 4 ≈ 14. The 7-, 9- and 10-gons join in the same release —
+teal `#2a9d8f`, violet-blue `#5e60ce` and ochre `#bc6c25` — so every regular size the minimal-uniformity
+species use below the giant gons now has a canonical fill; the giants (15, 18, 20, 24, 42) stay default
+grey, each being the unique biggest polygon of its figure. Figures without pentagons, 7-, 9- or 10-gons
 regenerate byte-identical.
 
 The release also carries the post-0.7.0 housekeeping — no further change to the `core` or `solver` public

@@ -14,6 +14,13 @@ package io.github.scala_tessella.research_core.render
   * figures where fill is the only cue between two convex near-round shapes. Pentagons therefore join the
   * canonical map as deep rose; the large gons stay default grey (each is the unique biggest polygon of its
   * figure, told apart by size alone). Greyscale: 5 vs the default grey separates by ΔL* ≈ 35, 5 vs 4 by ≈ 14.
+  *
+  * Extended the same day to the remaining regular sizes the minimal-uniformity species use: 7 (teal, beside
+  * yellow triangles and default-grey 42-gons), 9 (violet-blue, beside triangles and grey 18-gons) and 10
+  * (ochre, beside rose pentagons, triangles and grey 15-gons). Greyscale: each separates from its figure's
+  * grey companion by ΔL* ≥ 23; 10 vs 5 is ≈ 7 — accepted on the shape-carries-the-signal ground of 4 vs 6 (a
+  * decagon and a pentagon cannot be confused by outline). The giant gons (15, 18, 20, 24, 42) stay default
+  * grey: each is the unique biggest polygon of its figure.
   */
 object Palette:
 
@@ -22,7 +29,10 @@ object Palette:
     4  -> "#ee6c4d",
     5  -> "#c9366f",
     6  -> "#7fb069",
+    7  -> "#2a9d8f",
     8  -> "#9b5de5",
+    9  -> "#5e60ce",
+    10 -> "#bc6c25",
     12 -> "#3d84a8"
   ).withDefaultValue("#cccccc")
 
