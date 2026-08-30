@@ -5,7 +5,8 @@ package io.github.scala_tessella.research_core.render
   * barycentric [[io.github.scala_tessella.research_core.SymbolRenderer.develop]], or a moduli-point developer
   * that lives with its own symbol type), and this file is only the format.
   *
-  * IO-free, like everything in `core`: [[toSvg]] returns the document as a string.
+  * IO-free, like everything in `core`: [[toSvg]] returns the document as a string. `tint` (default 0)
+  * lightens the irregular faces as [[PdfFigure.toPdf]] does.
   */
 object SvgFigure:
 
@@ -16,7 +17,7 @@ object SvgFigure:
     * is in tiling units; explicit pixel `width`/`height` (~80 px per unit edge) make viewers open it at a
     * sensible size instead of unit-scale (~13 px).
     */
-  def toSvg(faces: Vector[(Int, Vector[Pt])], banner: String): String =
+  def toSvg(faces: Vector[(Int, Vector[Pt])], banner: String, tint: Double = 0.0): String =
     val all              = faces.flatMap(_._2)
     val (xs, ys)         = (all.map(_.x), all.map(_.y))
     val (x0, y0, x1, y1) = (xs.min - 0.2, ys.min - 0.2, xs.max + 0.2, ys.max + 0.2)
@@ -33,8 +34,8 @@ object SvgFigure:
       val d = pts.map((x, y) => s"${fmt(x)},${fmt(-y)}").mkString(" ")
       // the viewBox is in tiling units, so the stroke is too: FigurePolicy.StrokeUnits, not a literal
       sb ++=
-        s"""<polygon points="$d" fill="${Palette.fillOf(
-            p
-          )}" stroke="#222" stroke-width="${FigurePolicy.StrokeUnits}"/>\n"""
+        s"""<polygon points="$d" fill="${
+            if tint > 0 && !FaceShape.isRegular(pts) then Palette.fillTinted(p, tint) else Palette.fillOf(p)
+          }" stroke="#222" stroke-width="${FigurePolicy.StrokeUnits}"/>\n"""
     sb ++= "</svg>\n"
     sb.toString

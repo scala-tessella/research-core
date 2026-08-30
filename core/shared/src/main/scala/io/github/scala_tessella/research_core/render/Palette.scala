@@ -41,3 +41,17 @@ object Palette:
     val hex        = fillOf(p).drop(1)
     def ch(i: Int) = Integer.parseInt(hex.substring(2 * i, 2 * i + 2), 16) / 255.0
     (ch(0), ch(1), ch(2))
+
+  /** The fill of an IRREGULAR `p`-gon: the regular `p`-gon's colour pushed towards white by `tint` (0 keeps
+    * it, 1 is white). Same hue, distinguishably lighter — an irregular hexagon among regular ones, or a star
+    * dodecagon among regular dodecagons, reads at a glance and still says what it is fused from.
+    */
+  def rgbTinted(p: Int, tint: Double): (Double, Double, Double) =
+    val (r, g, b) = rgbOf(p)
+    (r + (1 - r) * tint, g + (1 - g) * tint, b + (1 - b) * tint)
+
+  /** [[rgbTinted]] as the hex string the SVG atlas writes. */
+  def fillTinted(p: Int, tint: Double): String =
+    val (r, g, b)     = rgbTinted(p, tint)
+    def hx(v: Double) = f"${(v * 255).round.toInt.max(0).min(255)}%02x"
+    s"#${hx(r)}${hx(g)}${hx(b)}"

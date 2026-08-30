@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+**Irregular faces, lighter.** `render.FaceShape.isRegular` tells a regular face from an irregular one by
+its boundary alone (equal turns at every corner, on unit edges); `render.Palette.rgbTinted` /
+`fillTinted` push a size's colour towards white; `PdfFigure.toPdf` and `SvgFigure.toSvg` take a `tint`
+parameter (default `0`, so every published panel regenerates byte-identical) that lightens the irregular
+faces by that amount, `FigurePolicy.IrregularTint = 0.45` being the value the minimal-uniformity figures
+use. The occasion: a star dodecagon among regular dodecagons, and a fused hexagon among regular ones,
+were indistinguishable in the published panels; the fix keeps the hue — the lighter tile still says what
+size it is fused from — and marks the shape.
+
 ## [0.7.2] — 2026-08-19
 
 **The published palette release.** The 0.7.1 tag's pipeline failed on a stale test fixture:

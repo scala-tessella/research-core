@@ -32,6 +32,12 @@ object FigurePolicy:
   /** Points per tiling unit for a standalone panel. */
   inline val PtPerUnit = 22.0
 
+  /** How far towards white an irregular face is pushed when an emitter is asked to tint (2026-08-30): the
+    * regular colour keeps the identity of the size, the lighter tone marks the shape as fused or deformed.
+    * Emitters default to 0 — no tint — so the published panels stay byte-frozen.
+    */
+  inline val IrregularTint = 0.45
+
   /** Stroke width in tiling units, for panels and for the SVG atlas (whose viewBox is in tiling units too).
     *
     * Raised 0.03 -> 0.05 on 2026-08-11. The arithmetic, for whoever revisits this: at [[PtPerUnit]] a panel

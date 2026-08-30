@@ -76,6 +76,34 @@ class RenderSpec extends AnyFlatSpec with Matchers:
 
   behavior of "the PDF panel emitter"
 
+  it should "tell a regular face from an irregular one by its boundary alone" in:
+    FaceShape.isRegular(faces(0)._2) shouldBe true
+    FaceShape.isRegular(faces(1)._2) shouldBe true
+    val rhombus = Vector[Pt]((0.0, 0.0), (1.0, 0.0), (1.5, 0.866), (0.5, 0.866))
+    FaceShape.isRegular(rhombus) shouldBe false
+    val hexagon =
+      Vector[Pt]((1.0, 0.0), (0.5, 0.866), (-0.5, 0.866), (-1.0, 0.0), (-0.5, -0.866), (0.5, -0.866))
+    FaceShape.isRegular(hexagon) shouldBe true
+    FaceShape.isRegular(hexagon.take(2)) shouldBe false
+
+  it should "tint only the irregular faces, and not at all by default" in:
+    val rhombus = 4 -> Vector[Pt]((0.0, 0.0), (1.0, 0.0), (1.5, 0.866), (0.5, 0.866))
+    val mixed   = faces :+ rhombus
+    PdfFigure.toPdf(mixed) shouldBe PdfFigure.toPdf(mixed, 0.0)
+    val plain   = PdfFigure.toPdf(mixed).linesIterator.filter(_.endsWith(" rg")).toVector
+    val tinted  =
+      PdfFigure.toPdf(mixed, FigurePolicy.IrregularTint).linesIterator.filter(_.endsWith(" rg")).toVector
+    plain.take(2) shouldBe tinted.take(2) // the square and the triangle keep their colours
+    plain(2) should not be tinted(2)      // the rhombus is lighter
+    val (r, g, b) = Palette.rgbTinted(4, FigurePolicy.IrregularTint)
+    tinted(2) shouldBe s"${num(r)} ${num(g)} ${num(b)} rg"
+    r should be > Palette.rgbOf(4)._1
+    Palette.fillTinted(4, 0.0) shouldBe Palette.fillOf(4)
+    Palette.fillTinted(4, 1.0) shouldBe "#ffffff"
+    SvgFigure.toSvg(mixed, "t", FigurePolicy.IrregularTint) should
+      include(Palette.fillTinted(4, FigurePolicy.IrregularTint))
+    SvgFigure.toSvg(mixed, "t") should not include Palette.fillTinted(4, FigurePolicy.IrregularTint)
+
   it should "emit one filled-and-stroked path per face, at the policy stroke" in:
     val pdf = PdfFigure.toPdf(faces)
     pdf.linesIterator.count(_.endsWith(" h B")) shouldBe faces.size
