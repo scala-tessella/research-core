@@ -53,9 +53,12 @@ symbol, so a developer typed on another repository's `DSymbol` reaches all of th
   same type, which is what lets a figure cross a repository boundary without a conversion.
 - `FigurePolicy` — THE stroke policy: `StrokeUnits`, `PtPerUnit`, `StrokePt`, the printed band `MinPt`/`MaxPt`,
   and `printedPt`/`inBand` for checking a placement.
-- `Palette` — face fill by polygon size: `fillOf`, `rgbOf`.
-- `SvgFigure` — the atlas format: `toSvg`.
-- `PdfFigure` — a standalone vector PDF panel, the format the papers `\includegraphics`: `toPdf`.
+- `Palette` — face fill by polygon size: `fillOf`, `rgbOf`; the same colour lightened for an irregular
+  face, `rgbTinted`, `fillTinted`.
+- `FaceShape` — what a boundary alone tells: `isRegular`.
+- `SvgFigure` — the atlas format: `toSvg(faces, banner, tint = 0)`.
+- `PdfFigure` — a standalone vector PDF panel, the format the papers `\includegraphics`:
+  `toPdf(faces, tint = 0)`; `tint > 0` lightens the irregular faces (`FigurePolicy.IrregularTint`).
 - `FigureCanvas` — a page-description IR with PDF **and** EPS backends, one drawing to both formats:
   `Shape` (`Poly`, `Seg`, `Label`, `Curved`), `Figure`, `fitted`, `textWidth`, `toPdf`, `toEps`.
 - `PdfDocument` — the hand-written PDF 1.4 container the PDF emitters share: `preamble`, `page`, `contents`,
