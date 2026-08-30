@@ -15,7 +15,9 @@ parameter (default `0`, so every published panel regenerates byte-identical) tha
 faces by that amount, `FigurePolicy.IrregularTint = 0.45` being the value the minimal-uniformity figures
 use. The occasion: a star dodecagon among regular dodecagons, and a fused hexagon among regular ones,
 were indistinguishable in the published panels; the fix keeps the hue — the lighter tile still says what
-size it is fused from — and marks the shape.
+size it is fused from — and marks the shape. The 15-gon joins the canonical palette (`15 -> "#3f5f8a"`,
+dark denim): in the (3.10.15) figure it is not the biggest polygon, so it could not stay default grey once
+the irregular 36-gon beside it became a lighter grey.
 
 ## [0.7.2] — 2026-08-19
 

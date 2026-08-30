@@ -21,6 +21,11 @@ package io.github.scala_tessella.research_core.render
   * grey companion by ΔL* ≥ 23; 10 vs 5 is ≈ 7 — accepted on the shape-carries-the-signal ground of 4 vs 6 (a
   * decagon and a pentagon cannot be confused by outline). The giant gons (15, 18, 20, 24, 42) stay default
   * grey: each is the unique biggest polygon of its figure.
+  *
+  * The 15-gon joined on 2026-08-30 (dark denim): in the $(3.10.15)$ figure it is NOT the biggest polygon — an
+  * irregular 36-gon is — so it could not stay default grey once irregular tiles took a lighter tone of their
+  * size's colour and the two greys met. Greyscale: 15 vs the yellow triangles ΔL* ≈ 45, vs the ochre decagons
+  * ≈ 12, vs the lightened grey 36-gon ≈ 50.
   */
 object Palette:
 
@@ -33,7 +38,8 @@ object Palette:
     8  -> "#9b5de5",
     9  -> "#5e60ce",
     10 -> "#bc6c25",
-    12 -> "#3d84a8"
+    12 -> "#3d84a8",
+    15 -> "#3f5f8a"
   ).withDefaultValue("#cccccc")
 
   /** The same colour as PDF/PostScript wants it: three components in `[0, 1]`. */
