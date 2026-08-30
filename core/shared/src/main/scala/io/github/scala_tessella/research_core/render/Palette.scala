@@ -25,7 +25,10 @@ package io.github.scala_tessella.research_core.render
   * The 15-gon joined on 2026-08-30 (dark denim): in the $(3.10.15)$ figure it is NOT the biggest polygon — an
   * irregular 36-gon is — so it could not stay default grey once irregular tiles took a lighter tone of their
   * size's colour and the two greys met. Greyscale: 15 vs the yellow triangles ΔL* ≈ 45, vs the ochre decagons
-  * ≈ 12, vs the lightened grey 36-gon ≈ 50.
+  * ≈ 12, vs the lightened grey 36-gon ≈ 50. The 16-gon followed the same day (forest green): no regular
+  * 16-gon is drawn anywhere, but the $(4.5.20)$ figure's reflex 16-gons are irregular tiles, and their
+  * lightened tone — a soft green — separates from the orange squares, rose pentagons and grey 20-gons in a
+  * way a lightened default grey does not.
   */
 object Palette:
 
@@ -39,7 +42,8 @@ object Palette:
     9  -> "#5e60ce",
     10 -> "#bc6c25",
     12 -> "#3d84a8",
-    15 -> "#3f5f8a"
+    15 -> "#3f5f8a",
+    16 -> "#3a7d44"
   ).withDefaultValue("#cccccc")
 
   /** The same colour as PDF/PostScript wants it: three components in `[0, 1]`. */

@@ -17,7 +17,9 @@ use. The occasion: a star dodecagon among regular dodecagons, and a fused hexago
 were indistinguishable in the published panels; the fix keeps the hue — the lighter tile still says what
 size it is fused from — and marks the shape. The 15-gon joins the canonical palette (`15 -> "#3f5f8a"`,
 dark denim): in the (3.10.15) figure it is not the biggest polygon, so it could not stay default grey once
-the irregular 36-gon beside it became a lighter grey.
+the irregular 36-gon beside it became a lighter grey. The 16-gon too (`16 -> "#3a7d44"`, forest green):
+no regular 16-gon is drawn anywhere, but the (4.5.20) figure's reflex 16-gons are irregular tiles whose
+lightened tone needed to separate from the orange squares, rose pentagons and grey 20-gons.
 
 ## [0.7.2] — 2026-08-19
 
