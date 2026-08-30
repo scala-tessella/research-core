@@ -6,9 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
-## [Unreleased]
+## [0.7.3] — 2026-08-30
 
-**Irregular faces, lighter.** `render.FaceShape.isRegular` tells a regular face from an irregular one by
+**Irregular faces, lighter; the 15- and 16-gons coloured.** `render.FaceShape.isRegular` tells a regular face from an irregular one by
 its boundary alone (equal turns at every corner, on unit edges); `render.Palette.rgbTinted` /
 `fillTinted` push a size's colour towards white; `PdfFigure.toPdf` and `SvgFigure.toSvg` take a `tint`
 parameter (default `0`, so every published panel regenerates byte-identical) that lightens the irregular
