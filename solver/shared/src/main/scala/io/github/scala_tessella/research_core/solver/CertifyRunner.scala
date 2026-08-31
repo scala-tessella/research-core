@@ -65,13 +65,38 @@ object CertifyRunner:
       ).parTupled.flatMap((out, err) => p.exitValue.map(code => (code, out + err)))
     }
 
+  /** Verdict by the exact `s VERIFIED` line: drat-trim's exit code is 1 even on its trivial-UNSAT verified
+    * path (input already contains the empty clause — the star-cut refutation frames).
+    */
+  private def verified(out: String): Boolean = out.linesIterator.exists(_.trim == "s VERIFIED")
+
+  /** kissat solves and emits a DRAT proof; drat-trim checks it. Both verdicts are returned: kissat's UNSAT
+    * (exit 20) and drat-trim's.
+    *
+    * THE BINARY FALLBACK. kissat writes its proof in BINARY DRAT by default, and drat-trim decides the format
+    * by sniffing the opening bytes rather than being told. Every proof here begins with `0x64`, the deletion
+    * marker — which is also the ASCII `d` that opens a TEXT deletion line — so the format hinges on the byte
+    * after it, the first literal's variable-length encoding. Large instances encode their literals above
+    * `0x80` and sniff as binary; a small one can encode a literal into printable ASCII (`0x2d`, a `-`, on the
+    * three-orbit C = 4 obligation) and the whole binary file is then parsed as text, yielding `ERROR: no
+    * conflict` and `s NOT VERIFIED` on a proof that is perfectly sound. Rather than force `--no-binary`
+    * everywhere — proofs roughly double, and the mid-window ones already run to gigabytes — the text proof is
+    * emitted only on that second pass, when the binary one failed to verify. The misdetection fails CLOSED,
+    * so this can only turn a false negative into the right answer: it never rescues an unsound proof, because
+    * drat-trim re-checks the freshly written text proof from scratch.
+    */
   def certifyCnfIO(cnf: Path, proof: Path): IO[(Boolean, Boolean)] =
     for
       (kc, _)   <- run(kissat.toString, cnf.toString, proof.toString)
       (_, dOut) <- run(dratTrim.toString, cnf.toString, proof.toString)
-    // verdict by the exact `s VERIFIED` line: drat-trim's exit code is 1 even on its trivial-UNSAT
-    // verified path (input already contains the empty clause — the star-cut refutation frames)
-    yield (kc == 20, dOut.linesIterator.exists(_.trim == "s VERIFIED"))
+      dv        <-
+        if verified(dOut) then IO.pure(true)
+        else
+          for
+            _       <- run(kissat.toString, "--no-binary", cnf.toString, proof.toString)
+            (_, d2) <- run(dratTrim.toString, cnf.toString, proof.toString)
+          yield verified(d2)
+    yield (kc == 20, dv)
 
   def certifyCnf(cnf: Path, proof: Path): (Boolean, Boolean) = certifyCnfIO(cnf, proof).unsafeRunSync()
 

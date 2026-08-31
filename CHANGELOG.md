@@ -6,6 +6,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.8.1] — 2026-08-31
+
+**A sound proof that failed to verify.** `CertifyRunner.certifyCnf` reported `s NOT VERIFIED` on a
+three-orbit certification obligation whose proof was perfectly good, and would do so again on any
+sufficiently small instance.
+
+### Fixed
+
+- `CertifyRunner.certifyCnf` / `certifyCnfIO` retry with a text proof when the binary one fails to verify.
+  kissat writes binary DRAT by default and drat-trim decides the format by sniffing the opening bytes rather
+  than being told. Every proof starts with `0x64`, the deletion marker — which is also the ASCII `d` that
+  opens a text deletion line — so the format hinges on the byte after it, the first literal's variable-length
+  encoding. Large instances encode literals above `0x80` and sniff as binary; a small one can encode a
+  literal into printable ASCII (`0x2d`, a `-`, on the three-orbit C = 4 obligation), and the binary file is
+  then parsed as text, giving `ERROR: no conflict` on a sound refutation. The fallback re-emits the proof
+  with `--no-binary` and re-checks it, only on that second pass — forcing text everywhere would roughly
+  double proofs that already run to gigabytes in the mid-window.
+
+  The misdetection **fails closed**: it reports NOT VERIFIED, never a false VERIFIED. So no verdict this
+  library has ever recorded is in doubt, and the fallback can only turn a false negative into the right
+  answer — drat-trim re-checks the freshly written text proof from scratch, so an unsound proof is never
+  rescued.
+
+Source- and binary-compatible with 0.8.0.
+
 ## [0.8.0] — 2026-08-31
 
 **The minimal-uniformity walk layer and the exact plane engine.** Everything a verification repository needs
@@ -450,7 +475,8 @@ when pinning this release.
   repository can certify a CNF/DRAT pair directly (external `kissat` + `drat-trim`, verdict taken from the
   exact `s VERIFIED` line) without going through the bundled runner entry points.
 
-[Unreleased]: https://github.com/scala-tessella/research-core/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/scala-tessella/research-core/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/scala-tessella/research-core/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/scala-tessella/research-core/compare/v0.7.3...v0.8.0
 [0.7.0]: https://github.com/scala-tessella/research-core/compare/v0.6.1...v0.7.0
 [0.4.0]: https://github.com/scala-tessella/research-core/compare/v0.3.1...v0.4.0
