@@ -6,6 +6,59 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.8.0] — 2026-08-31
+
+**The minimal-uniformity walk layer and the exact plane engine.** Everything a verification repository needs
+to re-derive the minimal-uniformity results now lives here: the three-orbit-and-beyond walk with its
+curvature filters and its sharding, and the exact `ℤ[ζ_N]` plane engine that develops a symbol, splits tiles
+and reads a symbol back out. Before this release those pieces sat in the development monorepo, so the claim
+specs that use them could not be archived at all.
+
+### Added
+
+- **The exact plane layer** (`core`), floating point nowhere in it: `CycloRing` (the ring `ℤ[ζ_N]`, exact
+  zero tests, signs decided algebraically at zero and otherwise only outside a certified error bound),
+  `ExactPlane` (`UnitPolygon` as a cyclic direction word, with the embedded-polygon certificate that catches
+  proper crossings a vertex-touch test misses), `ExactDeveloper` (development at an angle point, closure and
+  holonomy re-checked per tile), `Defusion` (splitting a regular polygon off an irregular tile as word
+  surgery, with pinch decomposition), `TilePatch` (patch state, class-wide moves, exhaustion to a saturated
+  endpoint, `shapeKey`), `Periodicity` (translation lattices accepted only against the exact cell-area
+  identity) and `SymbolExtractor` (geometry back to a minimal symbol).
+- `DelaneySymbols`: two further curvature filters beside `tier1Feasible`, nesting as
+  `euclid ⊆ staircase ⊆ tier-1` — `euclideanFeasibleExact` (the euclidean-feasible slice itself, the sharpest
+  sound cut) and `staircaseFeasible` (the sharpest a SAT encoding can express: per chamber the bin floor of
+  its exact tile-deficit rate). Each comes with its matching MONOTONE partial-D-set prune, so the walk is cut
+  in the tree rather than at the leaves.
+- `DelaneySymbols`: the orbit-bounded walk grows the species-level prunes `vertexCap` (a cap on the chambers
+  of every (1,2)-orbit, open ones included) and `threeLetterShapesOk`, a `valence2` mode across the walk, the
+  symbol enumeration and the curvature tables (vertex floors relax to `⌈2/r⌉`; `Orbit.minV2`), and
+  deterministic canonical-prefix SHARDING — `orbitBoundedFrontier` and `orbitBoundedShardWalk`, whose shard
+  indices are stable across runs and machines, so a walk of days is resumable and its shards checkpoint
+  independently. `BackTracker.parallelForeachFrom` walks a shard's subtree on the same work-stealing pool.
+- `UClass`: the two sharper readings of the around-every-vertex condition — `isArc` / `strictArcLegal` (the
+  regular corners form one contiguous run, and that run is an arc of z, not a rotation of one) and
+  `isolatedLegal` (the arc clause plus at most one irregular tile per vertex). `designations` and
+  `candidates` take them as flags. The readings part exactly on species with a repeated letter.
+- `MetricLayer`: the rigid-designation solver — `designatedRows` (the rows a regular/irregular designation
+  forces linearly) and `particularSolution` (exact RREF, free variables at zero).
+- `KCertify` (`solver`): `K2Certify` generalized from two vertex-orbit classes to k, with the staircase layer
+  as an optional refinement of the tier-1 curvature side. Same `SatSolver` abstraction as the rest of the
+  harness, so it runs on SAT4J and on CaDiCaL alike.
+- The walk entry points, the curvature filters and `collectOrbits` are public rather than
+  `private[research_core]`: the specs that consume them live in another repository.
+
+### Changed
+
+- `tier1Feasible`, `euclideanFeasible` and the walk entry points take a `valence2: Boolean = false`
+  parameter. Source-compatible for ordinary calls; a bare method reference passed where a function is
+  expected (`xs.filterNot(DelaneySymbols.tier1Feasible)`) no longer eta-expands and needs
+  `tier1Feasible(_)`.
+- `Periodicity.partitionBy` widened from `private[research_core]` to public.
+- The scaladoc of the sunk modules no longer points at the development repository's notes and probes.
+
+Otherwise source- and binary-compatible with 0.7.3 for library users: every other change is an addition or a
+widening of visibility.
+
 ## [0.7.3] — 2026-08-30
 
 **Irregular faces, lighter; the 15- and 16-gons coloured.** `render.FaceShape.isRegular` tells a regular face from an irregular one by
@@ -397,7 +450,8 @@ when pinning this release.
   repository can certify a CNF/DRAT pair directly (external `kissat` + `drat-trim`, verdict taken from the
   exact `s VERIFIED` line) without going through the bundled runner entry points.
 
-[Unreleased]: https://github.com/scala-tessella/research-core/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/scala-tessella/research-core/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/scala-tessella/research-core/compare/v0.7.3...v0.8.0
 [0.7.0]: https://github.com/scala-tessella/research-core/compare/v0.6.1...v0.7.0
 [0.4.0]: https://github.com/scala-tessella/research-core/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/scala-tessella/research-core/compare/v0.3.0...v0.3.1

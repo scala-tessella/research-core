@@ -12,7 +12,7 @@ verification repositories and depend on a pinned release of `research-core`.
 | Module | Artifact | Package | Contents |
 |---|---|---|---|
 | `core`   | `research-core`        | `io.github.scala_tessella.research_core`        | Pure combinatorics + exact arithmetic. Scala.js-clean (no JVM-only IO). |
-| `solver` | `research-core-solver` | `io.github.scala_tessella.research_core.solver` | SAT assembler (`SymbolAssembly`) + DRAT/UNSAT certification harness (`Certification`, `K1Certify`, `K2Certify`, `QuotientCertify`, `CertifyRunner`; live solver in-process per platform — SAT4J on the JVM, CaDiCaL on Scala Native — external kissat/drat-trim optional). |
+| `solver` | `research-core-solver` | `io.github.scala_tessella.research_core.solver` | SAT assembler (`SymbolAssembly`) + DRAT/UNSAT certification harness (`Certification`, `K1Certify`, `K2Certify`, `KCertify`, `QuotientCertify`, `CertifyRunner`; live solver in-process per platform — SAT4J on the JVM, CaDiCaL on Scala Native — external kissat/drat-trim optional). |
 
 `solver` is a subpackage of `core` (no split package). This keeps `core`'s `private[research_core]` members
 reachable from `solver` while they stay hidden from library users.
@@ -21,9 +21,11 @@ reachable from `solver` while they stay hidden from library users.
 
 > **Reading this from a verification repository?** This page describes the current development line, which
 > moves ahead of the archived releases that verification repositories pin. `UClass` and the widened
-> `DelaneySymbols` entry points, for instance, arrived in 0.3.0 and are **absent from 0.2.1**. Check the
-> pinned version's own archive and the [CHANGELOG](CHANGELOG.md) rather than this list. The newest archived
-> release is 0.3.1, [doi:10.5281/zenodo.21739112](https://doi.org/10.5281/zenodo.21739112).
+> `DelaneySymbols` entry points, for instance, arrived in 0.3.0 and are **absent from 0.2.1**; the
+> orbit-bounded walk, the staircase layer and the exact plane / de-fusion engine arrived in 0.8.0 and are
+> absent from everything before it. Check the pinned version's own archive and the
+> [CHANGELOG](CHANGELOG.md) rather than this list. The newest archived release is 0.3.1,
+> [doi:10.5281/zenodo.21739112](https://doi.org/10.5281/zenodo.21739112).
 
 - `Frac` — exact rationals.
 - `Cyclo24` — exact arithmetic in the 24th cyclotomic field (the angles that arise for `{3,4,6,8,12}` faces).
@@ -31,19 +33,52 @@ reachable from `solver` while they stay hidden from library users.
   support used internally by the engine.)
 - `DelaneySymbols` — the Delaney–Dress symbol engine: types `DSymbol`, `Orbit`, `Tiling`, `DSet`; enumeration
   (`enumerateSymbols`, `enumerateRelaxedDetailed`, `relaxedDSets`, `relaxedOrbitBoundedDSets`,
-  `bfsRelabelings`, `euclideanSymbolsOf`); the tier-1 curvature relaxation `tier1Feasible` (the
-  euclidean-feasible ⇒ tier-1 lemma is proved in its scaladoc); minimality/quotients (`isMinimal`,
-  `properQuotients`, `canonicalKey`); `regularPolygonVertices`.
+  `bfsRelabelings`, `euclideanSymbolsOf`); minimality/quotients (`isMinimal`, `properQuotients`,
+  `canonicalKey`, `symbolFromKey`); `regularPolygonVertices`. Three nested curvature filters, each exact
+  integer arithmetic in twelfths and each with its matching monotone tree prune, so a walk can be cut at the
+  sharpness a given certificate can express: `euclideanFeasibleExact` (the euclidean-feasible slice itself),
+  `staircaseFeasible` (the sharpest bound a SAT encoding can carry) and `tier1Feasible` (the local
+  permutation condition; the euclidean-feasible ⇒ tier-1 lemma is proved in its scaladoc) —
+  `euclid ⊆ staircase ⊆ tier-1`. The orbit-bounded walk (`relaxedOrbitBoundedDSets`) takes them, plus the
+  species-level prunes `vertexCap` (a cap on the chambers of every (1,2)-orbit, open ones included) and
+  `threeLetterShapesOk`, and shards deterministically at a canonical-prefix frontier
+  (`orbitBoundedFrontier`, `orbitBoundedShardWalk`) so a long walk is resumable and its shard indices stable
+  across machines. `valence2` on each of them relaxes vertices to degree 2 (`Orbit.minV2`).
 - `MetricLayer` — the exact linear angle theory and moduli: `angleSystem`, `regularPoint`, `satisfies`,
-  `maxClosureResidual`, `moduliDimension`, `nullspaceBasis`, `closureRank`, `exactSymmetryRealizable`.
+  `maxClosureResidual`, `moduliDimension`, `nullspaceBasis`, `closureRank`, `exactSymmetryRealizable`, and
+  the rigid-designation solver `designatedRows` / `particularSolution` (the rows a regular/irregular
+  designation forces, and an exact RREF particular solution of the augmented system).
 - `RankWitness` — exported algebraic rank witnesses (pivot minors, kernel bases): `produce`, `verify`, `det`,
   `minor`, re-checkable by any computer algebra system.
 - `UClass` — the U(z) class machinery (unit-edge tilings around a vertex figure): `candidates`,
-  `designations`, `forcedRegular`, `noneForcedRegular`, `cyclicSubset`, `targets`.
+  `designations`, `forcedRegular`, `noneForcedRegular`, `targets`, and the three readings of the
+  around-every-vertex condition — `cyclicSubset` (the regular corners are a cyclic subword of z),
+  `strictArcLegal` (they form one contiguous run, and that run is an arc of z: `isArc`, no rotation) and
+  `isolatedLegal` (the arc clause plus at most one irregular tile per vertex). `designations` and
+  `candidates` take the reading as flags, the strict class being a subset of the spliced one.
 - `SymbolRenderer` — barycentric development of a tiling straight from its minimal symbol: `develop`,
   `apothem`, `circumradius`, `reflect`, plus `toSvg` forwarded from `render`. IO-free (the caller writes the
   returned string).
 - `TilingReference` — reference data (e.g. `n1`, the 11 Archimedean vertex configurations).
+
+The exact plane layer, added in 0.8.0 — plane geometry with no floating point anywhere: a point is an element
+of `ℤ[ζ_N]` on the group basis, reduced modulo the cyclotomic polynomial only at zero tests, and the sign of
+a real algebraic quantity is decided algebraically at zero and otherwise only outside a certified numeric
+error bound, failing loudly in between.
+
+- `CycloRing` — the ring `ℤ[ζ_N]`: `Cyc`, `cyclotomic`, reduction, exact zero tests, certified signs.
+- `ExactPlane` — `UnitPolygon`, the unit-edge simple polygon as a cyclic direction word: closure, winding,
+  corner angles, the embedded-polygon certificate (no two non-adjacent edges sharing a point — a vertex-touch
+  test alone misses proper crossings), exact area.
+- `ExactDeveloper` — barycentric development of a symbol at a given angle point straight into `ℤ[ζ_N]`, with
+  closure and holonomy re-checked at every tile.
+- `Defusion` — splitting a regular polygon off an irregular tile as word surgery, with the remainder gated by
+  the embedded-polygon certificate and pinch decomposition when a cut lands on a boundary vertex.
+- `TilePatch` — a developed patch and its state: vertex words, class-wide moves, admissibility, greedy
+  exhaustion to a saturated endpoint, `shapeKey` (congruence up to shift, rotation and reflection).
+- `Periodicity` — translation lattices accepted only when the quotient census satisfies the exact cell-area
+  identity; `partitionBy` for classes given by an exact relation rather than a key.
+- `SymbolExtractor` — the loop back: geometry → symbol, quotient, minimise, canonical key.
 
 The figure format layer (`research_core.render`), added in 0.7.0 — everything about how a drawing becomes a
 file, so a journal's artwork rule lands in one place instead of five. Emitters take developed faces, never a

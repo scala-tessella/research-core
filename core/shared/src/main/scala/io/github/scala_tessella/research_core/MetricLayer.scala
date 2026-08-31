@@ -121,6 +121,61 @@ object MetricLayer:
       c += 1
     m.forall(row => !(row.take(vars).forall(_.isZero) && !row(vars).isZero))
 
+  /** A particular solution of an augmented rational system by exact RREF (free variables at 0); None iff
+    * inconsistent. The rigid-designation solver the k=4 probes carried privately.
+    */
+  def particularSolution(rows: Vector[(Array[Frac], Frac)], vars: Int): Option[Array[Frac]] =
+    val m          = rows.map((c, r) => c.clone :+ r).toArray
+    val nr         = m.length
+    val pivotOfCol = Array.fill(vars)(-1)
+    var r          = 0
+    var c          = 0
+    while r < nr && c < vars do
+      var pr = r
+      while pr < nr && m(pr)(c).isZero do pr += 1
+      if pr < nr then
+        val t   = m(pr); m(pr) = m(r); m(r) = t
+        val inv = m(r)(c)
+        for j <- c to vars do m(r)(j) = m(r)(j) / inv
+        for i <- 0 until nr if i != r && !m(i)(c).isZero do
+          val f = m(i)(c)
+          for j <- c to vars do m(i)(j) = m(i)(j) - f * m(r)(j)
+        pivotOfCol(c) = r
+        r += 1
+      c += 1
+    if m.exists(row => row.take(vars).forall(_.isZero) && !row(vars).isZero) then None
+    else
+      val x = Array.fill(vars)(Frac(0, 1))
+      for pc <- 0 until vars if pivotOfCol(pc) >= 0 do x(pc) = m(pivotOfCol(pc))(vars)
+      Some(x)
+
+  /** Angle sums plus the rows a regular/irregular designation forces linearly: regular pins `(p−2)/p`,
+    * equilateral-triangle pins `1/3`, rhombus opposite-angle equalities. Categories with no linear content
+    * fall through — callers must check dimension 0 on the result and verify the remaining faces' closure
+    * exactly (the k=4 campaign's rigid fall-through).
+    */
+  def designatedRows(ds: DSymbol, reg: Set[Int]): Vector[(Array[Frac], Frac)] =
+    val sys                            = angleSystem(ds)
+    val extra                          = Vector.newBuilder[(Array[Frac], Frac)]
+    def eq(c1: Int, c2: Int): Unit     =
+      if c1 != c2 then
+        val row = Array.fill(sys.vars)(Frac(0, 1))
+        row(c1) = Frac(1, 1); row(c2) = Frac(-1, 1)
+        extra += ((row, Frac(0, 1)))
+    def pin(c: Int, value: Frac): Unit =
+      val row = Array.fill(sys.vars)(Frac(0, 1))
+      row(c) = Frac(1, 1)
+      extra += ((row, value))
+    for (o, k) <- ds.orbs.zipWithIndex if o.i == 0 do
+      val d0  = o.elements.head
+      val p   = ds.m(0, 1, d0)
+      val ext = faceCornerSeq(ds, sys.corner, d0)
+      if reg(k) then ext.foreach(c => pin(c, Frac.make(p - 2L, p)))
+      else if p == 3 then ext.foreach(c => pin(c, Frac(1, 3)))
+      else if p == 4 then { eq(ext(0), ext(2)); eq(ext(1), ext(3)) }
+      else ()
+    sys.rows ++ extra.result()
+
   /** The geometric corner sequence around the face through `d0` (corner-variable indices, length m₀₁): the
     * quotient walk `cur := σ₁(σ₀(cur))` — cross the edge, turn within the face — repeated to the full m
     * (`vertexConfig`'s folding convention, face-side).

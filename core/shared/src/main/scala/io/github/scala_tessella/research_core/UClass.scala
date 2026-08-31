@@ -15,6 +15,16 @@ import io.github.scala_tessella.research_core.Signatures.VertexSignature
   * equals z). Both readings only SHRINK the class relative to this one, so a refutation of "U(z) has a tiling
   * with k vertex orbits" under (1)–(3) is sound for the stricter class as well.
   *
+  * THE STRICT READING (`strict = true`; with `isolated = true` the class the manuscript adopts from
+  * 2026-08-30 on — the arc clause plus at most one irregular tile per vertex, [[isolatedLegal]]): condition
+  * (3) becomes "the regular tiles form ONE contiguous arc around the vertex, and that arc, read in order, is
+  * a contiguous arc of z" — no rotation of the arc, an arc having endpoints ([[strictArcLegal]]). The two
+  * readings diverge exactly on species with a REPEATED letter: splicing out an irregular tile can bring two
+  * copies of the letter into an adjacency z does not have — $(3.4.4_i.4)$ splices to $(4.3.4)$, a rotation of
+  * the arc $(3.4.4)$ of $(3.4.4.6)$ but not an arc of it. The strict class is a SUBSET of the spliced one, so
+  * every lower bound proved for the default reading holds for it, and every strict tiling is already among
+  * the banked spliced-class candidates.
+  *
   * A symbol is tested over all DESIGNATIONS (subsets of face orbits declared regular): a genuine U(z) tiling
   * with uniformity k yields its full-symmetry symbol (≤ 12k chambers, the G0 bound) plus the
   * truth-designation, which passes [[designations]] and whose PINNED linear system (regular corners at
@@ -38,11 +48,48 @@ object UClass:
 
   private def cyclicEq(a: List[Int], b: List[Int]): Boolean = a.length == b.length && cyclicSubset(a, b)
 
+  /** `w` is a contiguous arc of the CYCLIC word `z`, read in either direction and NOT rotated: (4.6.3) is an
+    * arc of (3.4.4.6) (it wraps), (4.3.4) is not — the letter 3 of z is never flanked by two 4s.
+    */
+  def isArc(w: List[Int], z: List[Int]): Boolean =
+    w.length <= z.length && z.indices.exists: r =>
+      val rot = z.drop(r) ++ z.take(r)
+      rot.startsWith(w) || rot.startsWith(w.reverse)
+
+  /** The ISOLATED reading (measured and adopted 2026-08-30): [[strictArcLegal]] AND at most one irregular
+    * corner at the vertex — equivalently, no two irregular tiles share a point. Every vertex is then z with
+    * one contiguous arc of z swallowed by a single irregular corner of that arc's angle sum.
+    */
+  def isolatedLegal(letters: Seq[Option[Int]], z: List[Int]): Boolean =
+    strictArcLegal(letters, z) && letters.count(_.isEmpty) <= 1
+
+  /** Legality of one vertex under the STRICT reading of conditions (2)–(3). `letters` is the vertex's cyclic
+    * corner word, a regular letter or `None` for an irregular corner: an all-regular vertex must BE z as a
+    * cyclic sequence; otherwise the regular corners must form one cyclic run and that run, in order, an arc
+    * of z ([[isArc]]). An all-irregular vertex fails (2).
+    */
+  def strictArcLegal(letters: Seq[Option[Int]], z: List[Int]): Boolean =
+    val n      = letters.length
+    val regPos = letters.indices.filter(i => letters(i).isDefined)
+    val r      = regPos.size
+    if r == 0 then false
+    else if r == n then cyclicEq(letters.flatten.toList, z)
+    else
+      // one cyclic run of regular corners = exactly one regular corner follows an irregular one
+      val starts = regPos.filter(i => letters((i + n - 1) % n).isEmpty)
+      starts.size == 1 && isArc((0 until r).map(k => letters((starts.head + k) % n).get).toList, z)
+
   /** All designations (sets of 01-orbit indices declared REGULAR) under which `ds` satisfies U(z)
     * combinatorially: some all-regular vertex orbit has configuration z; every vertex orbit's RVS is
-    * non-empty and a cyclic subset of z.
+    * non-empty and a cyclic subset of z — or, with `strict`, a contiguous run forming an arc of z
+    * ([[strictArcLegal]]).
     */
-  def designations(ds: DSymbol, z: VertexSignature): List[Set[Int]] =
+  def designations(
+      ds: DSymbol,
+      z: VertexSignature,
+      strict: Boolean = false,
+      isolated: Boolean = false
+  ): List[Set[Int]] =
     val faceOrbits = ds.orbs.zipWithIndex.collect { case (o, k) if o.i == 0 => k }
     val configs    = ds.orbs
       .filter(o => o.i == 1)
@@ -50,19 +97,26 @@ object UClass:
     (0 until (1 << faceOrbits.size)).iterator
       .map(mask => faceOrbits.zipWithIndex.collect { case (f, i) if (mask & (1 << i)) != 0 => f }.toSet)
       .filter: reg =>
-        val rvss = configs.map(_.filter((f, _) => reg(f)))
-        rvss.forall(_.nonEmpty) && {
-          val sizes = rvss.map(_.map(_._2))
-          val fulls = configs.zip(sizes).collect { case (cfg, w) if cfg.length == w.length => w }
-          fulls.exists(cyclicEq(_, z)) && sizes.forall(cyclicSubset(_, z))
-        }
+        if strict || isolated then
+          configs.forall { cfg =>
+            val w = cfg.map((f, p) => Option.when(reg(f))(p))
+            strictArcLegal(w, z) && (!isolated || w.count(_.isEmpty) <= 1)
+          } &&
+          configs.exists(cfg => cfg.forall((f, _) => reg(f)) && cyclicEq(cfg.map(_._2), z))
+        else
+          val rvss = configs.map(_.filter((f, _) => reg(f)))
+          rvss.forall(_.nonEmpty) && {
+            val sizes = rvss.map(_.map(_._2))
+            val fulls = configs.zip(sizes).collect { case (cfg, w) if cfg.length == w.length => w }
+            fulls.exists(cyclicEq(_, z)) && sizes.forall(cyclicSubset(_, z))
+          }
       .toList
 
   /** Exact consistency of the PINNED linear layer: the angle system of `ds` plus `γ = (p−2)/p` for every
     * corner of a regular-designated face orbit. Inconsistency refutes the designation metrically; a
     * consistent designation is a SURVIVOR needing closure-level (affine, per the review repair) analysis.
     */
-  private[research_core] def pinnedConsistent(ds: DSymbol, regular: Set[Int]): Boolean =
+  def pinnedConsistent(ds: DSymbol, regular: Set[Int]): Boolean =
     pinnedConsistent(ds, MetricLayer.angleSystem(ds), regular)
 
   private def pinnedConsistent(ds: DSymbol, sys: MetricLayer.AngleSystem, regular: Set[Int]): Boolean =
@@ -125,9 +179,14 @@ object UClass:
   /** U(z) candidates of `ds`: designations passing the combinatorial check AND the pinned linear layer (the
     * angle system depends only on `ds` — built once, not per designation).
     */
-  def candidates(ds: DSymbol, z: VertexSignature): List[Set[Int]] =
+  def candidates(
+      ds: DSymbol,
+      z: VertexSignature,
+      strict: Boolean = false,
+      isolated: Boolean = false
+  ): List[Set[Int]] =
     val sys = MetricLayer.angleSystem(ds)
-    designations(ds, z).filter(pinnedConsistent(ds, sys, _))
+    designations(ds, z, strict, isolated).filter(pinnedConsistent(ds, sys, _))
 
   /** The ten conjecture targets (raw cyclic sequences) with their claimed minimal uniformities. */
   val targets: List[(List[Int], Int)] = List(

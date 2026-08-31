@@ -74,6 +74,11 @@ object DelaneySymbols:
     def r: Int      = if isChain then length else (length + 1) / 2
     def minV: Int   = math.ceil(3.0 / r).toInt
 
+    /** The valence-2-extended minimum: vertices may have degree 2, faces keep ≥ 3 sides — so only
+      * (1,2)-orbits relax, to ⌈2/r⌉.
+      */
+    def minV2: Int = if i == 1 then math.max(1, math.ceil(2.0 / r).toInt) else math.ceil(3.0 / r).toInt
+
   /** All `(i, j)`-orbits, where `j = i+1`. Mirrors `orbits(ds, i, j)`. */
   private def orbits(ds: DSet, i: Int, j: Int): Vector[Orbit] =
     val seen = Array.fill(ds.size + 1)(false)
@@ -173,23 +178,39 @@ object DelaneySymbols:
       * subtrees as tasks, computing the first child inline. Idle workers steal pending sibling tasks — so
       * even a single giant subtree gets distributed across all cores, with no slow single-threaded tail (the
       * flaw of a fixed up-front frontier split). `f` MUST be thread-safe (the caller's dedup set / output
-      * must be concurrent); `children`/`extract` are pure on their inputs, so this is sound. Long
-      * single-child chains fork nothing (empty tail), so task count tracks branch points, not total nodes.
+      * must be concurrent); `children`/`extract` are pure on their inputs, so this is sound.
+      *
+      * Forking STOPS below `forkDepth` levels (deeper nodes recurse sequentially in the owning worker): each
+      * live task pins its state (for the D-set generator, a copied op-table), so an unbounded fork on a fat
+      * subtree grows pending-task memory without bound — on 2026-08-08 that took the whole machine down
+      * (kernel jetsam swept 159 processes, the walk among them, twice, both times inside the fattest
+      * subtree). Bounded depth caps live tasks at O(branching^forkDepth) while keeping every core fed:
+      * parallelism comes from the top of the subtree, which is where the branch points are anyway.
       */
-    def parallelForeach(parallelism: Int, f: R => Unit): Unit =
-      val pool = new ForkJoinPool(parallelism)
-      final class Task(st: S) extends RecursiveAction:
+    def parallelForeach(parallelism: Int, f: R => Unit, forkDepth: Int = 12): Unit =
+      parallelForeachFrom(parallelism, f, root, forkDepth)
+
+    /** [[parallelForeach]] rooted at an arbitrary state — the SHARD walk: a frontier state's subtree is
+      * traversed with the same work-stealing pool, so shards can be checkpointed independently.
+      */
+    def parallelForeachFrom(parallelism: Int, f: R => Unit, from: S, forkDepth: Int = 12): Unit =
+      val pool                    = new ForkJoinPool(parallelism)
+      def sequential(st: S): Unit =
+        extract(st).foreach(f)
+        children(st).foreach(sequential)
+      final class Task(st: S, depth: Int) extends RecursiveAction:
         def compute(): Unit =
           extract(st).foreach(f)
           children(st) match
-            case Nil          => ()
-            case head :: tail =>
+            case Nil                       => ()
+            case all if depth >= forkDepth => all.foreach(sequential)
+            case head :: tail              =>
               val forked = tail.map { c =>
-                val t = new Task(c); t.fork(); t
+                val t = new Task(c, depth + 1); t.fork(); t
               }
-              new Task(head).compute()
+              new Task(head, depth + 1).compute()
               forked.foreach(_.join())
-      try { pool.invoke(new Task(root)); () }
+      try { pool.invoke(new Task(from, 0)); () }
       finally pool.shutdown()
 
     /** The Cats Effect twin of [[parallelForeach]] (the migration path to Scala Native, where the runtime is
@@ -457,7 +478,8 @@ object DelaneySymbols:
 
   final private case class DSymGenState(vs: Array[Int], curv: Frac, next: Int)
 
-  final private class DSymGenerator(ds: DSet) extends BackTracker[DSymbol, DSymGenState]:
+  final private class DSymGenerator(ds: DSet, valence2: Boolean = false)
+      extends BackTracker[DSymbol, DSymGenState]:
     // collectOrbits builds orbits(0,1) ++ orbits(1,2) — computed ONCE per D-set and shared by every
     // completed symbol this generator yields (extract used to re-derive it per symbol)
     private val (orbs, orbIndex)          = collectOrbits(ds)
@@ -472,7 +494,7 @@ object DelaneySymbols:
       automorphisms(ds).map(m => onOrbits(m)).toSet
 
     def root: DSymGenState =
-      val vs = orbs.map(_.minV).toArray
+      val vs = orbs.map(o => if valence2 then o.minV2 else o.minV).toArray
       DSymGenState(vs, curvature(vs), 1)
 
     def extract(st: DSymGenState): Option[DSymbol] =
@@ -514,7 +536,9 @@ object DelaneySymbols:
         while idx < orbs.length do
           val k = if orbs(idx).isChain then 1 else 2
           val v = vs(idx)
-          if v > orbs(idx).minV && (curv - Frac(k, v) + Frac(k, v - 1)).signum < 0 then return false
+          if v > (if valence2 then orbs(idx).minV2 else orbs(idx).minV) &&
+            (curv - Frac(k, v) + Frac(k, v - 1)).signum < 0
+          then return false
           idx += 1
         true
 
@@ -676,10 +700,10 @@ object DelaneySymbols:
   /** True iff a flat (curvature-0) tiling is achievable on this D-set: the MAXIMAL curvature (every v at its
     * minimum `minV`) is ≥ 0. Raising any v only lowers the curvature, so `maxCurv < 0` ⇒ purely hyperbolic.
     */
-  private def euclideanFeasible(ds: DSet): Boolean =
+  private def euclideanFeasible(ds: DSet, valence2: Boolean = false): Boolean =
     var c = Frac.make(-ds.size, 2)
     for orb <- orbits(ds, 0, 1) ++ orbits(ds, 1, 2) do
-      c = c + Frac.make(if orb.isChain then 1 else 2, orb.minV)
+      c = c + Frac.make(if orb.isChain then 1 else 2, if valence2 then orb.minV2 else orb.minV)
     c.signum >= 0
 
   /** Bucketed `(n, vertex-type-set)` view of [[enumerateDetailed]]. */
@@ -746,12 +770,13 @@ object DelaneySymbols:
     */
   def euclideanSymbolsOf(
       dsets: Vector[DSet],
-      maxN: Int
+      maxN: Int,
+      valence2: Boolean = false
   ): List[(Tiling, DSymbol)] =
     val out = List.newBuilder[(Tiling, DSymbol)]
     for dset <- dsets do
-      if euclideanFeasible(dset) then
-        DSymGenerator(dset).foreach: dsym =>
+      if euclideanFeasible(dset, valence2) then
+        DSymGenerator(dset, valence2).foreach: dsym =>
           if dsym.isEuclidean then
             val orbs12 = orbits(dsym.dset, 1, 2)
             if orbs12.length <= maxN then
@@ -917,6 +942,275 @@ object DelaneySymbols:
       d += 1
     bad
 
+  /** The DEFICIT sharpening of [[closedBadTileChambers]]: the EXACT tier-1 deficit (in twelfths, always an
+    * integer per orbit) of the closed (0,1)-orbits, `4·len − 12·k/minV` with `k` = 1 (chain) / 2 (cycle) and
+    * `minV = max(1, ⌈3/r⌉)`. Per chamber: 0 for r ∈ {1, 3}, exactly 1/12 for r ∈ {2, 4}, 8/5 for r = 5, ≥
+    * 2/12 for r ≥ 6 — the deficit tiers that put teeth back into the mid-window prune where the bad-chamber
+    * count (deficit floor 1/12) is toothless. A closed orbit persists unchanged in every completion and open
+    * orbits have deficit ≥ 0, so this sum is MONOTONE non-decreasing along the generation tree.
+    */
+  private def closedTileDeficit12(ds: DSet): Int =
+    val seen      = Array.fill(ds.size + 1)(false)
+    var deficit12 = 0
+    var d         = 1
+    while d <= ds.size do
+      if !seen(d) then
+        var e        = d
+        var k        = 0
+        var len      = 0
+        var isChain  = false
+        var complete = true
+        var go       = true
+        while go do
+          if !seen(e) then { seen(e) = true; len += 1 }
+          val ek = ds.get(k, e)
+          if ek == 0 then { complete = false; go = false }
+          else
+            if ek == e then isChain = true
+            e = ek
+            k = 1 - k
+            if e == d && k == 0 then go = false
+        if complete then
+          val r    = if isChain then len else (len + 1) / 2
+          val minV = math.max(1, (3 + r - 1) / r) // ⌈3/r⌉ ∈ {1, 2, 3}, so 12·k/minV is an integer
+          deficit12 += 4 * len - 12 * (if isChain then 1 else 2) / minV
+      d += 1
+    deficit12
+
+  /** The vertex-side sharpening: exact contribution (in twelfths) of the CLOSED (1,2)-orbits (chain of length
+    * L: 4 / 6 / 12 for L = 1 / 2 / ≥ 3; cycle: 8 / 12 / 24 for L = 2 / 4 / ≥ 6 — the [[tier1Feasible]] table)
+    * together with their count. A closed vertex orbit's contribution is fixed in every completion and an open
+    * or unstarted one contributes ≤ 24, so `sum12 + 24·(maxN − count)` bounds `12·vSum` of every ≤ maxN-orbit
+    * completion and is MONOTONE non-increasing.
+    */
+  /** Maximal curvature contribution (twelfths) of a closed (1,2)-orbit — `12·k/minV` by the family's legal
+    * v-floor: the classical valence-≥3 table 4/6/12 (chains by len 1/2/≥3) and 8/12/24 (cycles by len
+    * 2/4/≥6), or the valence-2-extended table 6/12 and 12/24 (only the small-r caps rise, all stay ≤ 24, so
+    * the 12n chamber bound and the ≤ 12 chain cap survive).
+    */
+  private def vertexOrbitCap12(isChain: Boolean, len: Int, valence2: Boolean): Int =
+    if valence2 then
+      if isChain then if len == 1 then 6 else 12
+      else if len == 2 then 12
+      else 24
+    else if isChain then if len == 1 then 4 else if len == 2 then 6 else 12
+    else if len == 2 then 8
+    else if len == 4 then 12
+    else 24
+
+  /** The largest (1,2)-orbit of a PARTIAL D-set, open orbits counted by the fragment already built (a lower
+    * bound on their final size, so a cap on this quantity is a sound tree prune). Species whose vertices all
+    * have valence ≤ 3 — the six three-letter species of U(z), Lemma lem:chambers — live in the D-sets whose
+    * every (1,2)-orbit has at most 6 chambers.
+    */
+  def maxVertexOrbitLength(ds: DSet): Int =
+    val seen = Array.fill(ds.size + 1)(false)
+    var best = 0
+    var d    = 1
+    while d <= ds.size do
+      if !seen(d) then
+        var len   = 0
+        var stack = List(d)
+        seen(d) = true
+        while stack.nonEmpty do
+          val x = stack.head
+          stack = stack.tail
+          len += 1
+          var k = 1
+          while k <= 2 do
+            val y = ds.get(k, x)
+            if y != 0 && !seen(y) then { seen(y) = true; stack = y :: stack }
+            k += 1
+        if len > best then best = len
+      d += 1
+    best
+
+  /** The (1,2)-orbit SHAPES of a three-letter species of U(z): every vertex has valence 3 with no symmetry
+    * (its three tiles are distinct) or valence 2 (a reflex corner hugging a regular polygon, stabiliser at
+    * most a mirror), so every closed (1,2)-orbit is a 6-cycle, a 4-cycle or a 2-chain — no chain of length 1
+    * or 3, no 2-cycle. Open orbits are checked by what they can still become: at most 6 chambers, at most 2
+    * once a fixed chamber (a mirror) is present. Sound as a tree prune, since orbits only grow.
+    */
+  def threeLetterShapesOk(ds: DSet): Boolean =
+    val seen = Array.fill(ds.size + 1)(false)
+    var ok   = true
+    var d    = 1
+    while ok && d <= ds.size do
+      if !seen(d) then
+        var len    = 0
+        var closed = true
+        var chain  = false
+        var stack  = List(d)
+        seen(d) = true
+        while stack.nonEmpty do
+          val x = stack.head
+          stack = stack.tail
+          len += 1
+          var k = 1
+          while k <= 2 do
+            val y = ds.get(k, x)
+            if y == 0 then closed = false
+            else if y == x then chain = true
+            else if !seen(y) then { seen(y) = true; stack = y :: stack }
+            k += 1
+        ok =
+          if closed then (chain && len == 2) || (!chain && (len == 4 || len == 6))
+          else len <= 6 && (!chain || len <= 2)
+      d += 1
+    ok
+
+  private def closedVertexStats12(ds: DSet, valence2: Boolean = false): (Int, Int) =
+    var sum12 = 0
+    var count = 0
+    val seen  = Array.fill(ds.size + 1)(false)
+    var d     = 1
+    while d <= ds.size do
+      if !seen(d) then
+        var e        = d
+        var k        = 1
+        var len      = 0
+        var isChain  = false
+        var complete = true
+        var go       = true
+        while go do
+          if !seen(e) then { seen(e) = true; len += 1 }
+          val ek = ds.get(k, e)
+          if ek == 0 then { complete = false; go = false }
+          else
+            if ek == e then isChain = true
+            e = ek
+            k = 3 - k
+            if e == d && k == 1 then go = false
+        if complete then
+          count += 1
+          sum12 += vertexOrbitCap12(isChain, len, valence2)
+      d += 1
+    (sum12, count)
+
+  /** The deficit floor of an OPEN (0,1)-orbit of current length `L`: the suffix minimum over final lengths ≥
+    * L of the exact deficit (chain of length n: `4n − 12/⌈3/n⌉`; cycle of length n = 2r: `4n − 24/⌈3/r⌉`).
+    * Values: 0 up to L = 6 (a 6-cycle is still reachable and free), 8 at L ∈ {7,8}, 16 at {9,10}, 24 at
+    * {11,12}, then ~4 per further chamber. An orbit only grows, so the floor is MONOTONE; and it is
+    * subadditive (two pieces of one orbit under-count, never over-count), which is what makes it sound to sum
+    * over the components a partial scan sees.
+    */
+  private val openTileDeficitFloor: Array[Int] =
+    val maxLen = 256
+    val exact  = Array.fill(maxLen + 2)(Int.MaxValue)
+    for n <- 1 to maxLen do
+      val chain = 4 * n - 12 / math.max(1, (3 + n - 1) / n)
+      val cycle = if n % 2 == 0 then 4 * n - 24 / math.max(1, (3 + n / 2 - 1) / (n / 2)) else Int.MaxValue
+      exact(n) = math.min(chain, cycle)
+    val floor  = Array.fill(maxLen + 2)(0)
+    var suffix = Int.MaxValue
+    for n <- maxLen to 1 by -1 do
+      suffix = math.min(suffix, exact(n))
+      floor(n) = suffix
+    floor
+
+  /** The tile-side lower bound of a PARTIAL D-set in twelfths: closed (0,1)-orbits contribute their exact
+    * deficit ([[closedTileDeficit12]]'s per-orbit term), open ones the [[openTileDeficitFloor]] of their
+    * current length. Monotone along the generation tree, so it prunes: today an open orbit contributes 0
+    * however long it grows, which is why the band's walk runs free until closure.
+    */
+  private def partialTileDeficit12(ds: DSet): Int =
+    val seen      = Array.fill(ds.size + 1)(false)
+    var deficit12 = 0
+    var d         = 1
+    while d <= ds.size do
+      if !seen(d) then
+        var e        = d
+        var k        = 0
+        var len      = 0
+        var isChain  = false
+        var complete = true
+        var go       = true
+        while go do
+          if !seen(e) then { seen(e) = true; len += 1 }
+          val ek = ds.get(k, e)
+          if ek == 0 then { complete = false; go = false }
+          else
+            if ek == e then isChain = true
+            e = ek
+            k = 1 - k
+            if e == d && k == 0 then go = false
+        if complete then
+          val r    = if isChain then len else (len + 1) / 2
+          val minV = math.max(1, (3 + r - 1) / r)
+          deficit12 += 4 * len - 12 * (if isChain then 1 else 2) / minV
+        else deficit12 += openTileDeficitFloor(math.min(len, 256))
+      d += 1
+    deficit12
+
+  /** The vertex-side upper bound of a PARTIAL D-set in twelfths. Two sound bounds, minimized:
+    *
+    *   - SLOT bound: closed (1,2)-orbits contribute their exact value ([[closedVertexStats12]]'s table) and
+    *     are final orbits already, so a completion has at most `maxN − closed` further orbits, each ≤ 24; and
+    *     every σ₁/σ₂ fixed point sitting in an OPEN piece forces one of those to be a chain (a chain never
+    *     becomes a cycle), capping it at 12 — for at least ⌈fixedOpen/2⌉ of them, a chain carrying at most 2
+    *     fixed points.
+    *   - GLOBAL fixed-point bound: `24·maxN − 12·⌈F/2⌉` over ALL fixed points, by the same chain argument.
+    *
+    * NOT per open component: an open component is not a final orbit — pieces merge, and orbits that do not
+    * exist yet still appear. A first attempt summed 24 (or 12) per open component and LOST D-sets whose chain
+    * was momentarily split into two fixed-point-carrying pieces, leaving the yet-to-be-built third orbit no
+    * allowance (the C = 16 witness: true orbits 4 + 12 + 24 = 40, bounded at 28, pruned). Only CLOSED
+    * components are safe to treat as final orbits. The band strength survives: feasibility needs 12·vSum ≥ 2C
+    * ≥ 62 while one chain caps it at 60, so a single fixed point still kills a 31–36 partial.
+    */
+  private def partialVertexBound12(ds: DSet, maxN: Int, valence2: Boolean = false): Int =
+    var fixedAll    = 0
+    var d           = 1
+    while d <= ds.size do
+      if ds.get(1, d) == d then fixedAll += 1
+      if ds.get(2, d) == d then fixedAll += 1
+      d += 1
+    val seen        = Array.fill(ds.size + 1)(false)
+    var sum12Closed = 0
+    var closedCount = 0
+    var fixedOpen   = 0
+    d = 1
+    while d <= ds.size do
+      if !seen(d) then
+        var e         = d
+        var k         = 1
+        var len       = 0
+        var isChain   = false
+        var complete  = true
+        var go        = true
+        var fixedHere = 0
+        while go do
+          if !seen(e) then
+            seen(e) = true
+            len += 1
+            if ds.get(1, e) == e then fixedHere += 1
+            if ds.get(2, e) == e then fixedHere += 1
+          val ek = ds.get(k, e)
+          if ek == 0 then { complete = false; go = false }
+          else
+            if ek == e then isChain = true
+            e = ek
+            k = 3 - k
+            if e == d && k == 1 then go = false
+        if complete then
+          closedCount += 1
+          sum12Closed += vertexOrbitCap12(isChain, len, valence2)
+        else fixedOpen += fixedHere
+      d += 1
+    val slots       = math.max(0, maxN - closedCount)
+    math.min(
+      sum12Closed + 24 * slots - 12 * math.min((fixedOpen + 1) / 2, slots),
+      24 * maxN - 12 * math.min((fixedAll + 1) / 2, maxN)
+    )
+
+  /** EXACT euclidean feasibility (κ_max ≥ 0) of a complete D-set in integer twelfths: `Σ 12·k/minV ≥ 6C` over
+    * all orbits ⟺ tile deficit ≤ vertex sum − 2C. The sharpest sound curvature cut — the euclid-mode universe
+    * sits between the euclidean-feasible symbols and the tier-1 universe (it IS the euclidean-feasible slice,
+    * exactly).
+    */
+  def euclideanFeasibleExact(ds: DSet, valence2: Boolean = false): Boolean =
+    closedTileDeficit12(ds) <= closedVertexStats12(ds, valence2)._1 - 2 * ds.size
+
   /** Paper certification, track A2 — the TIER-1 curvature relaxation, exact integer arithmetic in twelfths.
     * THE LEMMA (the one new pen-and-paper ingredient of the A2 certificate): every euclidean- feasible D-set
     * ([[euclideanFeasible]]) satisfies `#good ≥ 3·C − 12·vSum`, where `good(d)` ⟺ chamber `d`'s (0,1)-orbit
@@ -935,14 +1229,82 @@ object DelaneySymbols:
     * tight — at C = 24 it forces #good = C and both vertex orbits to be cycles of length ≥ 6, and every
     * tier-1 model there has κ_max = 0 exactly.
     */
-  def tier1Feasible(ds: DSet): Boolean =
+  def tier1Feasible(ds: DSet, valence2: Boolean = false): Boolean =
     var vSum12 = 0
     for orb <- orbits(ds, 1, 2) do
-      val len = orb.elements.length
-      vSum12 += (if orb.isChain then if len == 1 then 4 else if len == 2 then 6 else 12
-                 else if len == 2 then 8 else if len == 4 then 12 else 24)
+      vSum12 += vertexOrbitCap12(orb.isChain, orb.elements.length, valence2)
     val good   = ds.size - closedBadTileChambers(ds) // complete D-set: every orbit closed, bad = C − good
     good >= 3 * ds.size - vSum12
+
+  /** The T = 3 staircase weight of branching number `r` — the bin floor of the tile deficit rate. */
+  private def stairW(r: Int): Int =
+    if r == 1 || r == 3 then 0 else if r <= 5 then 1 else if r <= 11 then 2 else 3
+
+  /** The T = 3 STAIRCASE feasibility, the SAT-expressible sharpening of [[tier1Feasible]]: per chamber the
+    * bin floor of the exact tile deficit rate by the chamber's period r under σ₀σ₁ — w = 0 for r ∈ {1, 3}, 1
+    * for r ∈ {2, 4, 5}, 2 for 6 ≤ r ≤ 11, 3 for r ≥ 12 — must sum within the exact vertex-side budget 12·vSum
+    * − 2C. Sits strictly between [[euclideanFeasibleExact]] and [[tier1Feasible]]: euclidean ⇒ staircase is
+    * the staircase lemma (every floor under-charges the true rate) and staircase ⇒ tier-1 is w ≥ 1 on every
+    * bad chamber. Both containments are machine-validated in both directions — over 1.2M banked
+    * euclidean-feasible D-sets and over the full raw universe to 22 chambers (122M), where the staircase
+    * slice tracks the euclidean one at a flat ~1.3–1.9× while tier-1 diverges. This is the canonical JVM
+    * implementation, the blocking-set filter of the certification obligations; the probe/spec copies are
+    * deliberately independent re-derivations.
+    */
+  def staircaseFeasible(ds: DSet, valence2: Boolean = false): Boolean =
+    var wSum   = 0
+    var d      = 1
+    while d <= ds.size do
+      var e = ds.get(0, ds.get(1, d))
+      var r = 1
+      while e != d do
+        e = ds.get(0, ds.get(1, e))
+        r += 1
+      wSum += stairW(r)
+      d += 1
+    var vSum12 = 0
+    for orb <- orbits(ds, 1, 2) do
+      vSum12 += vertexOrbitCap12(orb.isChain, orb.elements.length, valence2)
+    wSum <= vSum12 - 2 * ds.size
+
+  /** The staircase analogue of [[partialTileDeficit12]] — a MONOTONE lower bound on the staircase weight sum
+    * of every completion of a partial D-set. Closed (0,1)-orbits contribute their exact `w(r)·len` (they
+    * persist unchanged). An OPEN piece of current length L sits inside a final orbit of length ≥ L, whose
+    * branching is ≥ L for a chain and ≥ ⌈L/2⌉ for a cycle, so its final per-chamber weight is at least
+    * `min{w(r) : r ≥ ⌈L/2⌉}` — 0 for ⌈L/2⌉ ≤ 3, then 1 / 2 / 3 as the floor climbs the bins — and the piece's
+    * L chambers each carry at least that weight. Summing per piece is sound under later merging: every
+    * piece's floor is ≤ the shared final orbit's true per-chamber weight, so the sum under-counts (the lesson
+    * that only CLOSED components are final orbits is respected: open pieces are never scored as if final).
+    */
+  private def partialStairFloor12(ds: DSet): Int =
+    val seen  = Array.fill(ds.size + 1)(false)
+    var floor = 0
+    var d     = 1
+    while d <= ds.size do
+      if !seen(d) then
+        var e        = d
+        var k        = 0
+        var len      = 0
+        var isChain  = false
+        var complete = true
+        var go       = true
+        while go do
+          if !seen(e) then { seen(e) = true; len += 1 }
+          val ek = ds.get(k, e)
+          if ek == 0 then { complete = false; go = false }
+          else
+            if ek == e then isChain = true
+            e = ek
+            k = 1 - k
+            if e == d && k == 0 then go = false
+        if complete then
+          val r = if isChain then len else (len + 1) / 2
+          floor += stairW(r) * len
+        else
+          val m = (len + 1) / 2 // the final branching is ≥ ⌈L/2⌉ whichever way the piece closes
+          floor += (if m <= 3 then 0 else if m <= 5 then 1 else if m <= 11 then 2 else 3) * len
+      d += 1
+    floor
 
   /** Paper certification, track A2 — the k ≤ 2 certification universe: ALL complete D-sets with ≤ `maxSize`
     * chambers and ≤ `maxN` vertex ((1,2))-orbits, canonically labeled, NO curvature pruning ([[relaxedDSets]]
@@ -955,8 +1317,33 @@ object DelaneySymbols:
     *
     * With `tier1 = true` the universe is additionally cut to the [[tier1Feasible]] D-sets (the sound
     * curvature relaxation that the SAT side can express), with the matching MONOTONE tree prune: a universe
-    * member of size C′ ≤ `maxSize` ≤ 24 has #bad ≤ 12·vSum − 2C′ ≤ 48 − 2C′ ≤ 48 − 2·(partial size), and
-    * [[closedBadTileChambers]] only grows, so a partial exceeding that bound has no universe completion.
+    * member of size C′ ≤ `maxSize` ≤ 12·maxN has #bad ≤ 12·vSum − 2C′ ≤ 24·maxN − 2C′ ≤ 24·maxN − 2·(partial
+    * size) (vSum ≤ 2 per vertex orbit), and [[closedBadTileChambers]] only grows, so a partial exceeding that
+    * bound has no universe completion. The generalized law: the relaxation is VOID below C = 12·(maxN − 1) +
+    * 1 and forces #good = C at C = 12·maxN.
+    *
+    * With `euclid = true` (mutually exclusive with `tier1`) the universe is instead cut to the EXACTLY
+    * euclidean-feasible D-sets ([[euclideanFeasibleExact]]), with the matching monotone deficit prune: every
+    * euclidean-feasible completion satisfies tileDeficit12 ≤ 12·vSum − 2C ≤ [[closedVertexStats12]] budget −
+    * 2·(partial size), [[closedTileDeficit12]] only grows and the budget only shrinks. This is the sharper
+    * walk for the maxN = 3 mid-window (25–36 chambers) where the tier-1 prune is toothless; whether the
+    * CERTIFICATION universe can be this sharp is a separate (SAT-expressibility) decision — the sizing
+    * reports both.
+    *
+    * With `stair = true` (mutually exclusive with both) the universe is cut to the [[staircaseFeasible]]
+    * D-sets: the SHARPEST curvature bound the SAT side can express (the `KCertify` staircase layer), sitting
+    * strictly between euclid and tier-1. The tree prune is [[partialStairFloor12]] against the same
+    * [[partialVertexBound12]] budget — weaker than the euclid prune exactly as the staircase universe is
+    * larger. This walk enumerates the BLOCKING SET of the staircase certification obligations, euclid fringe
+    * included.
+    *
+    * `minSize` (euclid/stair modes) is the BAND FLOOR: only D-sets with ≥ `minSize` chambers are emitted, and
+    * since every emitted completion then has C ≥ max(partial size, minSize), the deficit prune tightens to
+    * `budget − 2·max(size, minSize)` — sound by the same monotonicity. The floor SUBSUMES per-vertex-shape
+    * splitting at the top of the k = 3 window: vertex budgets are quantized (three of {4, 6, 8, 12, 24}, 72
+    * then 60), so floor ≥ 31 forces budget = 72 — all three vertex orbits ≥ 6-cycles, any closed chain or
+    * short cycle pruned by arithmetic — with root-level deficit cap 72 − 2·minSize (10 at 31, 0 at 36): the
+    * A2 exactness regime, entered from the floor instead of the top slice.
     */
   def relaxedOrbitBoundedDSets(
       maxN: Int,
@@ -964,15 +1351,75 @@ object DelaneySymbols:
       parallelism: Int = math.max(1, Runtime.getRuntime.availableProcessors - 1),
       sink: DSet => Unit,
       log: String => Unit = _ => (),
-      tier1: Boolean = false
+      tier1: Boolean = false,
+      euclid: Boolean = false,
+      minSize: Int = 0,
+      stair: Boolean = false,
+      valence2: Boolean = false,
+      vertexCap: Int = Int.MaxValue, // every (1,2)-orbit at most this many chambers (valence-≤3 species: 6)
+      threeLetter: Boolean =
+        false                        // the (1,2)-orbit shapes of a three-letter species, [[threeLetterShapesOk]]
   ): Long =
+    require(Seq(tier1, euclid, stair).count(identity) <= 1, "tier1/euclid/stair modes are mutually exclusive")
+    require(minSize == 0 || euclid || stair, "minSize (the band floor) is a euclid/stair-mode device")
     val count   = new AtomicLong(0)
-    val t0      = System.nanoTime()
-    val gen     = new BackTracker[DSet, DSetGenState]:
+    val nodes   = new AtomicLong(0) // generation-tree nodes expanded — the walk-position signal: emission
+    val t0      = System.nanoTime() // is heavily back-loaded (worse under a band floor), nodes/s is steady
+    val gen     =
+      orbitBoundedGen(maxN, maxSize, tier1, euclid, minSize, nodes, stair, valence2, vertexCap, threeLetter)
+    val running = new AtomicBoolean(true)
+    val logger  = new Thread(() =>
+      var lastNodes = 0L
+      var lastSecs  = 0.0
+      while running.get do
+        try Thread.sleep(15000)
+        catch case _: InterruptedException => ()
+        if running.get then
+          val secs  = math.max(1e-3, (System.nanoTime() - t0) / 1e9)
+          val n     = count.get
+          val m     = nodes.get
+          val dRate = ((m - lastNodes) / math.max(1e-3, secs - lastSecs)).toLong
+          log(
+            f"  [universe maxN=$maxN maxSize=$maxSize min=$minSize] ${secs}%.0fs  dsets=$n  " +
+              f"nodes=$m ($dRate nodes/s now, ${(m / secs).toLong} avg)"
+          )
+          lastNodes = m
+          lastSecs = secs
+    )
+    logger.setDaemon(true)
+    logger.start()
+    try
+      gen.parallelForeach(
+        parallelism,
+        ds =>
+          if orbitBoundedEmits(ds, tier1, euclid, minSize, stair, valence2) then
+            count.incrementAndGet()
+            sink(ds)
+      )
+    finally { running.set(false); logger.interrupt() }
+    count.get
+
+  /** The generation tree of [[relaxedOrbitBoundedDSets]], factored out so the full walk, the frontier
+    * enumeration and the shard walks all traverse EXACTLY the same tree (same children order, same prunes).
+    */
+  private def orbitBoundedGen(
+      maxN: Int,
+      maxSize: Int,
+      tier1: Boolean,
+      euclid: Boolean,
+      minSize: Int,
+      nodes: AtomicLong,
+      stair: Boolean = false,
+      valence2: Boolean = false,
+      vertexCap: Int = Int.MaxValue,
+      threeLetter: Boolean = false
+  ): BackTracker[DSet, DSetGenState] =
+    new BackTracker[DSet, DSetGenState]:
       def root: DSetGenState                             = DSetGenState(DSet.empty1, Array.fill(maxSize + 1)(false))
       def extract(st: DSetGenState): Option[DSet]        =
         if firstUndefined(st.ds).isEmpty then Some(st.ds) else None
       def children(st: DSetGenState): List[DSetGenState] =
+        nodes.incrementAndGet()
         firstUndefined(st.ds) match
           case None         => Nil
           case Some((d, i)) =>
@@ -989,32 +1436,157 @@ object DelaneySymbols:
                 if gap == 1 then dset.set(k, head, tail)
                 else if gap == 0 && head != tail then ok = false
                 if ok && closedVertexCount(dset) <= maxN &&
-                  (!tier1 || closedBadTileChambers(dset) <= 48 - 2 * dset.size)
+                  (vertexCap == Int.MaxValue || maxVertexOrbitLength(dset) <= vertexCap) &&
+                  (!threeLetter || threeLetterShapesOk(dset)) &&
+                  (!tier1 || closedBadTileChambers(dset) <= 24 * maxN - 2 * dset.size) &&
+                  (!euclid ||
+                    // bounds that also score OPEN orbits — the closed-only pair left the deep middle
+                    // of every subtree unconstrained, which is what made the 31–36 band a grind.
+                    partialTileDeficit12(dset) <=
+                    partialVertexBound12(dset, maxN, valence2) - 2 * math.max(dset.size, minSize)) &&
+                  (!stair ||
+                    // the staircase analogue: weaker than the euclid prune exactly as the staircase
+                    // universe is larger than the euclid one — same vertex budget, floored tile side.
+                    partialStairFloor12(dset) <=
+                    partialVertexBound12(dset, maxN, valence2) - 2 * math.max(dset.size, minSize))
                 then
                   val isRemapStart = st.isRemapStart.clone()
                   if grow then isRemapStart(e) = true
                   if checkCanonicity(dset, isRemapStart) then out += DSetGenState(dset, isRemapStart)
               e += 1
             out.result()
+
+  /** The emission filter of [[relaxedOrbitBoundedDSets]] — shared verbatim by the sharded walk. */
+  private def orbitBoundedEmits(
+      ds: DSet,
+      tier1: Boolean,
+      euclid: Boolean,
+      minSize: Int,
+      stair: Boolean = false,
+      valence2: Boolean = false
+  ): Boolean =
+    ds.size >= minSize && (!tier1 || tier1Feasible(ds, valence2)) &&
+      (!euclid || euclideanFeasibleExact(ds, valence2)) &&
+      (!stair || staircaseFeasible(ds, valence2))
+
+  /** Serialize a generation-tree state for shard checkpointing: `size|op-triples|remap-indices`. */
+  private def serializeGenState(st: DSetGenState): String =
+    val ops   = (1 to st.ds.size)
+      .map(d => s"${st.ds.get(0, d)},${st.ds.get(1, d)},${st.ds.get(2, d)}")
+      .mkString(";")
+    val remap = st.isRemapStart.zipWithIndex.collect { case (true, i) => i }.mkString(",")
+    s"${st.ds.size}|$ops|$remap"
+
+  private def parseGenState(line: String, maxSize: Int): DSetGenState =
+    val Array(sizeS, opsS, remapS) = line.split('|').padTo(3, "")
+    val size                       = sizeS.toInt
+    val a                          = Array.ofDim[Int](size + 1, Dim + 1)
+    if opsS.nonEmpty then
+      opsS.split(';').zipWithIndex.foreach: (triple, idx) =>
+        triple.split(',').zipWithIndex.foreach((v, i) => a(idx + 1)(i) = v.toInt)
+    val remap                      = Array.fill(maxSize + 1)(false)
+    if remapS.nonEmpty then remapS.split(',').foreach(i => remap(i.toInt) = true)
+    DSetGenState(new DSet(a), remap)
+
+  /** Canonical-prefix SHARDING of the orbit-bounded walk. Phase A: enumerate the tree SEQUENTIALLY to `depth`
+    * children-steps; states at exactly that depth become the shards (returned serialized,
+    * [[serializeGenState]], in deterministic DFS order — shard indices are stable across runs and machines
+    * given identical parameters); complete D-sets found ABOVE the frontier pass the emission filter into
+    * `aboveSink`. Every tree leaf is reached by exactly one of {above-frontier walk, one shard}, so the union
+    * of emissions over Phase A + all shards equals the full [[relaxedOrbitBoundedDSets]] walk.
+    */
+  def orbitBoundedFrontier(
+      maxN: Int,
+      maxSize: Int,
+      depth: Int,
+      tier1: Boolean = false,
+      euclid: Boolean = false,
+      minSize: Int = 0,
+      aboveSink: DSet => Unit = _ => (),
+      from: Option[String] = None, // sub-shard a FAT shard: its state becomes the root, `depth` is relative
+      stair: Boolean = false,
+      valence2: Boolean = false,
+      vertexCap: Int = Int.MaxValue,
+      threeLetter: Boolean = false
+  ): Vector[String] =
+    require(Seq(tier1, euclid, stair).count(identity) <= 1, "tier1/euclid/stair modes are mutually exclusive")
+    val gen                                =
+      orbitBoundedGen(
+        maxN,
+        maxSize,
+        tier1,
+        euclid,
+        minSize,
+        new AtomicLong(0),
+        stair,
+        valence2,
+        vertexCap,
+        threeLetter
+      )
+    val frontier                           = Vector.newBuilder[String]
+    def go(st: DSetGenState, d: Int): Unit =
+      if d == depth then frontier += serializeGenState(st)
+      else
+        gen.extract(st).foreach(ds =>
+          if orbitBoundedEmits(ds, tier1, euclid, minSize, stair, valence2) then aboveSink(ds)
+        )
+        gen.children(st).foreach(go(_, d + 1))
+    go(from.fold(gen.root)(parseGenState(_, maxSize)), 0)
+    frontier.result()
+
+  /** Walk ONE shard (a [[orbitBoundedFrontier]] state, serialized) to completion — work-stealing parallel
+    * within the shard, emission filter identical to the full walk. Returns (emitted, nodes expanded).
+    */
+  def orbitBoundedShardWalk(
+      serialized: String,
+      maxN: Int,
+      maxSize: Int,
+      tier1: Boolean = false,
+      euclid: Boolean = false,
+      minSize: Int = 0,
+      parallelism: Int = math.max(1, Runtime.getRuntime.availableProcessors - 1),
+      sink: DSet => Unit,
+      log: String => Unit = _ => (), // intra-shard heartbeat — monster shards must not look frozen
+      forkDepth: Int = 12,           // bounded forking: fat subtrees must not exhaust memory (2026-08-08)
+      stair: Boolean = false,
+      valence2: Boolean = false,
+      vertexCap: Int = Int.MaxValue,
+      threeLetter: Boolean = false
+  ): (Long, Long) =
+    val nodes   = new AtomicLong(0)
+    val count   = new AtomicLong(0)
+    val t0      = System.nanoTime()
+    val gen     =
+      orbitBoundedGen(maxN, maxSize, tier1, euclid, minSize, nodes, stair, valence2, vertexCap, threeLetter)
     val running = new AtomicBoolean(true)
     val logger  = new Thread(() =>
+      var lastNodes = 0L
+      var lastSecs  = 0.0
       while running.get do
         try Thread.sleep(15000)
         catch case _: InterruptedException => ()
         if running.get then
-          val secs = math.max(1e-3, (System.nanoTime() - t0) / 1e9)
-          val n    = count.get
-          log(f"  [universe maxN=$maxN maxSize=$maxSize] ${secs}%.0fs  dsets=$n (${(n / secs).toLong}/s)")
+          val secs  = math.max(1e-3, (System.nanoTime() - t0) / 1e9)
+          val m     = nodes.get
+          val dRate = ((m - lastNodes) / math.max(1e-3, secs - lastSecs)).toLong
+          log(f"${secs}%.0fs  dsets=${count.get}  nodes=$m ($dRate nodes/s now)")
+          lastNodes = m
+          lastSecs = secs
     )
     logger.setDaemon(true)
     logger.start()
     try
-      gen.parallelForeach(
+      gen.parallelForeachFrom(
         parallelism,
-        ds => if !tier1 || tier1Feasible(ds) then { count.incrementAndGet(); sink(ds) }
+        ds =>
+          if orbitBoundedEmits(ds, tier1, euclid, minSize, stair, valence2) then
+            count.incrementAndGet()
+            sink(ds),
+        parseGenState(serialized, maxSize),
+        forkDepth
       )
     finally { running.set(false); logger.interrupt() }
-    count.get
+    (count.get, nodes.get)
 
   /** All BFS-consistent relabelings of a D-set (the [[compareRenumberedFrom]] renumbering, one per start
     * chamber), deduped by op content. A labeling is BFS-consistent iff chambers are numbered in first-seen

@@ -57,7 +57,7 @@ class K2CertifySpec extends AnyFlatSpec with Matchers:
 
   it should "exclude tier-1-infeasible <= 2-orbit D-sets, non-vacuously" in:
     val raw        = universe(6, tier1 = false)
-    val infeasible = raw.filterNot(DelaneySymbols.tier1Feasible)
+    val infeasible = raw.filterNot(DelaneySymbols.tier1Feasible(_))
     infeasible should not be empty // the exclusion is exercised, not vacuous
     val modelsByC = (1 to 6).map(c => c -> K2Certify.enumerate(c).map(ops).toSet).toMap
     for ds <- infeasible; l <- DelaneySymbols.bfsRelabelings(ds) do
