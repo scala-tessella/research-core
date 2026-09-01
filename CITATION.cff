@@ -20,12 +20,14 @@ authors:
 license: Apache-2.0
 repository-code: https://github.com/scala-tessella/research-core
 url: https://github.com/scala-tessella/research-core
-# The latest ARCHIVED release, which is what a citation must resolve to. Later versions may exist on Maven
-# Central without being archived (0.3.0 is on Central but has no Zenodo deposit, so nothing citable names it);
-# this block moves forward only when a release is archived and its version DOI is minted.
-version: 0.3.1
-date-released: '2026-08-01'
-doi: 10.5281/zenodo.21739112
+# The latest ARCHIVED release, which is what a citation must resolve to. Archiving follows the publication of
+# a GitHub release, not the tag that publishes to Maven Central, so most versions on Central have no Zenodo
+# deposit and nothing citable names them (0.3.0, 0.4.0, 0.6.x, 0.7.x and 0.8.0 among them); this block moves
+# forward only when a release is archived and its version DOI is minted, which is necessarily the commit after
+# the archived tag.
+version: 0.8.1
+date-released: '2026-09-01'
+doi: 10.5281/zenodo.22238457
 keywords:
   - tilings
   - tessellations
@@ -38,8 +40,14 @@ identifiers:
     value: 10.5281/zenodo.21708010
     description: Concept DOI (all versions) — always resolves to the newest release
   - type: doi
+    value: 10.5281/zenodo.22238457
+    description: Version DOI of release 0.8.1 — the release pinned by the minimal-uniformity-three artifact 0.2.0
+  - type: doi
+    value: 10.5281/zenodo.21762821
+    description: Version DOI of release 0.5.0
+  - type: doi
     value: 10.5281/zenodo.21739112
-    description: Version DOI of release 0.3.1 — the release pinned by the minimal-uniformity-three artifact
+    description: Version DOI of release 0.3.1 — the release pinned by the minimal-uniformity-three artifact 0.1.1
   - type: doi
     value: 10.5281/zenodo.21708011
     description: Version DOI of release 0.2.1 — the release pinned by the 31-unit-edge-tilings artifact

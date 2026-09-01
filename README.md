@@ -24,8 +24,8 @@ reachable from `solver` while they stay hidden from library users.
 > `DelaneySymbols` entry points, for instance, arrived in 0.3.0 and are **absent from 0.2.1**; the
 > orbit-bounded walk, the staircase layer and the exact plane / de-fusion engine arrived in 0.8.0 and are
 > absent from everything before it. Check the pinned version's own archive and the
-> [CHANGELOG](CHANGELOG.md) rather than this list. The newest archived release is 0.3.1,
-> [doi:10.5281/zenodo.21739112](https://doi.org/10.5281/zenodo.21739112).
+> [CHANGELOG](CHANGELOG.md) rather than this list. The newest archived release is 0.8.1,
+> [doi:10.5281/zenodo.22238457](https://doi.org/10.5281/zenodo.22238457).
 
 - `Frac` — exact rationals.
 - `Cyclo24` — exact arithmetic in the 24th cyclotomic field (the angles that arise for `{3,4,6,8,12}` faces).
@@ -186,10 +186,14 @@ line so every archived verification repo keeps resolving. Release-by-release cha
 
 ### Archived releases
 
-Each release is archived with its own version DOI, which is what a verification repository should cite (not
-the all-versions concept DOI, which resolves to whatever is newest):
+An archived release carries its own version DOI, which is what a verification repository should cite (not the
+all-versions concept DOI, which resolves to whatever is newest). A version reaches Zenodo when its GitHub
+release is published, not when its tag reaches Maven Central, so this table is sparser than the version list
+on Central:
 
 | Version | DOI |
 |---|---|
+| 0.8.1 | [10.5281/zenodo.22238457](https://doi.org/10.5281/zenodo.22238457) |
+| 0.5.0 | [10.5281/zenodo.21762821](https://doi.org/10.5281/zenodo.21762821) |
 | 0.3.1 | [10.5281/zenodo.21739112](https://doi.org/10.5281/zenodo.21739112) |
 | 0.2.1 | [10.5281/zenodo.21708011](https://doi.org/10.5281/zenodo.21708011) |
