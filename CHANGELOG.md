@@ -6,6 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+### Added
+
+- `DelaneySymbols.orbifoldKey` is public. The flat-orbifold signature of a euclidean symbol — cone orders,
+  mirrors, corner orders — was already computed for the generator's own admissibility test but not exposed,
+  so a caller holding a minimal symbol could not name its wallpaper group without recomputing the signature.
+  It joins the compatibility contract with its own oracle: the complete n = 1 set against the textbook groups
+  of the 11 Archimedean tilings, the mirror-free `3.3.3.3.6` → p6 and `3.3.4.3.4` → p4g included, where a
+  dropped mirror or a mis-split cone/corner would show.
+
+Source- and binary-compatible with 0.8.1.
+
 ## [0.8.1] — 2026-08-31
 
 **A sound proof that failed to verify.** `CertifyRunner.certifyCnf` reported `s NOT VERIFIED` on a

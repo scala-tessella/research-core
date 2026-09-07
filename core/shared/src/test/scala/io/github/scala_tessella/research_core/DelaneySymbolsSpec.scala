@@ -120,6 +120,51 @@ class DelaneySymbolsSpec extends AnyFlatSpec with Matchers:
     // every n=1 tiling is rotation-bearing (R), so the order is a crystallographic 2/3/4/6
     all(d1.map(c => DelaneySymbols.maxConeOrder(c._3))) should (be >= 2 and be <= 6)
 
+  // orbifoldKey reads the flat-orbifold signature off the minimal symbol; through the standard
+  // orbifold-notation dictionary that signature NAMES the wallpaper group of any realization carrying exactly
+  // this symmetry. Checked on the complete n=1 set against the textbook groups of the 11 Archimedean tilings
+  // — the oracle for the key format, and the reason the two mirror-free cases (3.3.3.3.6 → p6,
+  // 3.3.4.3.4 → p4g) are load-bearing: they are where a dropped `*` or a mis-split cone/corner would show.
+  it should "report the correct wallpaper group for every n=1 tiling (oracle for orbifoldKey)" in:
+    val wallpaper = Map(
+      ""      -> "p1",
+      "x"     -> "pg",
+      "*"     -> "pm",
+      "*x"    -> "cm",
+      "2222"  -> "p2",
+      "*2222" -> "pmm",
+      "2*22"  -> "cmm",
+      "22*"   -> "pmg",
+      "22x"   -> "pgg",
+      "442"   -> "p4",
+      "*442"  -> "p4m",
+      "4*2"   -> "p4g",
+      "632"   -> "p6",
+      "*632"  -> "p6m",
+      "333"   -> "p3",
+      "*333"  -> "p3m1",
+      "3*3"   -> "p31m"
+    )
+    val known     = Map(
+      "3.3.3.3.3.3" -> "p6m",
+      "3.3.3.3.6"   -> "p6",
+      "3.3.3.4.4"   -> "cmm",
+      "3.3.4.3.4"   -> "p4g",
+      "3.4.6.4"     -> "p6m",
+      "3.6.3.6"     -> "p6m",
+      "3.12.12"     -> "p6m",
+      "4.4.4.4"     -> "p4m",
+      "4.6.12"      -> "p6m",
+      "4.8.8"       -> "p4m",
+      "6.6.6"       -> "p6m"
+    )
+    val d1        = distinctSyms(1, 12)
+    d1 should have size 11
+    d1.foreach: (_, vertices, ds) =>
+      val net = vertices.head.mkString(".")
+      withClue(s"[$net] key=${DelaneySymbols.orbifoldKey(ds)}: "):
+        wallpaper.get(DelaneySymbols.orbifoldKey(ds)) shouldBe Some(known(net))
+
   // ON DEMAND (~minutes, maxSize 24): the FULL discharge of Conjecture R for n ≤ 3. The rotation-AGNOSTIC
   // generate-all oracle reproduces the complete 11/20/39 (counts stable at maxSize 24 = 26 ⇒ complete; also
   // matches A068600) AND every tiling has a rotation. 4 of them are rotation-bearing ONLY via an edge-midpoint

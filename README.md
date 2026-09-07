@@ -34,7 +34,9 @@ reachable from `solver` while they stay hidden from library users.
 - `DelaneySymbols` — the Delaney–Dress symbol engine: types `DSymbol`, `Orbit`, `Tiling`, `DSet`; enumeration
   (`enumerateSymbols`, `enumerateRelaxedDetailed`, `relaxedDSets`, `relaxedOrbitBoundedDSets`,
   `bfsRelabelings`, `euclideanSymbolsOf`); minimality/quotients (`isMinimal`, `properQuotients`,
-  `canonicalKey`, `symbolFromKey`); `regularPolygonVertices`. Three nested curvature filters, each exact
+  `canonicalKey`, `symbolFromKey`); `regularPolygonVertices`; `orbifoldKey`, the flat-orbifold signature of a
+  euclidean symbol (cone orders, mirrors, corner orders), which names the wallpaper group of any realization
+  carrying exactly that symmetry. Three nested curvature filters, each exact
   integer arithmetic in twelfths and each with its matching monotone tree prune, so a walk can be cut at the
   sharpness a given certificate can express: `euclideanFeasibleExact` (the euclidean-feasible slice itself),
   `staircaseFeasible` (the sharpest bound a SAT encoding can carry) and `tier1Feasible` (the local

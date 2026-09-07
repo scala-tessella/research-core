@@ -1622,15 +1622,15 @@ object DelaneySymbols:
       .map(r => (1 to r.size).flatMap(d => (0 to Dim).map(i => r.get(i, d))).mkString(","))
       .min
 
-  /** The flat-orbifold signature of a euclidean symbol, in the [[goodKeys]] string format: cone orders (desc)
-    * + `*` if mirrors + corner orders (desc) + `x` if unorientable. For a K = 0 symbol this determines the
-    * wallpaper group of any realization carrying exactly this symmetry. Cones and corners: flipped edges
-    * ((0,2)-orbits — length-1 chains are doubly-fixed, length-2 cycles are 2-fold centres) plus every
-    * 01/12-orbit with v > 1 (chain → corner, cycle → cone) — the [[DSymGenerator.goodResult]] extraction,
-    * applied to a completed symbol.
+  /** The flat-orbifold signature of a euclidean symbol: cone orders (desc) + `*` if mirrors + corner orders
+    * (desc) + `x` if unorientable. For a K = 0 symbol this determines the wallpaper group of any realization
+    * carrying exactly this symmetry. Cones and corners: flipped edges ((0,2)-orbits — length-1 chains are
+    * doubly-fixed, length-2 cycles are 2-fold centres) plus every 01/12-orbit with v > 1 (chain → corner,
+    * cycle → cone) — the same extraction the generator's own admissibility test uses, applied to a completed
+    * symbol.
     */
   extension (ds: DSymbol)
-    private[research_core] def orbifoldKey: String =
+    def orbifoldKey: String =
       val cones   = mutable.ArrayBuffer.empty[Int]
       val corners = mutable.ArrayBuffer.empty[Int]
       for orb <- orbits(ds.dset, 0, 2) do
