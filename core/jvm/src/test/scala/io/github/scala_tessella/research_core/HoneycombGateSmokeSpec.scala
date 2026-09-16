@@ -21,6 +21,12 @@ class HoneycombGateSmokeSpec extends AnyFlatSpec with Matchers:
     audits.map(_.classes).sum shouldBe 28
     audits.forall(_.ok) shouldBe true
 
+  it should
+    "exercise coherence on more accepted patterns than classes (members, not only representatives)" in:
+      val (audits, _) = CompletenessAudit.results
+      audits.forall(_.coherent) shouldBe true
+      audits.map(_.patterns).sum should be > audits.map(_.classes).sum
+
   "SymbolRealization" should "derive valid minimal symbols with the audit's class counts (sample)" in:
     val flags = Flags()
     // species 0..2 carry one class each; species 25 is one of the two doubled species (audit table)

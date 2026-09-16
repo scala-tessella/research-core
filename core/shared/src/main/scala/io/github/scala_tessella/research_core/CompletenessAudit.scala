@@ -8,23 +8,29 @@ import TransitivePatterns.*
   *
   * The audited claims, closing the enumeration's four gaps:
   *
-  * (A) PERIODIZATION CERTIFICATE — every accepted pattern develops a genuine transitive honeycomb. For a
-  * class representative: find three linearly independent TRANSLATIONS as words in the pattern's gluings
-  * (rotational part = identity), verify on the developed ball that (i) the ball data is Λ-periodic (every
-  * vertex translated by ±τᵢ within range has a Stab-matching star), (ii) Λ is invariant under the rotational
-  * parts of all generators (so γ(H*) is Λ-periodic for every generator γ), and (iii) the verified radius
-  * covers a fundamental domain with margin: R_per ≥ covBound(Λ) + max|τ| + 1.5, where covBound = half the
-  * circumdiameter of the fundamental parallelepiped. Then the Λ-periodization H* of the ball data is a
-  * well-defined honeycomb (every point of space is Λ-equivalent to a verified region; local structure is
-  * everywhere a translate of verified structure), the generators map H* to itself (Λ-periodic images agreeing
-  * on a fundamental box are equal), Γ = ⟨gluings⟩ ∋ Λ acts vertex-transitively, and the development equals
-  * H*.
+  * (A) PERIODIZATION CERTIFICATE — every accepted pattern develops a genuine transitive honeycomb. For EVERY
+  * accepted pattern (class representatives and members alike, the exhausted ones included): find three
+  * linearly independent TRANSLATIONS as words in the pattern's gluings (rotational part = identity), verify
+  * on the developed ball that (i) the ball data is Λ-periodic (every vertex translated by ±τᵢ within range
+  * has a Stab-matching star), (ii) Λ is invariant under the rotational parts of all generators (so γ(H*) is
+  * Λ-periodic for every generator γ), and (iii) the verified radius covers a fundamental domain with margin:
+  * R_per ≥ covBound(Λ) + max|τ| + 1.5, where covBound = half the circumdiameter of the fundamental
+  * parallelepiped. Then the Λ-periodization H* of the ball data is a well-defined honeycomb (every point of
+  * space is Λ-equivalent to a verified region; local structure is everywhere a translate of verified
+  * structure), the generators map H* to itself (Λ-periodic images agreeing on a fundamental box are equal), Γ =
+  * ⟨gluings⟩ ∋ Λ acts vertex-transitively, and the development equals H* — in particular the developed field
+  * IS H* on the whole closed R_per-ball.
   *
-  * (B) CLASS COHERENCE — same fingerprint ⇒ same honeycomb. A certified honeycomb is DETERMINED by its ball
-  * of radius covBound + 1.5 together with Λ (periodization). For every accepted pattern, align its ball to
-  * its class representative's by the canonical-encoding element of Stab(S) and verify EXACT agreement out to
-  * the determination radius, and verify the pattern's ball is periodic under the representative's lattice:
-  * two Λ-periodic honeycombs agreeing on a fundamental box are equal.
+  * (B) CLASS COHERENCE — same fingerprint ⇒ same honeycomb. Let π be an accepted pattern of the class of the
+  * representative ρ, H_π and H* their certified honeycombs, Λ_π and Λ* their lattices. Three checks: (i) π's
+  * own certificate, its ball reaching max|τ*| beyond π's own basis; (ii) ALIGNMENT — some s ∈ Stab±(S)
+  * carries ρ's ball onto π's, exactly to the rounding, out to the determination radius covBound(Λ*) + 1.5, so
+  * H_π = s(H*) on a ball holding a fundamental box of s(Λ*) with margin; (iii) each translation s(τ*ᵢ) is a
+  * symmetry of π's certified ball. A translation commutes with Λ_π, so s(τ*ᵢ)(H_π) is Λ_π-periodic and agrees
+  * with H_π on a fundamental box of Λ_π (inside the certified ball by (i)), hence equals it: H_π is
+  * s(Λ*)-periodic. Then H_π and s(H*) are s(Λ*)-periodic honeycombs agreeing on a fundamental box, so H_π =
+  * s(H*), congruent to H*. Fingerprint agreement alone would not do: a hypothetical honeycomb agreeing with
+  * H* on a ball need not be Λ*-periodic, and box rigidity needs a common lattice.
   *
   * (C) CLASS SEPARATION — different fingerprint ⇒ different honeycomb: the fingerprinted set is INTRINSIC
   * (vertices reachable by edge-paths of ≤ 14 steps staying within R + 1.6, restricted to the R-ball), so the
@@ -117,13 +123,19 @@ object CompletenessAudit:
   ):
     def ok: Boolean = periodic && latticeInvariant && coverage
 
+  /** A certificate together with the collision-free ball it was verified on. */
+  final private case class Certified(cert: Certificate, ball: Vector[Iso])
+
   /** The periodization certificate for one pattern: translations, periodicity of the developed ball,
-    * generator-invariance of the lattice, coverage arithmetic.
+    * generator-invariance of the lattice, coverage arithmetic. `reach` is a floor on the translation lengths
+    * the certified ball must accommodate beyond the pattern's own basis (for coherence, the class
+    * representative's basis): R_per = covBound + max(max|τ|, reach) + 1.6. None when no basis is found or the
+    * development collides within R_per.
     */
-  private def certify(acc: Accepted, pat: Pattern, classId: Int, flags: Flags): Option[Certificate] =
+  private def certifyWithBall(acc: Accepted, pat: Pattern, classId: Int, reach: Double): Option[Certified] =
     LazyList(4, 5, 6, 7).map(l => latticeBasis(translationWords(pat, l))).collectFirst { case Some(b) =>
       b
-    }.map { basis =>
+    }.flatMap { basis =>
       val (t1, t2, t3) = basis
       val maxT         = Vector(t1, t2, t3).map(vNorm).max
       val covBound     =
@@ -132,11 +144,10 @@ object CompletenessAudit:
           e2 <- Vector(1.0, -1.0)
           e3 <- Vector(1.0, -1.0)
         yield vNorm(vAdd(vAdd(vScale(t1, e1), vScale(t2, e2)), vScale(t3, e3)))).max / 2.0
-      val rPer         = covBound + maxT + 1.6
-      val ball         = developBall(acc.g, pat, acc.stab, rPer)
-      val periodic     = ball.exists { entries =>
-        val byPos = entries.map(t => TransitivePatterns.round4(t.t) -> t).toMap
-        entries.forall { t =>
+      val rPer         = covBound + math.max(maxT, reach) + 1.6
+      developBall(acc.g, pat, acc.stab, rPer).map { entries =>
+        val byPos    = entries.map(t => TransitivePatterns.round4(t.t) -> t).toMap
+        val periodic = entries.forall { t =>
           Vector(t1, t2, t3).flatMap(tau => Vector(tau, vScale(tau, -1.0))).forall { tau =>
             val q = vAdd(t.t, tau)
             if vNorm(q) > rPer - 1e-6 then true
@@ -147,23 +158,64 @@ object CompletenessAudit:
                   t2i.m.dist(t.m) < 1e-4 || acc.stab.exists(s => (t2i.m.t * t.m).dist(s) < 1e-3)
           }
         }
+        val latInv   = acc.g.u.indices.forall { x =>
+          val rot = matOf(pat.glus(x).rot)
+          Vector(t1, t2, t3).forall(tau => inLattice(basis, rot(tau)))
+        }
+        Certified(
+          Certificate(classId, basis, covBound, rPer, periodic, latInv, rPer >= covBound + maxT + 1.5),
+          entries
+        )
       }
-      val latInv       = acc.g.u.indices.forall { x =>
-        val rot = matOf(pat.glus(x).rot)
-        Vector(t1, t2, t3).forall(tau => inLattice(basis, rot(tau)))
-      }
-      Certificate(classId, basis, covBound, rPer, periodic, latInv, rPer >= covBound + maxT + 1.5)
     }
 
-  /** Class coherence: the pattern's ball, canonically encoded at the determination radius, equals the class
-    * representative's — with the representative's lattice periodicity holding on the pattern's ball too.
+  private def certify(acc: Accepted, pat: Pattern, classId: Int): Option[Certificate] =
+    certifyWithBall(acc, pat, classId, 0.0).map(_.cert)
+
+  /** The alignment of two developed balls at radius `r`: an element s of Stab±(S) with s·b₂ = b₁ as
+    * placed-star fields, if any. Exists exactly when the canonical fingerprints at `r` agree.
     */
-  private def coheres(acc: Accepted, pat: Pattern, rep: Pattern, cert: Certificate): Boolean =
-    val rDet = cert.covBound + 1.5
-    (developBall(acc.g, pat, acc.stab, rDet), developBall(acc.g, rep, acc.stab, rDet)) match
-      case (Some(b1), Some(b2)) =>
-        fingerprintOf(acc.corners, acc.stab, b1, rDet) == fingerprintOf(acc.corners, acc.stab, b2, rDet)
-      case _                    => false // collision at the determination radius: not certifiable
+  private def alignment(acc: Accepted, b1: Vector[Iso], b2: Vector[Iso], r: Double): Option[Mat] =
+    val target = encodeBall(acc.corners, b1, r, idMat)
+    acc.stab.find(s => encodeBall(acc.corners, b2, r, s) == target)
+
+  /** Class coherence of the accepted pattern `pat` with its class representative `rep` (certificate `cert`,
+    * lattice Λ*), as in (B) above: alignment at the determination radius covBound(Λ*) + 1.5, the pattern's
+    * own periodization certificate with its ball reaching max|τ*|, and the aligned representative lattice
+    * acting by symmetries on that ball. Each failure is flagged under `what`.
+    */
+  private def coheres(
+      acc: Accepted,
+      pat: Pattern,
+      rep: Pattern,
+      cert: Certificate,
+      flags: Flags,
+      what: String
+  ): Boolean =
+    val rDet         = cert.covBound + 1.5
+    val (r1, r2, r3) = cert.tau
+    val reach        = Vector(r1, r2, r3).map(vNorm).max
+    val aligned      =
+      for
+        b1 <- developBall(acc.g, pat, acc.stab, rDet)
+        b2 <- developBall(acc.g, rep, acc.stab, rDet)
+        s  <- alignment(acc, b1, b2, rDet)
+      yield s
+    aligned match
+      case None    =>
+        flags.add(s"$what: no alignment with the class representative at the determination radius")
+        false
+      case Some(s) =>
+        certifyWithBall(acc, pat, cert.classId, reach) match
+          case Some(Certified(own, ball)) if own.ok =>
+            val lattice =
+              Vector(r1, r2, r3).forall(tau => isSymmetry(acc, ball, own.rPer, Iso(idMat, s(tau))))
+            if !lattice then
+              flags.add(s"$what: the aligned representative lattice is not a symmetry of the pattern's ball")
+            lattice
+          case _                                    =>
+            flags.add(s"$what: no periodization certificate for the pattern")
+            false
 
   /** The germ-forcing test for one skeleton: the 1-shell germ (star + neighbor placements) forces the germ of
     * every neighbor — then at most one honeycomb carries this germ, and the pattern caps hide nothing.
@@ -259,7 +311,8 @@ object CompletenessAudit:
           case Some(ball) =>
             val f2 = fingerprintOf(acc.corners, acc.stab, ball, 2.05)
             classData.find(_._1 == f2) match
-              case Some((_, rep, cert)) => if !coheres(acc, pat, rep, cert) then allKnown = false
+              case Some((_, rep, cert)) =>
+                if !coheres(acc, pat, rep, cert, flags, s"skeleton $si, exhaustion") then allKnown = false
               case None                 => allKnown = false
       }
     )
@@ -269,15 +322,16 @@ object CompletenessAudit:
 
   private[research_core] def debugTranslations(pat: Pattern, l: Int): Vector[Vec]           = translationWords(pat, l)
   private[research_core] def debugCertify(acc: Accepted, pat: Pattern): Option[Certificate] =
-    certify(acc, pat, 0, new Flags)
+    certify(acc, pat, 0)
 
   // ---------- the audit driver ----------
 
   final case class Audit(
       idx: Int,
       classes: Int,
-      certified: Int,    // classes with a full periodization certificate
-      coherent: Boolean, // every accepted pattern coheres with its class representative
+      certified: Int,    // classes whose representative carries a full periodization certificate
+      coherent: Boolean, // every accepted pattern coheres with its class representative, as in (B)
+      patterns: Int,     // accepted patterns within the caps, each certified and aligned when coherent
       forcingSkeletons: Int,
       skeletonsWithPatterns: Int
   ):
@@ -297,19 +351,23 @@ object CompletenessAudit:
     val classData = Vector.newBuilder[(Vector[(Long, Long, Long)], Pattern, Certificate)]
     classes.zipWithIndex.foreach { case ((fp, members), ci) =>
       val rep = members.head._2
-      certify(acc, rep, ci, flags) match
+      certify(acc, rep, ci) match
         case Some(cert) if cert.ok =>
           certOk += 1
           classData += ((fp, rep, cert))
-          if !members.forall((_, p) => coheres(acc, p, rep, cert)) then allCoh = false
-        case _                     => ()
+          // every member, the representative included (its own alignment is the identity)
+          val coherent = members.map((si, p) => coheres(acc, p, rep, cert, flags, s"skeleton $si, class $ci"))
+          if !coherent.forall(identity) then allCoh = false
+        case _                     =>
+          flags.add(s"class $ci: no periodization certificate for the representative")
+          allCoh = false
     }
     val cd        = classData.result()
     val skelsWith = acc.skeletons.indices.toVector // close EVERY skeleton, including capped-empty ones
     val closure   = skelsWith.map { si =>
       germForces(acc, acc.skeletons(si), flags) || exhaustSkeleton(acc, si, cd, flags)
     }
-    Audit(idx, classes.size, certOk, allCoh, closure.count(identity), skelsWith.size)
+    Audit(idx, classes.size, certOk, allCoh, acc.patterns.size, closure.count(identity), skelsWith.size)
 
   /** The full audit over the 26 species. */
   lazy val results: (Vector[Audit], Vector[String]) =

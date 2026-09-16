@@ -303,23 +303,36 @@ object TransitivePatterns:
       depth += 1
     if clash then None else Some(seen.values.toVector)
 
-  /** Canonical fingerprint of the ball of `radius` from a developed vertex list. */
+  /** The ball of `radius` from a developed vertex list, encoded after the orthogonal map `s`: the sorted
+    * (star signature, position) records of s·(the ball). Two balls satisfy `encodeBall(b₁, id) ==
+    * encodeBall(b₂, s)` exactly when b₁ = s·b₂ as placed-star fields (positions and stars alike, to the
+    * rounding), so this is the alignment test behind the canonical fingerprint.
+    */
+  def encodeBall(
+      corners: Vector[(Int, Vector[Vec])],
+      ball: Vector[Iso],
+      radius: Double,
+      s: Mat
+  ): Vector[(Long, Long, Long)] =
+    ball
+      .filter(t => vNorm(t.t) <= radius + 1e-6)
+      .flatMap { t =>
+        val p = round4(s(t.t))
+        val m = s * t.m
+        starSig(corners, m).flatMap((c, ds) => (c.toLong, 0L, 0L) +: ds) :+ p
+      }
+      .sorted
+
+  /** Canonical fingerprint of the ball of `radius` from a developed vertex list: the least encoding over
+    * Stab±(S).
+    */
   def fingerprintOf(
       corners: Vector[(Int, Vector[Vec])],
       stab: Vector[Mat],
       ball: Vector[Iso],
       radius: Double
   ): Vector[(Long, Long, Long)] =
-    val entries                                    = ball.filter(t => vNorm(t.t) <= radius + 1e-6)
-    def encode(s: Mat): Vector[(Long, Long, Long)] =
-      entries
-        .flatMap { t =>
-          val p = round4(s(t.t))
-          val m = s * t.m
-          starSig(corners, m).flatMap((c, ds) => (c.toLong, 0L, 0L) +: ds) :+ p
-        }
-        .sorted
-    stab.map(encode).min(using scala.math.Ordering.Implicits.seqOrdering)
+    stab.map(s => encodeBall(corners, ball, radius, s)).min(using scala.math.Ordering.Implicits.seqOrdering)
 
   // ---------- the per-species driver ----------
 

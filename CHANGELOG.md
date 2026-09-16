@@ -6,6 +6,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+**Class coherence proved, not assumed.** `CompletenessAudit`'s step (B) — same fingerprint ⇒ same
+honeycomb — compared two developed balls at the determination radius and stopped there. Agreement on a
+ball does not make a honeycomb periodic under the representative's lattice, and fundamental-box rigidity
+needs a common lattice, so the step did not follow from what was checked (nor from what its documentation
+said was checked: no periodicity of the member's ball was ever tested).
+
+### Changed
+
+- `CompletenessAudit`: every accepted pattern — class members and the patterns of the exhaustions alike,
+  not only the 28 representatives — now carries its own periodization certificate, its ball reaching the
+  representative's basis; the class representative's ball is ALIGNED onto the member's by an explicit
+  element of Stab±(S) at the determination radius; and the aligned representative basis is checked to act
+  by symmetries on the member's certified ball. Box rigidity then applies twice (the member's lattice, then
+  the transported one) and gives the member's honeycomb as a congruent copy of the representative's. Every
+  failure is flagged with its skeleton and class. The audit still closes all 26 species and 28 classes with
+  no flags.
+- `CompletenessAudit.Audit` gains `patterns`, the number of accepted patterns within the caps (each
+  certified and aligned when `coherent`); `ok` is unchanged.
+- `TransitivePatterns.encodeBall` (new): the encoding of a developed ball after an orthogonal map, the
+  alignment test behind `fingerprintOf`, which now takes its minimum over it.
+
+Source-compatible with 0.8.2 for readers of `Audit` (a field added); a minor bump under early-semver.
+
 ## [0.8.2] — 2026-09-07
 
 ### Added
