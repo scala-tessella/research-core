@@ -27,6 +27,22 @@ class HoneycombGateSmokeSpec extends AnyFlatSpec with Matchers:
       audits.forall(_.coherent) shouldBe true
       audits.map(_.patterns).sum should be > audits.map(_.classes).sum
 
+  it should "close ten skeletons of three species by exhaustion, the rest by germ forcing" in:
+    val (audits, _) = CompletenessAudit.results
+    val exhausted   = audits.flatMap(a => a.exhaustedSkeletons.map(si => (SpeciesCorona.label(a.idx), si)))
+    exhausted shouldBe Vector(
+      ("{p6:6}#1", 0),
+      ("{p6:6}#1", 1),
+      ("{p6:6}#1", 3),
+      ("{p6:6}#1", 4),
+      ("{p6:6}#1", 6),
+      ("{p6:6}#1", 7),
+      ("{cube:4 p3:6}#2", 0),
+      ("{p3:8 p6:2}#2", 0),
+      ("{p3:8 p6:2}#2", 1),
+      ("{p3:8 p6:2}#2", 2)
+    )
+
   "SymbolRealization" should "derive valid minimal symbols with the audit's class counts (sample)" in:
     val flags = Flags()
     // species 0..2 carry one class each; species 25 is one of the two doubled species (audit table)

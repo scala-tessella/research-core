@@ -329,11 +329,12 @@ object CompletenessAudit:
   final case class Audit(
       idx: Int,
       classes: Int,
-      certified: Int,    // classes whose representative carries a full periodization certificate
-      coherent: Boolean, // every accepted pattern coheres with its class representative, as in (B)
-      patterns: Int,     // accepted patterns within the caps, each certified and aligned when coherent
-      forcingSkeletons: Int,
-      skeletonsWithPatterns: Int
+      certified: Int,                                // classes whose representative carries a full periodization certificate
+      coherent: Boolean,                             // every accepted pattern coheres with its class representative, as in (B)
+      patterns: Int,                                 // accepted patterns within the caps, each certified and aligned when coherent
+      forcingSkeletons: Int,                         // skeletons closed, by germ forcing or by exhaustion
+      skeletonsWithPatterns: Int,
+      exhaustedSkeletons: Vector[Int] = Vector.empty // the skeletons germ forcing does not close
   ):
     def ok: Boolean = certified == classes && coherent && forcingSkeletons == skeletonsWithPatterns
 
@@ -364,10 +365,18 @@ object CompletenessAudit:
     }
     val cd        = classData.result()
     val skelsWith = acc.skeletons.indices.toVector // close EVERY skeleton, including capped-empty ones
-    val closure   = skelsWith.map { si =>
-      germForces(acc, acc.skeletons(si), flags) || exhaustSkeleton(acc, si, cd, flags)
-    }
-    Audit(idx, classes.size, certOk, allCoh, acc.patterns.size, closure.count(identity), skelsWith.size)
+    val forced    = skelsWith.map(si => germForces(acc, acc.skeletons(si), flags))
+    val closure   = skelsWith.map(si => forced(si) || exhaustSkeleton(acc, si, cd, flags))
+    Audit(
+      idx,
+      classes.size,
+      certOk,
+      allCoh,
+      acc.patterns.size,
+      closure.count(identity),
+      skelsWith.size,
+      skelsWith.filterNot(forced)
+    )
 
   /** The full audit over the 26 species. */
   lazy val results: (Vector[Audit], Vector[String]) =

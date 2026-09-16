@@ -25,7 +25,9 @@ said was checked: no periodicity of the member's ball was ever tested).
   failure is flagged with its skeleton and class. The audit still closes all 26 species and 28 classes with
   no flags.
 - `CompletenessAudit.Audit` gains `patterns`, the number of accepted patterns within the caps (each
-  certified and aligned when `coherent`); `ok` is unchanged.
+  certified and aligned when `coherent`), and `exhaustedSkeletons`, the skeletons germ forcing does not
+  close — ten, of three species, all closed by exhaustion; `forcingSkeletons` keeps counting both closure
+  kinds, as it always did, and `ok` is unchanged.
 - `TransitivePatterns.encodeBall` (new): the encoding of a developed ball after an orthogonal map, the
   alignment test behind `fingerprintOf`, which now takes its minimum over it.
 
