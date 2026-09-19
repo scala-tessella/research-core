@@ -27,6 +27,20 @@ class HoneycombGateSmokeSpec extends AnyFlatSpec with Matchers:
       audits.forall(_.coherent) shouldBe true
       audits.map(_.patterns).sum should be > audits.map(_.classes).sum
 
+  it should "certify generator equivariance on every accepted pattern of a multi-coset species" in:
+    // the snub-trihexagonal lift is the species whose patterns are not Stab-equivariant (the developability
+    // gap), so its certificates are the ones where condition (iv) is not implied by collision-freeness
+    val flags = Flags()
+    val idx   = (0 until 34).find(i => SpeciesCorona.label(i) == "{p3:8 p6:2}#2").get
+    val acc   = TransitivePatterns.acceptedOf(idx, flags)
+    acc.patterns should not be empty
+    acc.patterns.foreach { (_, pat) =>
+      val cert = CompletenessAudit.debugCertify(acc, pat).get
+      cert.generatorEquivariant shouldBe true
+      cert.ok shouldBe true
+    }
+    flags.items shouldBe empty
+
   it should "close ten skeletons of three species by exhaustion, the rest by germ forcing" in:
     val (audits, _) = CompletenessAudit.results
     val exhausted   = audits.flatMap(a => a.exhaustedSkeletons.map(si => (SpeciesCorona.label(a.idx), si)))

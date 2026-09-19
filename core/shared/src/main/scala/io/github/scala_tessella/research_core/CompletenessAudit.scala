@@ -13,13 +13,19 @@ import TransitivePatterns.*
   * linearly independent TRANSLATIONS as words in the pattern's gluings (rotational part = identity), verify
   * on the developed ball that (i) the ball data is Λ-periodic (every vertex translated by ±τᵢ within range
   * has a Stab-matching star), (ii) Λ is invariant under the rotational parts of all generators (so γ(H*) is
-  * Λ-periodic for every generator γ), and (iii) the verified radius covers a fundamental domain with margin:
+  * Λ-periodic for every generator γ), (iii) the verified radius covers a fundamental domain with margin:
   * R_per ≥ covBound(Λ) + max|τ| + 1.5, where covBound = half the circumdiameter of the fundamental
-  * parallelepiped. Then the Λ-periodization H* of the ball data is a well-defined honeycomb (every point of
-  * space is Λ-equivalent to a verified region; local structure is everywhere a translate of verified
-  * structure), the generators map H* to itself (Λ-periodic images agreeing on a fundamental box are equal), Γ =
-  * ⟨gluings⟩ ∋ Λ acts vertex-transitively, and the development equals H* — in particular the developed field
-  * IS H* on the whole closed R_per-ball.
+  * parallelepiped, and (iv) GENERATOR EQUIVARIANCE: every generator g_x acts as a symmetry of the developed
+  * ball — for every ball entry whose g_x-image stays within R_per, the entry at the image position carries
+  * the g_x-image of its star modulo Stab±(S). Condition (iv) is checked, not derived: the development expands
+  * only the first word reaching each position, so collision-freeness never compares the word g_x·w against
+  * the field, and without Stab-equivariance of the pattern (which the developability gap shows can fail) the
+  * equality at g_x(p) does not follow from the equality at p. Then the Λ-periodization H* of the ball data is
+  * a well-defined honeycomb (every point of space is Λ-equivalent to a verified region; local structure is
+  * everywhere a translate of verified structure), the generators map H* to itself (by (iv) at the vertices of
+  * a fundamental box, whose g_x-images lie within covBound + 1 < R_per, and Λ-periodic images agreeing on a
+  * fundamental box are equal), Γ = ⟨gluings⟩ ∋ Λ acts vertex-transitively, and the development equals H* — in
+  * particular the developed field IS H* on the whole closed R_per-ball.
   *
   * (B) CLASS COHERENCE — same fingerprint ⇒ same honeycomb. Let π be an accepted pattern of the class of the
   * representative ρ, H_π and H* their certified honeycombs, Λ_π and Λ* their lattices. Three checks: (i) π's
@@ -117,20 +123,22 @@ object CompletenessAudit:
       tau: (Vec, Vec, Vec),
       covBound: Double,
       rPer: Double,
-      periodic: Boolean,         // ball data Λ-periodic under all ±τᵢ
-      latticeInvariant: Boolean, // ρ(g_x)(τⱼ) ∈ Λ for all generators and basis vectors
-      coverage: Boolean          // rPer ≥ covBound + max|τ| + 1.5
+      periodic: Boolean,            // ball data Λ-periodic under all ±τᵢ
+      latticeInvariant: Boolean,    // ρ(g_x)(τⱼ) ∈ Λ for all generators and basis vectors
+      coverage: Boolean,            // rPer ≥ covBound + max|τ| + 1.5
+      generatorEquivariant: Boolean // every generator g_x is a symmetry of the ball within rPer
   ):
-    def ok: Boolean = periodic && latticeInvariant && coverage
+    def ok: Boolean = periodic && latticeInvariant && coverage && generatorEquivariant
 
   /** A certificate together with the collision-free ball it was verified on. */
   final private case class Certified(cert: Certificate, ball: Vector[Iso])
 
   /** The periodization certificate for one pattern: translations, periodicity of the developed ball,
-    * generator-invariance of the lattice, coverage arithmetic. `reach` is a floor on the translation lengths
-    * the certified ball must accommodate beyond the pattern's own basis (for coherence, the class
-    * representative's basis): R_per = covBound + max(max|τ|, reach) + 1.6. None when no basis is found or the
-    * development collides within R_per.
+    * generator-invariance of the lattice, coverage arithmetic, and generator equivariance of the ball (every
+    * gluing g_x is a symmetry of the developed field within R_per, condition (iv) above). `reach` is a floor
+    * on the translation lengths the certified ball must accommodate beyond the pattern's own basis (for
+    * coherence, the class representative's basis): R_per = covBound + max(max|τ|, reach) + 1.6. None when no
+    * basis is found or the development collides within R_per.
     */
   private def certifyWithBall(acc: Accepted, pat: Pattern, classId: Int, reach: Double): Option[Certified] =
     LazyList(4, 5, 6, 7).map(l => latticeBasis(translationWords(pat, l))).collectFirst { case Some(b) =>
@@ -162,8 +170,18 @@ object CompletenessAudit:
           val rot = matOf(pat.glus(x).rot)
           Vector(t1, t2, t3).forall(tau => inLattice(basis, rot(tau)))
         }
+        val genEquiv = acc.g.u.indices.forall(x => isSymmetry(acc, entries, rPer, pat.iso(x)))
         Certified(
-          Certificate(classId, basis, covBound, rPer, periodic, latInv, rPer >= covBound + maxT + 1.5),
+          Certificate(
+            classId,
+            basis,
+            covBound,
+            rPer,
+            periodic,
+            latInv,
+            rPer >= covBound + maxT + 1.5,
+            genEquiv
+          ),
           entries
         )
       }
@@ -359,7 +377,16 @@ object CompletenessAudit:
           // every member, the representative included (its own alignment is the identity)
           val coherent = members.map((si, p) => coheres(acc, p, rep, cert, flags, s"skeleton $si, class $ci"))
           if !coherent.forall(identity) then allCoh = false
-        case _                     =>
+        case Some(cert)            =>
+          val failed = Vector(
+            "periodic"              -> cert.periodic,
+            "lattice-invariant"     -> cert.latticeInvariant,
+            "coverage"              -> cert.coverage,
+            "generator-equivariant" -> cert.generatorEquivariant
+          ).collect { case (name, false) => name }
+          flags.add(s"class $ci: periodization certificate fails (${failed.mkString(", ")})")
+          allCoh = false
+        case None                  =>
           flags.add(s"class $ci: no periodization certificate for the representative")
           allCoh = false
     }

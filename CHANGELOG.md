@@ -6,6 +6,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+**Generator equivariance checked, not derived.** `CompletenessAudit`'s periodization certificate (A)
+verified periodicity of the developed ball, generator-invariance of the lattice and the coverage
+arithmetic, and then took the gluings to be symmetries of the periodized honeycomb on the strength of the
+collision-free development. That does not follow from what was checked: the development expands only the
+first word reaching each position, so the word g_x·w is never generated and collision-freeness never
+compares it against the field; and without Stab-equivariance of the pattern — which the developability gap
+shows can fail — the equality at g_x(p) does not follow from the equality at p.
+
+### Changed
+
+- `CompletenessAudit`: the periodization certificate gains condition (iv), GENERATOR EQUIVARIANCE — every
+  gluing g_x acts as a symmetry of the developed ball within R_per (for every ball entry whose g_x-image
+  stays within R_per, the entry at the image position carries the g_x-image of its star modulo Stab±(S)),
+  the same test the coherence step already applied to the transported lattice. Generator symmetry of the
+  periodized honeycomb then follows at the vertices of a fundamental box directly, with no word-length
+  argument. The condition holds on every accepted pattern of every species; the audit still closes all 26
+  species and 28 classes with no flags.
+- `CompletenessAudit.Certificate` gains `generatorEquivariant`, and `ok` requires it. A representative
+  whose certificate fails is now flagged with the failing conditions by name.
+
+Source-compatible with 0.9.0 for readers of `Certificate` and `Audit` (a field added); a minor bump under
+early-semver.
+
 ## [0.9.0] — 2026-09-19
 
 **Class coherence proved, not assumed.** `CompletenessAudit`'s step (B) — same fingerprint ⇒ same
