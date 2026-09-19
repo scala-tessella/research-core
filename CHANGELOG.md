@@ -6,7 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
-## [Unreleased]
+## [0.10.0] — 2026-09-20
 
 **Generator equivariance checked, not derived.** `CompletenessAudit`'s periodization certificate (A)
 verified periodicity of the developed ball, generator-invariance of the lattice and the coverage
