@@ -27,6 +27,8 @@ shows can fail — the equality at g_x(p) does not follow from the equality at p
   species and 28 classes with no flags.
 - `CompletenessAudit.Certificate` gains `generatorEquivariant`, and `ok` requires it. A representative
   whose certificate fails is now flagged with the failing conditions by name.
+- Toolchain: Scala 3.9.0 (from 3.8.4) and, for the test scope only, scalacheck 1.20.0. Consumers must compile
+  with Scala 3.9 or later to read this release's TASTy.
 
 Source-compatible with 0.9.0 for readers of `Certificate` and `Audit` (a field added); a minor bump under
 early-semver.

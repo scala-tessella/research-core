@@ -15,7 +15,7 @@
 
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
-ThisBuild / scalaVersion   := "3.8.4"
+ThisBuild / scalaVersion   := "3.9.0"
 ThisBuild / organization   := "io.github.scala-tessella"
 ThisBuild / versionScheme  := Some("early-semver")
 ThisBuild / scalafmtOnCompile := true
@@ -57,7 +57,7 @@ lazy val commonSettings = Seq(
     "io.github.scala-tessella" %%% "ring-seq"        % "0.9.0",
     "org.typelevel"            %%% "cats-effect"     % "3.7.0",
     "org.scalatest"            %%% "scalatest"       % "3.2.20"   % Test,
-    "org.scalacheck"           %%% "scalacheck"      % "1.19.0"   % Test,
+    "org.scalacheck"           %%% "scalacheck"      % "1.20.0"   % Test,
     "org.scalatestplus"        %%% "scalacheck-1-19" % "3.2.20.0" % Test
   )
 )
