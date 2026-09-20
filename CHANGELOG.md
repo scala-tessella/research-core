@@ -6,7 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
-## [Unreleased]
+## [0.11.0] — 2026-09-20
 
 **Box periodicity checked, not walked.** The periodization certificate identified the periodized honeycomb
 with the developed field on the whole ball by walking from a box representative to a general ball point
