@@ -25,9 +25,9 @@ url: https://github.com/scala-tessella/research-core
 # deposit and nothing citable names them (0.3.0, 0.4.0, 0.6.x, 0.7.x and 0.8.0 among them); this block moves
 # forward only when a release is archived and its version DOI is minted, which is necessarily the commit after
 # the archived tag.
-version: 0.10.0
+version: 0.11.0
 date-released: '2026-09-20'
-doi: 10.5281/zenodo.22857025
+doi: 10.5281/zenodo.22859955
 keywords:
   - tilings
   - tessellations
@@ -39,6 +39,9 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.21708010
     description: Concept DOI (all versions) — always resolves to the newest release
+  - type: doi
+    value: 10.5281/zenodo.22859955
+    description: Version DOI of release 0.11.0 — the release pinned by the convex-uniform-honeycombs artifact 0.4.0
   - type: doi
     value: 10.5281/zenodo.22857025
     description: Version DOI of release 0.10.0 — the release pinned by the convex-uniform-honeycombs artifact 0.3.0
