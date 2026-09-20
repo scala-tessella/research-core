@@ -6,6 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+**Box periodicity in both directions.** Condition (v) of 0.11.0 checked that every ball entry within R_per is
+the Λ-translate of the entry at its box representative. That is one direction of the identification of
+the periodized honeycomb with the developed field: it says nothing about a lattice translate of a box
+representative that is not an entry, and the coherence step reads its lattice-transport check at such
+points. The converse clause is now checked too.
+
+### Changed
+
+- `CompletenessAudit`: condition (v) gains its converse — every Λ-translate within R_per of a box
+  representative (an entry whose rounded lattice coordinates are all zero) is an entry carrying the
+  translated star. The lattice vectors of norm ≤ R_per + covBound are enumerated through a coefficient
+  bound from the dual basis (`latticeCoefficientBound`, new), rounded up and padded. `Certificate.boxPeriodic`
+  now means both directions; holds on every accepted pattern, the audit unchanged otherwise.
+- `boxReduce` documents the half-open box [−1/2, 1/2) that rounding half up produces, the same
+  representative for a whole lattice orbit.
+
+Source- and binary-compatible with 0.11.0; a minor bump under early-semver by convention of this changelog.
+
 ## [0.11.0] — 2026-09-20
 
 **Box periodicity checked, not walked.** The periodization certificate identified the periodized honeycomb

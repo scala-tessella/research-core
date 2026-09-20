@@ -20,21 +20,24 @@ import TransitivePatterns.*
   * the g_x-image of its star modulo Stab±(S). Condition (iv) is checked, not derived: the development expands
   * only the first word reaching each position, so collision-freeness never compares the word g_x·w against
   * the field, and without Stab-equivariance of the pattern (which the developability gap shows can fail) the
-  * equality at g_x(p) does not follow from the equality at p. And (v) BOX PERIODICITY: every ball entry
-  * within R_per carries, modulo Stab±(S), the Λ-translate of the star at its box representative — the entry
-  * at p − λ, where λ is the lattice vector with the rounded coordinates of p, so that p − λ lies in the
-  * closed fundamental parallelepiped. This is what identifies the periodization with the developed field on
-  * the whole ball: (i) alone reaches a general ball point from the box only along a chain of ±τᵢ-steps that
-  * need not stay inside the ball, and a point near the boundary of the ball can be many steps from the box. A
-  * CLOSURE line records that the breadth-first development terminated before its depth cap: every generator
-  * image of an entry that lies within the slack radius is itself an entry, so the ball is the full set of
-  * words with all prefixes inside the slack ball, as the theorem defines it. Then the Λ-periodization H* of
-  * the ball data is a well-defined honeycomb (every point of space is Λ-equivalent to a verified region;
-  * local structure is everywhere a translate of verified structure), the generators map H* to itself (by (iv)
-  * at the vertices of a fundamental box, whose g_x-images lie within covBound + 1 < R_per, where (v) makes H*
-  * the developed field, and Λ-periodic images agreeing on a fundamental box are equal), Γ = ⟨gluings⟩ ∋ Λ
-  * acts vertex-transitively, and the development equals H* — in particular the developed field IS H* on the
-  * whole closed R_per-ball, by (v).
+  * equality at g_x(p) does not follow from the equality at p. And (v) BOX PERIODICITY, in both directions:
+  * every ball entry within R_per carries, modulo Stab±(S), the Λ-translate of the star at its box
+  * representative — the entry at p − λ, where λ is the lattice vector with the rounded (half up) coordinates
+  * of p, so that p − λ has coordinates in [−1/2, 1/2) and is the same point for the whole Λ-orbit — and,
+  * conversely, every Λ-translate within R_per of a box representative is an entry carrying the translated
+  * star (the lattice vectors of norm ≤ R_per + covBound are enumerated through a coefficient bound from the
+  * dual basis). Together the two clauses identify the periodization with the developed field on the whole
+  * ball, as a set of vertices with stars: (i) alone reaches a general ball point from the box only along a
+  * chain of ±τᵢ-steps that need not stay inside the ball, and the downward clause alone says nothing about
+  * lattice translates that are not entries. A CLOSURE line records that the breadth-first development
+  * terminated before its depth cap: every generator image of an entry that lies within the slack radius is
+  * itself an entry, so the ball is the full set of words with all prefixes inside the slack ball, as the
+  * theorem defines it. Then the Λ-periodization H* of the ball data is a well-defined honeycomb (every point
+  * of space is Λ-equivalent to a verified region; local structure is everywhere a translate of verified
+  * structure), the generators map H* to itself (by (iv) at the vertices of a fundamental box, whose
+  * g_x-images lie within covBound + 1 < R_per, where (v) makes H* the developed field, and Λ-periodic images
+  * agreeing on a fundamental box are equal), Γ = ⟨gluings⟩ ∋ Λ acts vertex-transitively, and the development
+  * equals H* — in particular the developed field IS H* on the whole closed R_per-ball, by (v).
   *
   * (B) CLASS COHERENCE — same fingerprint ⇒ same honeycomb. Let π be an accepted pattern of the class of the
   * representative ρ, H_π and H* their certified honeycombs, Λ_π and Λ* their lattices. Three checks: (i) π's
@@ -131,9 +134,10 @@ object CompletenessAudit:
     def isInt(x: Double) = math.abs(x - math.round(x)) < 1e-3
     isInt(ca) && isInt(cb) && isInt(cc)
 
-  /** The box representative of a position: v minus the lattice vector whose coordinates are the rounded
-    * coordinates of v, so that the result has coordinates in [-1/2, 1/2] — a point of the closed fundamental
-    * parallelepiped. Returns the representative and the lattice vector subtracted.
+  /** The box representative of a position: v minus the lattice vector whose coordinates are the rounded (half
+    * up) coordinates of v, so that the result has coordinates in [-1/2, 1/2) — a point of the closed
+    * fundamental parallelepiped, the same for every point of one lattice orbit. Returns the representative
+    * and the lattice vector subtracted.
     */
   def boxReduce(basis: (Vec, Vec, Vec), v: Vec): (Vec, Vec) =
     val (t1, t2, t3) = basis
@@ -144,6 +148,19 @@ object CompletenessAudit:
     )
     (vSub(v, lambda), lambda)
 
+  /** Bounds on the integer coefficients of every lattice vector of norm at most `radius`: the i-th coordinate
+    * of λ is ⟨λ, dᵢ⟩ for the dual basis vector dᵢ (a cross product of the other two basis vectors over the
+    * determinant), so |cᵢ| ≤ |dᵢ|·radius. Rounded up and padded by one, so that the enumeration over the box
+    * is a superset of the lattice vectors within the radius.
+    */
+  def latticeCoefficientBound(basis: (Vec, Vec, Vec), radius: Double): (Int, Int, Int) =
+    val (a, b, c)                  = basis
+    def cross(x: Vec, y: Vec): Vec =
+      (x._2 * y._3 - x._3 * y._2, x._3 * y._1 - x._1 * y._3, x._1 * y._2 - x._2 * y._1)
+    val det                        = math.abs(vDot(a, cross(b, c)))
+    def bound(dual: Vec): Int      = (vNorm(dual) / det * radius).ceil.toInt + 1
+    (bound(cross(b, c)), bound(cross(c, a)), bound(cross(a, b)))
+
   final case class Certificate(
       classId: Int,
       tau: (Vec, Vec, Vec),
@@ -153,7 +170,7 @@ object CompletenessAudit:
       latticeInvariant: Boolean,     // ρ(g_x)(τⱼ) ∈ Λ for all generators and basis vectors
       coverage: Boolean,             // rPer ≥ covBound + max|τ| + 1.5
       generatorEquivariant: Boolean, // every generator g_x is a symmetry of the ball within rPer
-      boxPeriodic: Boolean,          // every entry within rPer is the Λ-translate of its box representative
+      boxPeriodic: Boolean,          // entries within rPer ↔ Λ-translates of box representatives, stars matching
       closed: Boolean                // every entry's generator images within the slack radius are entries
   ):
     def ok: Boolean =
@@ -183,8 +200,8 @@ object CompletenessAudit:
         yield vNorm(vAdd(vAdd(vScale(t1, e1), vScale(t2, e2)), vScale(t3, e3)))).max / 2.0
       val rPer         = covBound + math.max(maxT, reach) + 1.6
       developBall(acc.g, pat, acc.stab, rPer).map { entries =>
-        val byPos    = entries.map(t => TransitivePatterns.round4(t.t) -> t).toMap
-        val periodic = entries.forall { t =>
+        val byPos        = entries.map(t => TransitivePatterns.round4(t.t) -> t).toMap
+        val periodic     = entries.forall { t =>
           Vector(t1, t2, t3).flatMap(tau => Vector(tau, vScale(tau, -1.0))).forall { tau =>
             val q = vAdd(t.t, tau)
             if vNorm(q) > rPer - 1e-6 then true
@@ -195,13 +212,16 @@ object CompletenessAudit:
                   t2i.m.dist(t.m) < 1e-4 || acc.stab.exists(s => (t2i.m.t * t.m).dist(s) < 1e-3)
           }
         }
-        val latInv   = acc.g.u.indices.forall { x =>
+        val latInv       = acc.g.u.indices.forall { x =>
           val rot = matOf(pat.glus(x).rot)
           Vector(t1, t2, t3).forall(tau => inLattice(basis, rot(tau)))
         }
-        val genEquiv = acc.g.u.indices.forall(x => isSymmetry(acc, entries, rPer, pat.iso(x)))
-        // (v) box periodicity: every entry within rPer carries the translate of its box representative's star
-        val boxPer   = entries.forall { t =>
+        val genEquiv     = acc.g.u.indices.forall(x => isSymmetry(acc, entries, rPer, pat.iso(x)))
+        // (v) box periodicity, both directions: every entry within rPer carries the translate of its box
+        // representative's star, and every lattice translate within rPer of a box representative is an entry
+        // (with that star) — the second clause enumerates the lattice vectors of norm ≤ rPer + covBound
+        // through the coefficient bound of the dual basis
+        val boxDown      = entries.forall { t =>
           if vNorm(t.t) > rPer + 1e-6 then true
           else
             val (p0, _) = boxReduce(basis, t.t)
@@ -210,10 +230,30 @@ object CompletenessAudit:
               case Some(t0i) =>
                 t0i.m.dist(t.m) < 1e-4 || acc.stab.exists(s => (t0i.m.t * t.m).dist(s) < 1e-3)
         }
+        val (n1, n2, n3) = latticeCoefficientBound(basis, rPer + covBound)
+        val boxUp        = entries.forall { r =>
+          val (_, lam0) = boxReduce(basis, r.t)
+          if vNorm(r.t) > rPer + 1e-6 || vNorm(lam0) > 1e-9 then true // not a box representative
+          else
+            (-n1 to n1).forall { c1 =>
+              (-n2 to n2).forall { c2 =>
+                (-n3 to n3).forall { c3 =>
+                  val lam = vAdd(vAdd(vScale(t1, c1), vScale(t2, c2)), vScale(t3, c3))
+                  val q   = vAdd(r.t, lam)
+                  vNorm(q) > rPer + 1e-6 ||
+                  (byPos.get(TransitivePatterns.round4(q)) match
+                    case None    => false
+                    case Some(e) => e.m.dist(r.m) < 1e-4 ||
+                      acc.stab.exists(s => (e.m.t * r.m).dist(s) < 1e-3))
+                }
+              }
+            }
+        }
+        val boxPer       = boxDown && boxUp
         // closure: the breadth-first development terminated before its depth cap — every generator image
         // of an entry that lies within the slack radius is itself an entry
-        val slack    = rPer + 1.6
-        val closed   = entries.forall { t =>
+        val slack        = rPer + 1.6
+        val closed       = entries.forall { t =>
           acc.g.u.indices.forall { x =>
             val img = t.compose(pat.iso(x))
             vNorm(img.t) > slack + 1e-6 || byPos.contains(TransitivePatterns.round4(img.t))
