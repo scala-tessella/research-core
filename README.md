@@ -24,8 +24,8 @@ reachable from `solver` while they stay hidden from library users.
 > `DelaneySymbols` entry points, for instance, arrived in 0.3.0 and are **absent from 0.2.1**; the
 > orbit-bounded walk, the staircase layer and the exact plane / de-fusion engine arrived in 0.8.0 and are
 > absent from everything before it. Check the pinned version's own archive and the
-> [CHANGELOG](CHANGELOG.md) rather than this list. The newest archived release is 0.9.0,
-> [doi:10.5281/zenodo.22238457](https://doi.org/10.5281/zenodo.22238457).
+> [CHANGELOG](CHANGELOG.md) rather than this list. The newest archived release is 0.10.0,
+> [doi:10.5281/zenodo.22857025](https://doi.org/10.5281/zenodo.22857025).
 
 - `Frac` — exact rationals.
 - `Cyclo24` — exact arithmetic in the 24th cyclotomic field (the angles that arise for `{3,4,6,8,12}` faces).
@@ -195,6 +195,7 @@ on Central:
 
 | Version | DOI |
 |---|---|
+| 0.10.0 | [10.5281/zenodo.22857025](https://doi.org/10.5281/zenodo.22857025) |
 | 0.9.0 | [10.5281/zenodo.22849707](https://doi.org/10.5281/zenodo.22849707) |
 | 0.8.1 | [10.5281/zenodo.22238457](https://doi.org/10.5281/zenodo.22238457) |
 | 0.5.0 | [10.5281/zenodo.21762821](https://doi.org/10.5281/zenodo.21762821) |
