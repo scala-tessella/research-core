@@ -37,6 +37,8 @@ class HoneycombGateSmokeSpec extends AnyFlatSpec with Matchers:
     acc.patterns.foreach { (_, pat) =>
       val cert = CompletenessAudit.debugCertify(acc, pat).get
       cert.generatorEquivariant shouldBe true
+      cert.boxPeriodic shouldBe true
+      cert.closed shouldBe true
       cert.ok shouldBe true
     }
     flags.items shouldBe empty

@@ -20,12 +20,21 @@ import TransitivePatterns.*
   * the g_x-image of its star modulo Stab±(S). Condition (iv) is checked, not derived: the development expands
   * only the first word reaching each position, so collision-freeness never compares the word g_x·w against
   * the field, and without Stab-equivariance of the pattern (which the developability gap shows can fail) the
-  * equality at g_x(p) does not follow from the equality at p. Then the Λ-periodization H* of the ball data is
-  * a well-defined honeycomb (every point of space is Λ-equivalent to a verified region; local structure is
-  * everywhere a translate of verified structure), the generators map H* to itself (by (iv) at the vertices of
-  * a fundamental box, whose g_x-images lie within covBound + 1 < R_per, and Λ-periodic images agreeing on a
-  * fundamental box are equal), Γ = ⟨gluings⟩ ∋ Λ acts vertex-transitively, and the development equals H* — in
-  * particular the developed field IS H* on the whole closed R_per-ball.
+  * equality at g_x(p) does not follow from the equality at p. And (v) BOX PERIODICITY: every ball entry
+  * within R_per carries, modulo Stab±(S), the Λ-translate of the star at its box representative — the entry
+  * at p − λ, where λ is the lattice vector with the rounded coordinates of p, so that p − λ lies in the
+  * closed fundamental parallelepiped. This is what identifies the periodization with the developed field on
+  * the whole ball: (i) alone reaches a general ball point from the box only along a chain of ±τᵢ-steps that
+  * need not stay inside the ball, and a point near the boundary of the ball can be many steps from the box. A
+  * CLOSURE line records that the breadth-first development terminated before its depth cap: every generator
+  * image of an entry that lies within the slack radius is itself an entry, so the ball is the full set of
+  * words with all prefixes inside the slack ball, as the theorem defines it. Then the Λ-periodization H* of
+  * the ball data is a well-defined honeycomb (every point of space is Λ-equivalent to a verified region;
+  * local structure is everywhere a translate of verified structure), the generators map H* to itself (by (iv)
+  * at the vertices of a fundamental box, whose g_x-images lie within covBound + 1 < R_per, where (v) makes H*
+  * the developed field, and Λ-periodic images agreeing on a fundamental box are equal), Γ = ⟨gluings⟩ ∋ Λ
+  * acts vertex-transitively, and the development equals H* — in particular the developed field IS H* on the
+  * whole closed R_per-ball, by (v).
   *
   * (B) CLASS COHERENCE — same fingerprint ⇒ same honeycomb. Let π be an accepted pattern of the class of the
   * representative ρ, H_π and H* their certified honeycombs, Λ_π and Λ* their lattices. Three checks: (i) π's
@@ -98,8 +107,8 @@ object CompletenessAudit:
       t3 <- ts.find(t => math.abs(det(t1, t2, t)) > 1e-3)
     yield (t1, t2, t3)
 
-  /** Integer lattice coordinates of v in basis (t1,t2,t3), if v ∈ Λ within tolerance. */
-  def inLattice(basis: (Vec, Vec, Vec), v: Vec): Boolean =
+  /** The coordinates of v in the basis (t1,t2,t3), by Cramer's rule. */
+  def latticeCoords(basis: (Vec, Vec, Vec), v: Vec): (Double, Double, Double) =
     val (a, b, c)                             = basis
     val d                                     = a._1 *
       (b._2 * c._3 - b._3 * c._2) -
@@ -114,21 +123,41 @@ object CompletenessAudit:
         (x._1 * y._3 - x._3 * y._1) +
         w._3 *
         (x._1 * y._2 - x._2 * y._1)) / d
-    val (ca, cb, cc)                          = (solve(b, c, v), solve(c, a, v), solve(a, b, v))
-    def isInt(x: Double)                      = math.abs(x - math.round(x)) < 1e-3
+    (solve(b, c, v), solve(c, a, v), solve(a, b, v))
+
+  /** Integer lattice coordinates of v in basis (t1,t2,t3), if v ∈ Λ within tolerance. */
+  def inLattice(basis: (Vec, Vec, Vec), v: Vec): Boolean =
+    val (ca, cb, cc)     = latticeCoords(basis, v)
+    def isInt(x: Double) = math.abs(x - math.round(x)) < 1e-3
     isInt(ca) && isInt(cb) && isInt(cc)
+
+  /** The box representative of a position: v minus the lattice vector whose coordinates are the rounded
+    * coordinates of v, so that the result has coordinates in [-1/2, 1/2] — a point of the closed fundamental
+    * parallelepiped. Returns the representative and the lattice vector subtracted.
+    */
+  def boxReduce(basis: (Vec, Vec, Vec), v: Vec): (Vec, Vec) =
+    val (t1, t2, t3) = basis
+    val (ca, cb, cc) = latticeCoords(basis, v)
+    val lambda       = vAdd(
+      vAdd(vScale(t1, math.round(ca).toDouble), vScale(t2, math.round(cb).toDouble)),
+      vScale(t3, math.round(cc).toDouble)
+    )
+    (vSub(v, lambda), lambda)
 
   final case class Certificate(
       classId: Int,
       tau: (Vec, Vec, Vec),
       covBound: Double,
       rPer: Double,
-      periodic: Boolean,            // ball data Λ-periodic under all ±τᵢ
-      latticeInvariant: Boolean,    // ρ(g_x)(τⱼ) ∈ Λ for all generators and basis vectors
-      coverage: Boolean,            // rPer ≥ covBound + max|τ| + 1.5
-      generatorEquivariant: Boolean // every generator g_x is a symmetry of the ball within rPer
+      periodic: Boolean,             // ball data Λ-periodic under all ±τᵢ
+      latticeInvariant: Boolean,     // ρ(g_x)(τⱼ) ∈ Λ for all generators and basis vectors
+      coverage: Boolean,             // rPer ≥ covBound + max|τ| + 1.5
+      generatorEquivariant: Boolean, // every generator g_x is a symmetry of the ball within rPer
+      boxPeriodic: Boolean,          // every entry within rPer is the Λ-translate of its box representative
+      closed: Boolean                // every entry's generator images within the slack radius are entries
   ):
-    def ok: Boolean = periodic && latticeInvariant && coverage && generatorEquivariant
+    def ok: Boolean =
+      periodic && latticeInvariant && coverage && generatorEquivariant && boxPeriodic && closed
 
   /** A certificate together with the collision-free ball it was verified on. */
   final private case class Certified(cert: Certificate, ball: Vector[Iso])
@@ -171,6 +200,25 @@ object CompletenessAudit:
           Vector(t1, t2, t3).forall(tau => inLattice(basis, rot(tau)))
         }
         val genEquiv = acc.g.u.indices.forall(x => isSymmetry(acc, entries, rPer, pat.iso(x)))
+        // (v) box periodicity: every entry within rPer carries the translate of its box representative's star
+        val boxPer   = entries.forall { t =>
+          if vNorm(t.t) > rPer + 1e-6 then true
+          else
+            val (p0, _) = boxReduce(basis, t.t)
+            byPos.get(TransitivePatterns.round4(p0)) match
+              case None      => false
+              case Some(t0i) =>
+                t0i.m.dist(t.m) < 1e-4 || acc.stab.exists(s => (t0i.m.t * t.m).dist(s) < 1e-3)
+        }
+        // closure: the breadth-first development terminated before its depth cap — every generator image
+        // of an entry that lies within the slack radius is itself an entry
+        val slack    = rPer + 1.6
+        val closed   = entries.forall { t =>
+          acc.g.u.indices.forall { x =>
+            val img = t.compose(pat.iso(x))
+            vNorm(img.t) > slack + 1e-6 || byPos.contains(TransitivePatterns.round4(img.t))
+          }
+        }
         Certified(
           Certificate(
             classId,
@@ -180,7 +228,9 @@ object CompletenessAudit:
             periodic,
             latInv,
             rPer >= covBound + maxT + 1.5,
-            genEquiv
+            genEquiv,
+            boxPer,
+            closed
           ),
           entries
         )
@@ -382,7 +432,9 @@ object CompletenessAudit:
             "periodic"              -> cert.periodic,
             "lattice-invariant"     -> cert.latticeInvariant,
             "coverage"              -> cert.coverage,
-            "generator-equivariant" -> cert.generatorEquivariant
+            "generator-equivariant" -> cert.generatorEquivariant,
+            "box-periodic"          -> cert.boxPeriodic,
+            "closed"                -> cert.closed
           ).collect { case (name, false) => name }
           flags.add(s"class $ci: periodization certificate fails (${failed.mkString(", ")})")
           allCoh = false

@@ -6,6 +6,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+**Box periodicity checked, not walked.** The periodization certificate identified the periodized honeycomb
+with the developed field on the whole ball by walking from a box representative to a general ball point
+along ±τᵢ-steps, "all inside the ball". That holds for two points of the closed fundamental box, whose
+difference is a {−1, 0, 1}-combination of the basis, but not for a general point of the R_per-ball: such a
+point can be many lattice steps from the box, and a step chain need not stay inside the ball. Two consumers
+relied on the identification — generator symmetry at the g_x-images of box vertices, and the lattice
+transport of class coherence, which reads a check on ball data as a statement about the periodized
+honeycomb.
+
+### Changed
+
+- `CompletenessAudit`: the periodization certificate gains condition (v), BOX PERIODICITY — every ball entry
+  within R_per carries, modulo Stab±(S), the Λ-translate of the star at its box representative (the entry at
+  p − λ, λ the lattice vector with the rounded lattice coordinates of p) — which makes the seam step and the
+  field identification one-line consequences; and a CLOSURE line — every generator image of an entry that
+  lies within the slack radius is itself an entry — recording that the breadth-first development terminated
+  before its depth cap, so the ball is the full word set the theorem defines. Both hold on every accepted
+  pattern of every species; the audit still closes all 26 species and 28 classes with no flags.
+- `CompletenessAudit.Certificate` gains `boxPeriodic` and `closed`, and `ok` requires them;
+  `CompletenessAudit.latticeCoords` and `boxReduce` (new) expose the Cramer coordinates and the box
+  reduction behind the check.
+
+Source-compatible with 0.10.0 for readers of `Certificate` (fields added); a minor bump under early-semver.
+
 ## [0.10.0] — 2026-09-20
 
 **Generator equivariance checked, not derived.** `CompletenessAudit`'s periodization certificate (A)
