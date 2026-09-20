@@ -6,7 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
-## [Unreleased]
+## [0.12.0] — 2026-09-20
 
 **Box periodicity in both directions.** Condition (v) of 0.11.0 checked that every ball entry within R_per is
 the Λ-translate of the entry at its box representative. That is one direction of the identification of
