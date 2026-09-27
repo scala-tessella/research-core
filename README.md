@@ -121,6 +121,12 @@ The three-dimensional substrate (unit-edge honeycombs of `E³` by convex uniform
 - `StarChambers`, `StarFoldings`, `Sigma0Assembly`, `SymbolCatalog`, `SymbolRealization` — the Delaney–Dress
   side of a vertex star: chamber complex, subgroup lattice and foldings, the σ₀ assembly, canonical keys and
   minimality with the sweep drivers, and the minimal symbol of a certified honeycomb.
+- `PairShell`, `KSetShell` — the substrate of honeycombs with k ≥ 2 vertex orbits: the cross-gluing atlas of two
+  species, the mixed shell, the fair pairs, and the edge relation `e(S→T | K)` with the fair (admissible)
+  k-sets, the connected k-subsets of the shared-figure graph whose edge relation spans them.
+- `PairPatterns`, `PairRealization`, `SymbolRealizationFilter`, `ChamberRings` — k-patterns and their rigid
+  development, the minimal symbol of a certified k-pattern, and the standalone realization filter from a
+  census symbol to a certified honeycomb (or its refusal); the chamber rings the σ₀ assembly propagates.
 
 ## Platforms
 

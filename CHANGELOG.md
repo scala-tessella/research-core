@@ -6,6 +6,31 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [Unreleased]
+
+**The substrate of honeycombs with several vertex orbits.** The engines that a census of k-uniform
+Krötenheerdt honeycombs of `E³` rests on, until now kept beside the one programme that used them, move here so
+that its verification repository can pin them: the fair pairs and fair k-sets of two or more species, the
+k-pattern machinery with its rigid development, and the realization of a census symbol as a certified
+honeycomb.
+
+### Added
+
+- `PairShell` — the cross-gluing atlas of two species, the mixed shell, the candidate and fair pairs.
+- `KSetShell` — the edge relation `e(S→T | K)` (memoized, monotone in `K`), the fairness verdict of a k-set and
+  the candidate k-sets as the connected k-subsets of the shared-figure graph (canonical ESU growth).
+- `PairPatterns` — k-patterns (the two-orbit and k-orbit generalization of `TransitivePatterns`): the
+  groupoid (R1)/(R2) conditions, coset skeletons per role, the pattern search and the species-aware rigid
+  development.
+- `PairRealization` — the minimal symbol of a certified k-pattern and the tables it is read from.
+- `SymbolRealizationFilter` — from a census symbol to a certified honeycomb: σ₀-filtered domains, the pattern
+  search, the two-orbit periodization certificate.
+- `ChamberRings` — the chamber orbits and equivariant intertwiners the σ₀ assembly propagates.
+- JVM tests: `PairShellSpec`, `PairPatternsSpec` (with the Barlow known-answer fixtures) and `KSetShellSpec`;
+  their full sweeps are opt-in (`-Dpairs.sweep`, `-Dpairs.patterns`, `-Dksets.sweep`, `-Dksets.k4`).
+
+Additive: no existing member changes.
+
 ## [0.12.0] — 2026-09-20
 
 **Box periodicity in both directions.** Condition (v) of 0.11.0 checked that every ball entry within R_per is
