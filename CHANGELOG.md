@@ -6,7 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
-## [Unreleased]
+## [0.13.0] — 2026-09-27
 
 **The substrate of honeycombs with several vertex orbits.** The engines that a census of k-uniform
 Krötenheerdt honeycombs of `E³` rests on, until now kept beside the one programme that used them, move here so
