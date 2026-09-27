@@ -485,22 +485,23 @@ object PairPatterns:
           tryAll(r, v, viable)
         case None           =>
           // forward check + most-constrained open slot
-          var bestR              = -1
-          var bestV              = -1
-          var bestVi: Vector[Pl] = null
-          var dead               = false
+          var bestR                      = -1
+          var bestV                      = -1
+          var bestVi: Option[Vector[Pl]] = None
+          var dead                       = false
           for r <- ctx.roles if !dead; v <- chosen(r).indices if !dead && chosen(r)(v).isEmpty do
             val vi = doms(r)(v).filter(r1ok(r, v, _))
             if vi.isEmpty then dead = true
-            else if bestVi == null || vi.size < bestVi.size then
+            else if bestVi.forall(vi.size < _.size) then
               bestR = r
               bestV = v
-              bestVi = vi
+              bestVi = Some(vi)
           if !dead then
-            if bestVi == null then
-              found += 1
-              emit(KPattern(chosen.map(_.map(_.get).toVector)))
-            else tryAll(bestR, bestV, bestVi)
+            bestVi match
+              case None     =>
+                found += 1
+                emit(KPattern(chosen.map(_.map(_.get).toVector)))
+              case Some(vi) => tryAll(bestR, bestV, vi)
 
     bt()
     (found, capped)

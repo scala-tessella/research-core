@@ -59,42 +59,39 @@ object KSetShell:
     // serializes unrelated keys that share a bin — compute outside, publish with putIfAbsent
     // (keys are per-candidate unique, so no duplicated work in the sweep)
     val cacheKey = (seed, target, kSet)
-    val cached   = edgeCache.get(cacheKey)
-    if cached != null then cached
-    else
+    Option(edgeCache.get(cacheKey)).getOrElse:
       val computed = {
         val gS                                   = geom(seed)
         val n                                    = gS.u.size
         val domains                              = domainsOf(seed, kSet, flags)
         val order                                = (0 until n).sortBy(domains(_).size).toVector
-        val chosen                               = Array.fill(n)(null.asInstanceOf[Pl])
+        val chosen                               = Array.fill[Option[Pl]](n)(None)
         def bt(k: Int, forcedSlot: Int): Boolean =
           if k == n then true
           else
             val x  = order(k)
             val ds = if k == forcedSlot then domains(x).filter(_.sp == target) else domains(x)
             ds.exists { pl =>
-              chosen(x) = pl
+              chosen(x) = Some(pl)
               val ok  = (0 until k).forall { k2 =>
                 val x2 = order(k2)
-                PairShell.compatibleP(gS, x, pl, x2, chosen(x2), flags)
+                PairShell.compatibleP(gS, x, pl, x2, chosen(x2).get, flags)
               }
               val res = ok && bt(k + 1, forcedSlot)
-              if !res then chosen(x) = null.asInstanceOf[Pl]
+              if !res then chosen(x) = None
               res
             }
         // a forced slot without any target member can never succeed — skipping it up front is
         // witness-preserving (the first succeeding forced slot is unchanged)
         val sat                                  = (0 until n).exists { slot =>
           domains(order(slot)).exists(_.sp == target) && {
-            java.util.Arrays.fill(chosen.asInstanceOf[Array[AnyRef]], null)
+            for i <- chosen.indices do chosen(i) = None
             bt(0, slot)
           }
         }
-        EdgeResult(seed, target, kSet, if sat then Some(chosen.toVector) else None)
+        EdgeResult(seed, target, kSet, if sat then Some(chosen.toVector.map(_.get)) else None)
       }
-      val prev     = edgeCache.putIfAbsent(cacheKey, computed)
-      if prev != null then prev else computed
+      Option(edgeCache.putIfAbsent(cacheKey, computed)).getOrElse(computed)
 
   /** The fairness verdict of one candidate set: the undirected edges computed lazily (substrate pairs only,
     * both directions) until K is connected or the pairs are exhausted.

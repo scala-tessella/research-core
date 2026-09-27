@@ -243,7 +243,7 @@ object SymbolRealizationFilter:
     // the DFS nests one frame per processed slot (~stars × slots ≈ thousands) — run it on a big stack
     var result: (Vector[KPattern], Boolean) = (Vector.empty, false)
     val th                                  = new Thread(
-      null,
+      Thread.currentThread.getThreadGroup,
       () =>
         result =
           developSymbolImpl(ctx, folds, decks, sym, baseDeck, flags, radius, branchBudget, log),

@@ -123,27 +123,27 @@ object PairShell:
     }
     // visit smallest domains first; the forced cross position is tried at every slot in turn
     val order                                = (0 until n).sortBy(domains(_).size).toVector
-    val chosen                               = Array.fill(n)(null.asInstanceOf[Pl])
+    val chosen                               = Array.fill[Option[Pl]](n)(None)
     def bt(k: Int, forcedSlot: Int): Boolean =
       if k == n then true
       else
         val x  = order(k)
         val ds = if k == forcedSlot then domains(x).filter(_.sp == other) else domains(x)
         ds.exists { pl =>
-          chosen(x) = pl
+          chosen(x) = Some(pl)
           val ok  = (0 until k).forall { k2 =>
             val x2 = order(k2)
-            compatibleP(gS, x, pl, x2, chosen(x2), flags)
+            compatibleP(gS, x, pl, x2, chosen(x2).get, flags)
           }
           val res = ok && bt(k + 1, forcedSlot)
-          if !res then chosen(x) = null.asInstanceOf[Pl]
+          if !res then chosen(x) = None
           res
         }
     val sat                                  = (0 until n).exists { slot =>
-      java.util.Arrays.fill(chosen.asInstanceOf[Array[AnyRef]], null)
+      for i <- chosen.indices do chosen(i) = None
       bt(0, slot)
     }
-    MixedResult(seed, other, sizes, if sat then Some(chosen.toVector) else None)
+    MixedResult(seed, other, sizes, if sat then Some(chosen.toVector.map(_.get)) else None)
 
   /** Candidate pairs: edges of the certified shared-figure adjacency graph (unordered, no self-pairs). */
   lazy val candidatePairs: Vector[(Int, Int)] =
