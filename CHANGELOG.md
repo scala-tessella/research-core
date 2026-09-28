@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [early-semver](https://www.scala-sbt.org/1.x/docs/Publishing.html#Version+scheme). The `core` public surface
 listed in the README is the compatibility contract.
 
+## [0.13.1] — 2026-09-28
+
+**0.13.0 under the library's lint.** The 0.13.0 tag was never published; this is the first release of the
+substrate of honeycombs with several vertex orbits.
+
+### Fixed
+
+- `PairShell`, `KSetShell`, `PairPatterns`, `SymbolRealizationFilter`: no `null` and no cast, as the
+  `DisableSyntax` rules require — the backtracking slots are `Option[Pl]`, the edge cache is read and published
+  through `Option`, the most-constrained slot of the pattern search is an `Option`, and the development thread
+  names the current thread group. Behaviour unchanged.
+
 ## [0.13.0] — 2026-09-27
 
 **The substrate of honeycombs with several vertex orbits.** The engines that a census of k-uniform
